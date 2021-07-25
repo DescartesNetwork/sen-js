@@ -1,3 +1,34 @@
+export type MintData = {
+  mint_authority_option: number
+  mint_authority: string
+  supply: BigInt
+  decimals: number
+  is_initialized: boolean
+  freeze_authority_option: number
+  freeze_authority: string
+}
+
+export type AccountData = {
+  mint: string
+  owner: string
+  amount: BigInt
+  delegate_option: number
+  delegate: string
+  state: number
+  is_native_option: number
+  is_native: BigInt
+  delegated_amount: BigInt
+  close_authority_option: number
+  close_authority: string
+}
+
+export type MultisigData = {
+  m: number
+  n: number
+  is_initialized: boolean
+  signers: string[]
+}
+
 const schema = {
   /**
    * Swap
