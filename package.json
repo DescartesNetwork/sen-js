@@ -1,14 +1,23 @@
 {
-  "name": "@senswap/senjs",
+  "name": "@senswap/sen-js",
   "version": "0.0.1",
   "description": "The library for Sen",
-  "main": "index.js",
+  "main": "dist/index.js",
   "scripts": {
-    "build": "tsc",
+    "build": "npm run clean && tsc",
+    "clean": "rm -rf ./dist",
     "test": "npm run build && mocha"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/DescartesNetwork/sen-js.git"
   },
   "author": "Tu Phan",
   "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/DescartesNetwork/sen-js/issues"
+  },
+  "homepage": "https://github.com/DescartesNetwork/sen-js#readme",
   "devDependencies": {
     "@types/aes-js": "^3.1.1",
     "@types/bs58": "^4.0.1",
