@@ -3,7 +3,7 @@ import { Keypair } from '@solana/web3.js'
 import { pbkdf2Sync } from 'pbkdf2'
 import * as aesjs from 'aes-js'
 
-export interface KeyStore {
+export interface Keystore {
   publicKey: string
   Crypto: {
     ciphertext: string
@@ -19,7 +19,7 @@ export interface KeyStore {
   }
 }
 
-const hollowKeystore = (): KeyStore => {
+const hollowKeystore = (): Keystore => {
   return {
     publicKey: '',
     Crypto: {
@@ -36,7 +36,7 @@ const hollowKeystore = (): KeyStore => {
 }
 
 const keystore = {
-  decrypt: (ks: KeyStore, pwd: string) => {
+  decrypt: (ks: Keystore, pwd: string) => {
     if (!ks || !pwd) return null
     try {
       const {

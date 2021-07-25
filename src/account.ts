@@ -4,7 +4,7 @@ import {
   DEFAULT_SPLT_PROGRAM_ADDRESS,
   DEFAULT_SPLATA_PROGRAM_ADDRESS,
 } from './default'
-import ks, { KeyStore } from './keystore'
+import ks, { Keystore } from './keystore'
 
 const account = {
   /**
@@ -123,7 +123,7 @@ const account = {
    * @param password
    * @returns
    */
-  fromKeystore: (keystore: KeyStore, password: string): Keypair | null => {
+  fromKeystore: (keystore: Keystore, password: string): Keypair | null => {
     if (!keystore || !password) return null
     const secretKey = ks.decrypt(keystore, password)
     if (!secretKey) return null

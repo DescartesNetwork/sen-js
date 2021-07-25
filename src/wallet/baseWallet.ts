@@ -1,7 +1,7 @@
 import { Transaction, PublicKey } from '@solana/web3.js'
 import storage from './storage'
 
-export type Provider = {
+export interface Provider {
   disconnect: () => void
 }
 
