@@ -2,7 +2,7 @@ import axios from 'axios'
 import * as BN from 'bn.js'
 import * as nacl from 'tweetnacl'
 import { LAMPORTS_PER_SOL } from '@solana/web3.js'
-import * as emoji from './data/emoji.json'
+import * as emoji from './assets/emoji.json'
 
 const PRECISION = new BN('1000000000')
 
@@ -80,8 +80,10 @@ const util = {
    */
   decimalize: (a: string | number, decimals: number): BigInt => {
     if (!a) return BigInt(0)
-    if (decimals <= 0 || decimals % 1 != 0) return BigInt(0)
+    if (decimals < 0 || decimals % 1 != 0)
+      throw new Error('decimals must be an integer greater than zero')
     const n = a.toString()
+    if (!decimals) return BigInt(n)
     const m = n.split('.')
     if (m.length > 2) throw new Error('Invalid number')
     if (m.length == 1) return BigInt(a) * BigInt(10 ** decimals)
@@ -100,8 +102,8 @@ const util = {
     if (decimals < 0 || decimals % 1 != 0)
       throw new Error('decimals must be an integer greater than zero')
     if (!a) return '0'
-    if (!decimals) return '1'
     const n = a.toString()
+    if (!decimals) return n
 
     let integer =
       n.length > decimals ? n.substring(0, n.length - decimals) : '0'

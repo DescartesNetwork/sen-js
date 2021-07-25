@@ -43,8 +43,6 @@ class RawWallet implements WalletInterface {
   }
 
   rawSignTransaction = async (transaction: Transaction) => {
-    const confirmed = window.confirm('Please confirm to sign the traction!')
-    if (!confirmed) throw new Error('User rejects to sign the transaction')
     const { keypair } = await this.getProvider()
     const signData = transaction.serializeMessage()
     const publicKey = keypair.publicKey
@@ -54,10 +52,6 @@ class RawWallet implements WalletInterface {
 
   signMessage = async (message: string) => {
     if (!message) throw new Error('Message must be a non-empty string')
-    const confirmed = window.confirm(
-      `Please confirm to sign the message! Message: ${message}`,
-    )
-    if (!confirmed) throw new Error('User rejects to sign the message')
     const { keypair } = await this.getProvider()
     const secretKey = Buffer.from(keypair.secretKey).toString('hex')
     const data = account.signMessage(message, secretKey)
