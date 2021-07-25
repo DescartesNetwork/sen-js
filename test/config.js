@@ -19,11 +19,17 @@ const payer = {
   password: '123',
 }
 
+const delegate = {
+  secretKey:
+    '2cedf5aba2387360b2e1cbfc649200bbda25f3ca01920c1e97bf81a58b91302180f78b4aeb06b742fd36decdbc60df7dfba2a606ba11de6c987eed1d827572a0',
+}
+
 const mint = {
   address: '6Qvp2kKkZwPoNibncFPygiEJJd6sFP5JeHbtsQDyBqNN',
 }
 
 module.exports = {
   payer,
+  delegate,
   mint,
 }
