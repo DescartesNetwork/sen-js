@@ -1,7 +1,7 @@
 const { utils } = require('../dist')
 const { payer } = require('./config')
 
-describe('Util library', function () {
+describe('Utils library', function () {
   it('Should create a consistent emoji', async function () {
     const emoji = utils.randEmoji(payer.address)
     if (emoji != '🐑') throw new Error('Inconsistent emoji')
