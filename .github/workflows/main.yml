@@ -12,7 +12,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Welcome
-        run: echo Start deploying SenSwap JS
+        run: echo Start deploying Sen JS
       - name: Publish npm package
         uses: actions/setup-node@v2
         with:
