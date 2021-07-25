@@ -24,6 +24,13 @@ const account = {
   },
 
   /**
+   * Create a new account
+   */
+  createAccount: () => {
+    return Keypair.generate()
+  },
+
+  /**
    * Validate an associated address
    * @param address Base58 string
    * @returns true/false
