@@ -850,7 +850,6 @@ class SPLT extends Tx {
   ): Promise<{ accountAddress: string; txId: string }> => {
     if (!account.isAddress(ownerAddress))
       throw new Error('Invalid owner address')
-    lamports = Number(lamports)
     // Generate the associated account address
     const accountAddress = await this.deriveAssociatedAddress(
       ownerAddress,
@@ -860,14 +859,10 @@ class SPLT extends Tx {
     const accountSpace = new soproxABI.struct(schema.ACCOUNT_SCHEMA).space
     const requiredLamports =
       await this.connection.getMinimumBalanceForRentExemption(accountSpace)
-    if (requiredLamports > lamports)
+    if (requiredLamports > Number(lamports))
       throw new Error(`At least ${requiredLamports} is required`)
     // Call wrap
-    await this._lamports.transfer(
-      lamports + requiredLamports,
-      accountAddress,
-      wallet,
-    )
+    await this._lamports.transfer(lamports, accountAddress, wallet)
     const { txId } = await this.initializeAccount(
       DEFAULT_WSOL,
       ownerAddress,
