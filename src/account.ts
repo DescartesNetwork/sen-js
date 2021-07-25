@@ -52,28 +52,21 @@ const account = {
   /**
    * Try to find an keypair that can derive a program address with seed being itself
    * @param programId
-   * @returns a randomly available address
+   * @returns a randomly available keypair
    */
-  createStrictAccount: (programId: PublicKey): Promise<Keypair> => {
-    const createStrictAccountCallback = (
-      _programId: PublicKey,
-      cb: (account: Keypair) => void,
-    ) => {
+  createStrictAccount: async (programId: PublicKey): Promise<Keypair> => {
+    if (!account.isAddress(programId.toBase58()))
+      throw new Error('Invalid programId')
+    while (true) {
       const acc = Keypair.generate()
       const seeds = [acc.publicKey.toBuffer()]
-      return PublicKey.createProgramAddress(seeds, _programId)
-        .then((re) => {
-          cb(acc)
-        })
-        .catch((er) => {
-          createStrictAccountCallback(_programId, cb)
-        })
+      try {
+        await PublicKey.createProgramAddress(seeds, programId)
+        return acc
+      } catch (er) {
+        continue
+      }
     }
-    return new Promise((resolve, reject) => {
-      createStrictAccountCallback(programId, (acc) => {
-        return resolve(acc)
-      })
-    })
   },
 
   /**

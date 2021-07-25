@@ -35,8 +35,6 @@ const hollowKeystore = (): KeyStore => {
   }
 }
 
-console.log(hollowKeystore())
-
 const keystore = {
   decrypt: (ks: KeyStore, pwd: string) => {
     if (!ks || !pwd) return null
