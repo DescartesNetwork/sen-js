@@ -1,6 +1,6 @@
 {
-  "name": "senjs",
-  "version": "1.0.0",
+  "name": "senswapjs",
+  "version": "3.0.0",
   "description": "The library for Sen",
   "main": "index.js",
   "scripts": {
