@@ -98,7 +98,7 @@ class SPLT extends Tx {
       error: string | null,
       data: SPLTAccountChangeInfo | null,
     ) => void,
-    filters: GetProgramAccountsFilter[],
+    filters?: GetProgramAccountsFilter[],
   ): number => {
     const cb = ({
       accountId,

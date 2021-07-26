@@ -68,7 +68,7 @@ class Swap extends Tx {
       error: string | null,
       data: SwapAccountChangeInfo | null,
     ) => void,
-    filters: GetProgramAccountsFilter[],
+    filters?: GetProgramAccountsFilter[],
   ): number => {
     const cb = ({
       accountId,

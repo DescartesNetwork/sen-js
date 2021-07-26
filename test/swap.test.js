@@ -15,17 +15,11 @@ let POOL_ADDRESS_0 = ''
 let LPT_ADDRESS_0 = ''
 let MINT_LPT_ADDRESS_0 = ''
 let VAULT_ADDRESS_0 = ''
-let TREASURY_S_ADDRESS_0 = ''
-let TREASURY_A_ADDRESS_0 = ''
-let TREASURY_B_ADDRESS_0 = ''
 // Pool 1
 let POOL_ADDRESS_1 = ''
 let LPT_ADDRESS_1 = ''
 let MINT_LPT_ADDRESS_1 = ''
 let VAULT_ADDRESS_1 = ''
-let TREASURY_S_ADDRESS_1 = ''
-let TREASURY_A_ADDRESS_1 = ''
-let TREASURY_B_ADDRESS_1 = ''
 
 describe('Swap library', function () {
   describe('Test pool initilization', function () {
