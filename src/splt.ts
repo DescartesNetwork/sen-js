@@ -97,9 +97,9 @@ class SPLT extends Tx {
     callback: (
       error: string | null,
       data:
-        | (Omit<SPLTAccountChangeInfo, 'data'> & { data: AccountData })
-        | (Omit<SPLTAccountChangeInfo, 'data'> & { data: MintData })
-        | (Omit<SPLTAccountChangeInfo, 'data'> & { data: MultisigData })
+        | (Omit<SPLTAccountChangeInfo, 'data'> & {
+            data: AccountData | MintData | MultisigData
+          })
         | null,
     ) => void,
     filters?: GetProgramAccountsFilter[],
@@ -130,7 +130,7 @@ class SPLT extends Tx {
       return callback(null, {
         type: type as SPLTAccountChangeInfo['type'],
         address,
-        data: data as AccountData,
+        data: data as AccountData | MintData | MultisigData,
       })
     }
     return this.connection.onProgramAccountChange(
