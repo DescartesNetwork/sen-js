@@ -66,7 +66,7 @@ class Swap extends Tx {
   watch = (
     callback: (
       error: string | null,
-      data: SwapAccountChangeInfo | null,
+      data: (Omit<SwapAccountChangeInfo, 'data'> & { data: PoolData }) | null,
     ) => void,
     filters?: GetProgramAccountsFilter[],
   ): number => {
@@ -83,7 +83,11 @@ class Swap extends Tx {
         data = this.parsePoolData(buf)
       }
       if (!type) return callback('Unmatched type', null)
-      return callback(null, { type, address, data } as SwapAccountChangeInfo)
+      return callback(null, {
+        type: type as SwapAccountChangeInfo['type'],
+        address,
+        data: data as PoolData,
+      })
     }
     return this.connection.onProgramAccountChange(
       this.swapProgramId,

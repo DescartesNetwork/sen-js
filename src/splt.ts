@@ -96,7 +96,9 @@ class SPLT extends Tx {
   watch = (
     callback: (
       error: string | null,
-      data: SPLTAccountChangeInfo | null,
+      data:
+        | (Omit<SPLTAccountChangeInfo, 'data'> & { data: AccountData })
+        | null,
     ) => void,
     filters?: GetProgramAccountsFilter[],
   ): number => {
@@ -123,7 +125,11 @@ class SPLT extends Tx {
         data = this.parseMultiSigData(buf)
       }
       if (!type) return callback('Unmatched type', null)
-      return callback(null, { type, address, data } as SPLTAccountChangeInfo)
+      return callback(null, {
+        type: type as SPLTAccountChangeInfo['type'],
+        address,
+        data: data as AccountData,
+      })
     }
     return this.connection.onProgramAccountChange(
       this.spltProgramId,
