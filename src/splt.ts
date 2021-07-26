@@ -98,6 +98,8 @@ class SPLT extends Tx {
       error: string | null,
       data:
         | (Omit<SPLTAccountChangeInfo, 'data'> & { data: AccountData })
+        | (Omit<SPLTAccountChangeInfo, 'data'> & { data: MintData })
+        | (Omit<SPLTAccountChangeInfo, 'data'> & { data: MultisigData })
         | null,
     ) => void,
     filters?: GetProgramAccountsFilter[],
