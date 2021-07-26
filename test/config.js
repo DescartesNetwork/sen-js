@@ -24,12 +24,20 @@ const delegate = {
     '2cedf5aba2387360b2e1cbfc649200bbda25f3ca01920c1e97bf81a58b91302180f78b4aeb06b742fd36decdbc60df7dfba2a606ba11de6c987eed1d827572a0',
 }
 
-const mint = {
-  address: '6Qvp2kKkZwPoNibncFPygiEJJd6sFP5JeHbtsQDyBqNN',
-}
+const mints = [
+  {
+    address: '37m9dk3N7Biv5u4UHhgDbUs7QQnqxeYLnSaUrV176X8K',
+  },
+  {
+    address: 'FhvkF3WdKLhF4XyQk3Gpf5CtTmfxAf31QLYNz8JCYevf',
+  },
+  {
+    address: '6dF1XcKgPUFyYg65bFABmqtd8yztCS8pFWW9kZFKeBqH',
+  },
+]
 
 module.exports = {
   payer,
   delegate,
-  mint,
+  mints,
 }

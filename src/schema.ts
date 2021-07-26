@@ -29,6 +29,22 @@ export type MultisigData = {
   signers: string[]
 }
 
+export type PoolData = {
+  owner: string
+  state: number
+  mint_lpt: string
+  vault: string
+  mint_s: string
+  treasury_s: string
+  reserve_s: number
+  mint_a: string
+  treasury_a: string
+  reserve_a: number
+  mint_b: string
+  treasury_b: string
+  reserve_b: number
+}
+
 const schema = {
   /**
    * Swap

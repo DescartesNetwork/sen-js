@@ -149,11 +149,10 @@ class SPLT extends Tx {
    * @returns
    */
   parseMintData = (data: Buffer): MintData => {
-    const mintLayout = new soproxABI.struct(schema.MINT_SCHEMA)
-    if (data.length !== mintLayout.space)
-      throw new Error('Unmatched buffer length')
-    mintLayout.fromBuffer(data)
-    return mintLayout.value as MintData
+    const layout = new soproxABI.struct(schema.MINT_SCHEMA)
+    if (data.length !== layout.space) throw new Error('Unmatched buffer length')
+    layout.fromBuffer(data)
+    return layout.value
   }
 
   /**
@@ -175,11 +174,10 @@ class SPLT extends Tx {
    * @returns
    */
   parseAccountData = (data: Buffer): AccountData => {
-    const accountLayout = new soproxABI.struct(schema.ACCOUNT_SCHEMA)
-    if (data.length !== accountLayout.space)
-      throw new Error('Unmatched buffer length')
-    accountLayout.fromBuffer(data)
-    return accountLayout.value as AccountData
+    const layout = new soproxABI.struct(schema.ACCOUNT_SCHEMA)
+    if (data.length !== layout.space) throw new Error('Unmatched buffer length')
+    layout.fromBuffer(data)
+    return layout.value
   }
 
   /**
@@ -203,11 +201,10 @@ class SPLT extends Tx {
    * @returns
    */
   parseMultiSigData = (data: Buffer): MultisigData => {
-    const multiSigLayout = new soproxABI.struct(schema.MULTISIG_SCHEMA)
-    if (data.length !== multiSigLayout.space)
-      throw new Error('Unmatched buffer length')
-    multiSigLayout.fromBuffer(data)
-    return multiSigLayout.value as MultisigData
+    const layout = new soproxABI.struct(schema.MULTISIG_SCHEMA)
+    if (data.length !== layout.space) throw new Error('Unmatched buffer length')
+    layout.fromBuffer(data)
+    return layout.value
   }
 
   /**

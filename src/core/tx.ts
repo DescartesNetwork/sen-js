@@ -77,9 +77,11 @@ class Tx {
   protected selfSign = (
     transaction: Transaction,
     account: Keypair,
-  ): Signature | null => {
-    if (!transaction || !transaction.feePayer) return null
-    if (!account || !account.secretKey) return null
+  ): Signature => {
+    if (!transaction || !transaction.feePayer)
+      throw new Error('Empty transaction')
+    if (!transaction.feePayer) throw new Error('Empty transaction payer')
+    if (!account || !account.secretKey) throw new Error('Empty account')
     const publicKey = account.publicKey
     const signData = transaction.serializeMessage()
     const sig = nacl.sign.detached(signData, account.secretKey)
@@ -150,7 +152,6 @@ class Tx {
     const payerSig = await wallet.rawSignTransaction(transaction)
     this.addSignature(transaction, payerSig)
     const accSig = this.selfSign(transaction, newAccount)
-    if (!accSig) throw new Error('Cannot seign the transaction by the account')
     this.addSignature(transaction, accSig)
     // Send tx
     const txId = this.sendTransaction(transaction)
