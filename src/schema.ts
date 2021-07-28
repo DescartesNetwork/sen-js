@@ -1,7 +1,7 @@
 export type MintData = {
   mint_authority_option: number
   mint_authority: string
-  supply: BigInt
+  supply: bigint
   decimals: number
   is_initialized: boolean
   freeze_authority_option: number
@@ -11,13 +11,13 @@ export type MintData = {
 export type AccountData = {
   mint: string
   owner: string
-  amount: BigInt
+  amount: bigint
   delegate_option: number
   delegate: string
   state: number
   is_native_option: number
-  is_native: BigInt
-  delegated_amount: BigInt
+  is_native: bigint
+  delegated_amount: bigint
   close_authority_option: number
   close_authority: string
 }
@@ -36,13 +36,13 @@ export type PoolData = {
   vault: string
   mint_s: string
   treasury_s: string
-  reserve_s: BigInt
+  reserve_s: bigint
   mint_a: string
   treasury_a: string
-  reserve_a: BigInt
+  reserve_a: bigint
   mint_b: string
   treasury_b: string
-  reserve_b: BigInt
+  reserve_b: bigint
 }
 
 const schema = {

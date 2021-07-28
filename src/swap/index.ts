@@ -34,7 +34,8 @@ class Swap extends Tx {
   readonly spltProgramId: PublicKey
   readonly splataProgramId: PublicKey
   private _splt: SPLT
-  readonly oracle: typeof oracle
+
+  static oracle = oracle
 
   constructor(
     swapProgramAddress = DEFAULT_SWAP_PROGRAM_ADDRESS,
@@ -56,7 +57,6 @@ class Swap extends Tx {
       splataProgramAddress,
     ) as PublicKey
 
-    this.oracle = oracle
     this._splt = new SPLT(spltProgramAddress, splataProgramAddress, nodeUrl)
   }
 
@@ -274,9 +274,9 @@ class Swap extends Tx {
    * @returns Transaction id, pool address, mint LPT address, lpt address, vault address
    */
   initializePool = async (
-    reserveS: BigInt,
-    reserveA: BigInt,
-    reserveB: BigInt,
+    reserveS: bigint,
+    reserveA: bigint,
+    reserveB: bigint,
     ownerAddress: string,
     srcSAddress: string,
     srcAAddress: string,
@@ -457,9 +457,9 @@ class Swap extends Tx {
    * @returns Transaction id, LPT address
    */
   addLiquidity = async (
-    deltaS: BigInt,
-    deltaA: BigInt,
-    deltaB: BigInt,
+    deltaS: bigint,
+    deltaA: bigint,
+    deltaB: bigint,
     poolAddress: string,
     srcSAddress: string,
     srcAAddress: string,
@@ -580,7 +580,7 @@ class Swap extends Tx {
    * @returns Transaction id, LPT address
    */
   removeLiquidity = async (
-    lpt: BigInt,
+    lpt: bigint,
     poolAddress: string,
     dstSAddress: string,
     dstAAddress: string,
@@ -695,8 +695,8 @@ class Swap extends Tx {
    * @returns
    */
   swap = async (
-    amount: BigInt,
-    limit: BigInt,
+    amount: bigint,
+    limit: bigint,
     poolAddress: string,
     srcAddress: string,
     dstAddress: string,
@@ -873,7 +873,7 @@ class Swap extends Tx {
    * @returns
    */
   earn = async (
-    amount: BigInt,
+    amount: bigint,
     poolAddress: string,
     dstAddress: string,
     wallet: WalletInterface,

@@ -58,7 +58,7 @@ class Lamports extends Tx {
    * @returns Transaction id
    */
   transfer = async (
-    lamports: number | BigInt,
+    lamports: number | bigint,
     dstAddress: string,
     wallet: WalletInterface,
   ): Promise<string> => {

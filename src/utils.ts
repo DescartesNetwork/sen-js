@@ -79,7 +79,7 @@ const util = {
    * @param decimals
    * @returns
    */
-  decimalize: (a: string | number, decimals: number): BigInt => {
+  decimalize: (a: string | number, decimals: number): bigint => {
     if (!a) return BigInt(0)
     if (decimals < 0 || decimals % 1 != 0)
       throw new Error('decimals must be an integer greater than zero')
@@ -99,7 +99,7 @@ const util = {
    * @param decimals
    * @returns
    */
-  undecimalize: (a: BigInt, decimals: number) => {
+  undecimalize: (a: bigint, decimals: number) => {
     if (decimals < 0 || decimals % 1 != 0)
       throw new Error('decimals must be an integer greater than zero')
     if (!a) return '0'
@@ -127,7 +127,7 @@ const util = {
    * @param b
    * @returns
    */
-  div: (a: string | number | BigInt, b: string | number | BigInt): number => {
+  div: (a: string | number | bigint, b: string | number | bigint): number => {
     if (!b) throw new Error('Cannot be divided by 0')
     if (!a) return 0
     const ba = new BN(a.toString())

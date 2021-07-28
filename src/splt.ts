@@ -414,7 +414,7 @@ class SPLT extends Tx {
    * @returns Transaction id
    */
   transfer = async (
-    amount: BigInt,
+    amount: bigint,
     srcAddress: string,
     dstAddress: string,
     wallet: WalletInterface,
@@ -466,7 +466,7 @@ class SPLT extends Tx {
    * @returns
    */
   approve = async (
-    amount: BigInt,
+    amount: bigint,
     srcAddress: string,
     delegateAddress: string,
     wallet: WalletInterface,
@@ -617,7 +617,7 @@ class SPLT extends Tx {
    * @returns
    */
   mintTo = async (
-    amount: BigInt,
+    amount: bigint,
     mintAddress: string,
     dstAddress: string,
     wallet: WalletInterface,
@@ -668,7 +668,7 @@ class SPLT extends Tx {
    * @returns
    */
   burn = async (
-    amount: BigInt,
+    amount: bigint,
     srcAddress: string,
     mintAddress: string,
     wallet: WalletInterface,
@@ -849,7 +849,7 @@ class SPLT extends Tx {
    * @returns
    */
   wrap = async (
-    lamports: BigInt | number,
+    lamports: bigint | number,
     ownerAddress: string,
     wallet: WalletInterface,
   ): Promise<{ accountAddress: string; txId: string }> => {
