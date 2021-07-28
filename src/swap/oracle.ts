@@ -28,65 +28,64 @@ BN.prototype.cbrt = function () {
 
 const TRIPPLE_PRECISION = new BN('1000000000000000000')
 
-/**
- * Curve & Inverse Curve
- */
-const _curve = (
-  bidAmount: typeof BN,
-  bidReserve: typeof BN,
-  askReserve: typeof BN,
-): typeof BN => {
-  const newBidReserve = bidAmount.add(bidReserve)
-  const newAskReserve = bidReserve.mul(askReserve).div(newBidReserve)
-  const askAmount = askReserve.sub(newAskReserve)
-  return askAmount
-}
-const _inverseCurve = (
-  askAmount: typeof BN,
-  bidReserve: typeof BN,
-  askReserve: typeof BN,
-): typeof BN => {
-  const newAskReserve = askReserve.sub(askAmount)
-  const newBidReserve = bidReserve.mul(askReserve).div(newAskReserve)
-  const bidAmount = newBidReserve.sub(bidReserve)
-  return bidAmount
-}
-
-/**
- * Single Rake && Multiple Rake
- */
-const _rake = (
-  delta: typeof BN,
-  reserveS: typeof BN,
-  reserveA: typeof BN,
-  reserveB: typeof BN,
-) => {
-  if (reserveS.isZero() || reserveA.isZero() || reserveB.isZero())
-    throw new Error('Invalid reserve')
-  if (delta.isZero()) return [new BN(0), new BN(0), new BN(0)]
-  const cbrtOfDeltaPlusReserve = delta
-    .add(reserveS)
-    .mul(TRIPPLE_PRECISION)
-    .cbrt()
-  const cbrtOfReserce = reserveS.mul(TRIPPLE_PRECISION).cbrt()
-  const z = cbrtOfDeltaPlusReserve
-    .pow(new BN(2))
-    .mul(cbrtOfReserce)
-    .div(TRIPPLE_PRECISION)
-    .sub(reserveS)
-  const x = z.add(reserveS).mul(reserveS).sqrt().sub(reserveS)
-  const y = z.sub(x)
-  const s = delta.sub(z)
-  const a = reserveA.mul(x).div(reserveS.add(x))
-  const b = reserveB.mul(y).div(reserveS.add(z))
-  return [s, a, b]
-}
-
 const oracle = {
+  /**
+   * Curve & Inverse Curve
+   */
+  _curve: (
+    bidAmount: typeof BN,
+    bidReserve: typeof BN,
+    askReserve: typeof BN,
+  ): typeof BN => {
+    const newBidReserve = bidAmount.add(bidReserve)
+    const newAskReserve = bidReserve.mul(askReserve).div(newBidReserve)
+    const askAmount = askReserve.sub(newAskReserve)
+    return askAmount
+  },
+  _inverseCurve: (
+    askAmount: typeof BN,
+    bidReserve: typeof BN,
+    askReserve: typeof BN,
+  ): typeof BN => {
+    const newAskReserve = askReserve.sub(askAmount)
+    const newBidReserve = bidReserve.mul(askReserve).div(newAskReserve)
+    const bidAmount = newBidReserve.sub(bidReserve)
+    return bidAmount
+  },
+
+  /**
+   * Single Rake && Multiple Rake
+   */
+  _rake: (
+    delta: typeof BN,
+    reserveS: typeof BN,
+    reserveA: typeof BN,
+    reserveB: typeof BN,
+  ) => {
+    if (reserveS.isZero() || reserveA.isZero() || reserveB.isZero())
+      throw new Error('Invalid reserve')
+    if (delta.isZero()) return [new BN(0), new BN(0), new BN(0)]
+    const cbrtOfDeltaPlusReserve = delta
+      .add(reserveS)
+      .mul(TRIPPLE_PRECISION)
+      .cbrt()
+    const cbrtOfReserce = reserveS.mul(TRIPPLE_PRECISION).cbrt()
+    const z = cbrtOfDeltaPlusReserve
+      .pow(new BN(2))
+      .mul(cbrtOfReserce)
+      .div(TRIPPLE_PRECISION)
+      .sub(reserveS)
+    const x = z.add(reserveS).mul(reserveS).sqrt().sub(reserveS)
+    const y = z.sub(x)
+    const s = delta.sub(z)
+    const a = reserveA.mul(x).div(reserveS.add(x))
+    const b = reserveB.mul(y).div(reserveS.add(z))
+    return [s, a, b]
+  },
+
   /**
    * Main
    */
-
   curve: (
     bidAmount: bigint,
     bidReserve: bigint,
@@ -99,7 +98,11 @@ const oracle = {
     const _askReserve = new BN(askReserve.toString())
     const _fee = new BN(fee.toString())
     const _feeDecimals = new BN(feeDecimals.toString())
-    const askAmountWithoutFee = _curve(_bidAmount, _bidReserve, _askReserve)
+    const askAmountWithoutFee = oracle._curve(
+      _bidAmount,
+      _bidReserve,
+      _askReserve,
+    )
     const askAmount = askAmountWithoutFee
       .mul(_feeDecimals.sub(_fee))
       .div(_feeDecimals)
@@ -118,7 +121,7 @@ const oracle = {
     const _askReserve = new BN(askReserve.toString())
     const _fee = new BN(fee.toString())
     const _feeDecimals = new BN(feeDecimals.toString())
-    const bidAmountWithoutFee = _inverseCurve(
+    const bidAmountWithoutFee = oracle._inverseCurve(
       _askAmount,
       _bidReserve,
       _askReserve,
@@ -170,19 +173,19 @@ const oracle = {
     let _reserveB = new BN(reserveB.toString())
     let _reserveLPT = new BN(reserveLPT.toString())
 
-    const [s1, a1, b1] = _rake(_deltaS, _reserveS, _reserveA, _reserveB)
+    const [s1, a1, b1] = oracle._rake(_deltaS, _reserveS, _reserveA, _reserveB)
     _reserveS = _reserveS.add(_deltaS)
     _reserveSPrime = _reserveS.sub(s1)
     const lpt1 = s1.mul(_reserveLPT).div(_reserveSPrime)
     _reserveLPT = _reserveLPT.add(lpt1)
 
-    const [a2, b2, s2] = _rake(_deltaA, _reserveA, _reserveB, _reserveS)
+    const [a2, b2, s2] = oracle._rake(_deltaA, _reserveA, _reserveB, _reserveS)
     _reserveA = _reserveA.add(_deltaA)
     _reserveSPrime = _reserveS.sub(s2)
     const lpt2 = s2.mul(_reserveLPT).div(_reserveSPrime)
     _reserveLPT = _reserveLPT.add(lpt2)
 
-    const [b3, s3, a3] = _rake(_deltaB, _reserveB, _reserveS, _reserveA)
+    const [b3, s3, a3] = oracle._rake(_deltaB, _reserveB, _reserveS, _reserveA)
     _reserveB = _reserveB.add(_deltaB)
     _reserveSPrime = _reserveS.sub(s3)
     const lpt3 = s3.mul(_reserveLPT).div(_reserveSPrime)
