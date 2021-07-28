@@ -40,6 +40,7 @@ const util = {
    * @returns icon, symcol, name, address, rank, price, priceChange (24h), totalVolume
    */
   parseCGK: async (ticket = '') => {
+    if (!ticket) throw new Error('Ticket is empty')
     const {
       data: {
         image: { large, small, thumb },

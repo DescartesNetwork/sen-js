@@ -8,16 +8,17 @@ import {
   KeyedAccountInfo,
 } from '@solana/web3.js'
 
-import Tx from './core/tx'
-import SPLT from './splt'
-import account from './account'
-import schema, { AccountData, PoolData } from './schema'
+import Tx from '../core/tx'
+import SPLT from '../splt'
+import account from '../account'
+import schema, { AccountData, PoolData } from '../schema'
 import {
   DEFAULT_SWAP_PROGRAM_ADDRESS,
   DEFAULT_SPLT_PROGRAM_ADDRESS,
   DEFAULT_SPLATA_PROGRAM_ADDRESS,
-} from './default'
-import { WalletInterface } from './wallet/baseWallet'
+} from '../default'
+import { WalletInterface } from '../wallet/baseWallet'
+import oracle from './oracle'
 
 const soproxABI = require('soprox-abi')
 const xor = require('buffer-xor')
@@ -33,6 +34,7 @@ class Swap extends Tx {
   readonly spltProgramId: PublicKey
   readonly splataProgramId: PublicKey
   private _splt: SPLT
+  readonly oracle: typeof oracle
 
   constructor(
     swapProgramAddress = DEFAULT_SWAP_PROGRAM_ADDRESS,
@@ -54,6 +56,7 @@ class Swap extends Tx {
       splataProgramAddress,
     ) as PublicKey
 
+    this.oracle = oracle
     this._splt = new SPLT(spltProgramAddress, splataProgramAddress, nodeUrl)
   }
 
