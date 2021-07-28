@@ -36,13 +36,13 @@ export type PoolData = {
   vault: string
   mint_s: string
   treasury_s: string
-  reserve_s: number
+  reserve_s: BigInt
   mint_a: string
   treasury_a: string
-  reserve_a: number
+  reserve_a: BigInt
   mint_b: string
   treasury_b: string
-  reserve_b: number
+  reserve_b: BigInt
 }
 
 const schema = {
