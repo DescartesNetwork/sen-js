@@ -713,7 +713,7 @@ class Swap extends Tx {
       await this.getPoolData(poolAddress)
     const { mint: srcMintAddress } = await this._splt.getAccountData(srcAddress)
     const { mint: dstMintAddress } = await this._splt.getAccountData(dstAddress)
-    // validation #2
+    // Validation #2
     if (!account.isAddress(vaultAddress))
       throw new Error('Invalid vault address')
     if (!account.isAddress(treasurySAddress))

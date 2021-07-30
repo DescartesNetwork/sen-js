@@ -86,6 +86,22 @@ class Lamports extends Tx {
     const txId = await this.sendTransaction(transaction)
     return txId
   }
+
+  /**
+   * (For devnet/testnet only) Airdrop SOL
+   * @param lamports
+   * @param dstAddress
+   * @returns
+   */
+  airdrop = async (
+    lamports: number | bigint,
+    dstAddress: string,
+  ): Promise<string> => {
+    if (!account.isAddress(dstAddress))
+      throw new Error('Invalid destination address')
+    const dstPublicKey = account.fromAddress(dstAddress) as PublicKey
+    return await this.connection.requestAirdrop(dstPublicKey, Number(lamports))
+  }
 }
 
 export default Lamports

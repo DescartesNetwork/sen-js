@@ -19,3 +19,5 @@ export { default as SPLT } from './splt'
 
 export * from './swap'
 export { default as Swap } from './swap'
+
+export { default as Routing } from './routing'

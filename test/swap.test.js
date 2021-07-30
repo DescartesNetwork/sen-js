@@ -1,6 +1,4 @@
-const { PublicKey } = require('@solana/web3.js')
-
-const { account, Swap, SPLT, RawWallet } = require('../dist')
+const { account, Swap, RawWallet } = require('../dist')
 const { payer, mints } = require('./config')
 
 const wallet = new RawWallet(payer.secretKey)

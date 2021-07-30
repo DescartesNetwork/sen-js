@@ -1,10 +1,10 @@
 const { PublicKey } = require('@solana/web3.js')
 const { account, DEFAULT_SPLT_PROGRAM_ADDRESS } = require('../dist')
-const { payer, mint } = require('./config')
+const { payer, mints } = require('./config')
 
 describe('Account library', function () {
   it('Should be a valid address', async function () {
-    const ok = account.isAddress(mint.address)
+    const ok = account.isAddress(mints[0].address)
     if (!ok) throw new Error('Failed address validation')
   })
 
@@ -37,7 +37,7 @@ describe('Account library', function () {
     const acc = account.fromSecretKey(payer.secretKey)
     const address = await account.deriveAssociatedAddress(
       acc.publicKey.toBase58(),
-      mint.address,
+      mints[0].address,
     )
     const ok = account.isAssociatedAddress(address)
     if (!ok) throw new Error('Failed associated address validation')
