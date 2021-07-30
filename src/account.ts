@@ -12,7 +12,7 @@ const account = {
    * @param address Base58 string
    * @returns true/false
    */
-  isAddress: (address: string): boolean => {
+  isAddress: (address: string | undefined): boolean => {
     if (!address) return false
     try {
       const publicKey = new PublicKey(address)
