@@ -189,6 +189,23 @@ class Swap extends Tx {
   }
 
   /**
+   * Find treasury accounts of a pool by mint addresses
+   * @param mintAddress
+   * @param poolData
+   * @returns
+   */
+  private findTreasury = (mintAddress: string, poolData: PoolData): string => {
+    if (!account.isAddress(mintAddress)) throw new Error('Invalid mint address')
+    const { mint_s, mint_a, mint_b, treasury_s, treasury_a, treasury_b } =
+      poolData
+    const mints = [mint_s, mint_a, mint_b]
+    const treasuries = [treasury_s, treasury_a, treasury_b]
+    const index = mints.findIndex((address) => address === mintAddress)
+    if (index < 0) throw new Error('There is no treasury account matched')
+    return treasuries[index]
+  }
+
+  /**
    * Derive a set of treasury address corresponding to mint addresses
    * @param treasurerAddress
    * @param mintAddresses
@@ -489,13 +506,16 @@ class Swap extends Tx {
       throw new Error('Invalid source B address')
     if (!account.isAddress(poolAddress)) throw new Error('Invalid pool address')
     // Fetch necessary info
-    const data = await this.getPoolData(poolAddress)
+    const poolData = await this.getPoolData(poolAddress)
     const {
       mint_lpt: mintLPTAddress,
       mint_s: mintSAddress,
       mint_a: mintAAddress,
       mint_b: mintBAddress,
-    } = data
+      treasury_s: treasurySAddress,
+      treasury_a: treasuryAAddress,
+      treasury_b: treasuryBAddress,
+    } = poolData
     const lptAddress = await this.deriveLPTAddress(mintLPTAddress, wallet, true)
     // validation #2
     if (!account.isAddress(lptAddress)) throw new Error('Invalid lpt address')
@@ -523,15 +543,12 @@ class Swap extends Tx {
       seed,
       this.swapProgramId,
     )
-    const treasurerAddress = treasurerPublicKey.toBase58()
     // Get treasury S, A, B
-    const [treasurySPublicKey, treasuryAPublicKey, treasuryBPublicKey] = (
-      await this.deriveTreasuryAddresses(treasurerAddress, [
-        mintSAddress,
-        mintAAddress,
-        mintBAddress,
-      ])
-    ).map(
+    const [treasurySPublicKey, treasuryAPublicKey, treasuryBPublicKey] = [
+      treasurySAddress,
+      treasuryAAddress,
+      treasuryBAddress,
+    ].map(
       (treasuryAddress) => account.fromAddress(treasuryAddress) as PublicKey,
     )
     // Build tx
@@ -615,6 +632,9 @@ class Swap extends Tx {
       mint_s: mintSAddress,
       mint_a: mintAAddress,
       mint_b: mintBAddress,
+      treasury_s: treasurySAddress,
+      treasury_a: treasuryAAddress,
+      treasury_b: treasuryBAddress,
     } = await this.getPoolData(poolAddress)
     const lptAddress = await this.deriveLPTAddress(
       mintLPTAddress,
@@ -647,15 +667,12 @@ class Swap extends Tx {
       seed,
       this.swapProgramId,
     )
-    const treasurerAddress = treasurerPublicKey.toBase58()
     // Get treasury S, A, B
-    const [treasurySPublicKey, treasuryAPublicKey, treasuryBPublicKey] = (
-      await this.deriveTreasuryAddresses(treasurerAddress, [
-        mintSAddress,
-        mintAAddress,
-        mintBAddress,
-      ])
-    ).map(
+    const [treasurySPublicKey, treasuryAPublicKey, treasuryBPublicKey] = [
+      treasurySAddress,
+      treasuryAAddress,
+      treasuryBAddress,
+    ].map(
       (treasuryAddress) => account.fromAddress(treasuryAddress) as PublicKey,
     )
     // Build tx
@@ -723,8 +740,8 @@ class Swap extends Tx {
     if (!account.isAddress(dstAddress))
       throw new Error('Invalid destination address')
     // Fetch necessary info
-    const { vault: vaultAddress, treasury_s: treasurySAddress } =
-      await this.getPoolData(poolAddress)
+    const poolData = await this.getPoolData(poolAddress)
+    const { vault: vaultAddress, treasury_s: treasurySAddress } = poolData
     const { mint: srcMintAddress } = await this._splt.getAccountData(srcAddress)
     const { mint: dstMintAddress } = await this._splt.getAccountData(dstAddress)
     // Validation #2
@@ -753,14 +770,11 @@ class Swap extends Tx {
       seed,
       this.swapProgramId,
     )
-    const treasurerAddress = treasurerPublicKey.toBase58()
     // Get bid, ask treasury
-    const [treasuryBidPublicKey, treasuryAskPublicKey] = (
-      await this.deriveTreasuryAddresses(treasurerAddress, [
-        srcMintAddress,
-        dstMintAddress,
-      ])
-    ).map(
+    const [treasuryBidPublicKey, treasuryAskPublicKey] = [
+      this.findTreasury(srcMintAddress, poolData),
+      this.findTreasury(dstMintAddress, poolData),
+    ].map(
       (treasuryAddress) => account.fromAddress(treasuryAddress) as PublicKey,
     )
     // Build tx

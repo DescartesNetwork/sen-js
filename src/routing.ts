@@ -16,6 +16,7 @@ import {
 } from './default'
 import { WalletInterface } from './wallet/baseWallet'
 import Swap from './swap'
+import { PoolData } from './schema'
 
 const soproxABI = require('soprox-abi')
 
@@ -56,6 +57,23 @@ class Routing extends Tx {
   }
 
   /**
+   * Find treasury accounts of a pool by mint addresses
+   * @param mintAddress
+   * @param poolData
+   * @returns
+   */
+  private findTreasury = (mintAddress: string, poolData: PoolData): string => {
+    if (!account.isAddress(mintAddress)) throw new Error('Invalid mint address')
+    const { mint_s, mint_a, mint_b, treasury_s, treasury_a, treasury_b } =
+      poolData
+    const mints = [mint_s, mint_a, mint_b]
+    const treasuries = [treasury_s, treasury_a, treasury_b]
+    const index = mints.findIndex((address) => address === mintAddress)
+    if (index < 0) throw new Error('There is no treasury account matched')
+    return treasuries[index]
+  }
+
+  /**
    * Conveniently swap (with auto account initilization)
    * @param amount
    * @param limit
@@ -83,8 +101,8 @@ class Routing extends Tx {
     const payerAddress = await wallet.getAddress()
     const payerPublicKey = account.fromAddress(payerAddress) as PublicKey
     // Fetch necessary info
-    const { vault: vaultAddress, treasury_s: treasurySAddress } =
-      await this._swap.getPoolData(poolAddress)
+    const poolData = await this._swap.getPoolData(poolAddress)
+    const { vault: vaultAddress, treasury_s: treasurySAddress } = poolData
     const srcAddress = await account.deriveAssociatedAddress(
       payerAddress,
       srcMintAddress,
@@ -124,20 +142,10 @@ class Routing extends Tx {
     const treasurerAddress = treasurerPublicKey.toBase58()
     // Get bid, ask treasury
     const treasuryBidPublicKey = account.fromAddress(
-      await account.deriveAssociatedAddress(
-        treasurerAddress,
-        srcMintAddress,
-        this._swap.spltProgramId.toBase58(),
-        this._swap.splataProgramId.toBase58(),
-      ),
+      this.findTreasury(srcMintAddress, poolData),
     ) as PublicKey
     const treasuryAskPublicKey = account.fromAddress(
-      await account.deriveAssociatedAddress(
-        treasurerAddress,
-        dstMintAddress,
-        this._swap.spltProgramId.toBase58(),
-        this._swap.splataProgramId.toBase58(),
-      ),
+      this.findTreasury(dstMintAddress, poolData),
     ) as PublicKey
     // Build tx
     let transaction = new Transaction()
@@ -216,22 +224,24 @@ class Routing extends Tx {
     const payerAddress = await wallet.getAddress()
     const payerPublicKey = account.fromAddress(payerAddress) as PublicKey
     // Fetch necessary info
+    const firstPoolData = await this._swap.getPoolData(firstPoolAddress)
     const {
       vault: firstVaultAddress,
       treasury_s: firstTreasurySAddress,
       mint_s: firstMiddleMintAddress,
-    } = await this._swap.getPoolData(firstPoolAddress)
+    } = firstPoolData
     const srcAddress = await account.deriveAssociatedAddress(
       payerAddress,
       srcMintAddress,
       this._swap.spltProgramId.toBase58(),
       this._swap.splataProgramId.toBase58(),
     )
+    const secondPoolData = await this._swap.getPoolData(secondPoolAddress)
     const {
       vault: secondVaultAddress,
       treasury_s: secondTreasurySAddress,
       mint_s: secondMiddleMintAddress,
-    } = await this._swap.getPoolData(secondPoolAddress)
+    } = secondPoolData
     const dstAddress = await account.deriveAssociatedAddress(
       payerAddress,
       dstMintAddress,
@@ -297,28 +307,16 @@ class Routing extends Tx {
       [firstPoolPublicKey.toBuffer()],
       this._swap.swapProgramId,
     )
-    const firstTreasurerAddress = firstTreasurerPublicKey.toBase58()
     const secondTreasurerPublicKey = await PublicKey.createProgramAddress(
       [secondPoolPublicKey.toBuffer()],
       this._swap.swapProgramId,
     )
-    const secondTreasurerAddress = secondTreasurerPublicKey.toBase58()
     // Get bid, ask treasury
     const treasuryBidPublicKey = account.fromAddress(
-      await account.deriveAssociatedAddress(
-        firstTreasurerAddress,
-        srcMintAddress,
-        this._swap.spltProgramId.toBase58(),
-        this._swap.splataProgramId.toBase58(),
-      ),
+      this.findTreasury(srcMintAddress, firstPoolData),
     ) as PublicKey
     const treasuryAskPublicKey = account.fromAddress(
-      await account.deriveAssociatedAddress(
-        secondTreasurerAddress,
-        dstMintAddress,
-        this._swap.spltProgramId.toBase58(),
-        this._swap.splataProgramId.toBase58(),
-      ),
+      this.findTreasury(dstMintAddress, secondPoolData),
     ) as PublicKey
     // Build tx
     let transaction = new Transaction()
