@@ -11,13 +11,42 @@ import account from '../account'
 import { DEFAULT_NODEURL } from '../default'
 import { Signature, WalletInterface } from '../wallet/baseWallet'
 
+export class TxError extends Error {
+  info: { txId: string }
+
+  constructor(msg: string, txId: string = '') {
+    super(msg)
+
+    this.name = `Error: ${msg}`
+    this.info = { txId }
+  }
+}
+
 class Tx {
   nodeUrl: string
   connection: Connection
+  errorMapping: string[]
 
-  constructor(nodeUrl = DEFAULT_NODEURL) {
+  constructor(nodeUrl = DEFAULT_NODEURL, errorMapping: string[] = []) {
     this.nodeUrl = nodeUrl
+    this.errorMapping = errorMapping
     this.connection = new Connection(this.nodeUrl, 'confirmed')
+  }
+
+  /**
+   * Build programmable error
+   * The method's precision os very relative, it's will parse wrong error in case of invoking programs
+   * @param er
+   * @param txId
+   * @returns
+   */
+  private throwError = (er: any, txId: string) => {
+    const defaultError = 'Transaction failed'
+    if (!er) throw new TxError(defaultError, txId)
+    const instructionError = er.InstructionError || []
+    const { Custom } = instructionError[1] || {}
+    if (typeof Custom !== 'number') throw new TxError(defaultError, txId)
+    throw new TxError(this.errorMapping[Custom] || defaultError, txId)
   }
 
   /**
@@ -36,7 +65,7 @@ class Tx {
     const {
       value: { err },
     } = await this.connection.confirmTransaction(txId, 'confirmed')
-    if (err) throw new Error(err.toString())
+    if (err) return this.throwError(err, txId)
     return txId
   }
 

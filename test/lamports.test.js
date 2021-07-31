@@ -11,7 +11,7 @@ describe('Lamports library', function () {
   it('Should transfer lamports', async function () {
     const wallet = new RawWallet(payer.secretKey)
     const lamports = new Lamports()
-    const sol = 0.05
+    const sol = 0.005
     const txId = await lamports.transfer(
       utils.decimalize(sol, 9),
       payer.address,

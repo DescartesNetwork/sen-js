@@ -29,6 +29,20 @@ export type SwapAccountChangeInfo = {
   data: Buffer
 }
 
+const ErrorMapping = [
+  'Invalid instruction',
+  'Invalid owner',
+  'Incorrect program id',
+  'Already constructed',
+  'Operation overflowed',
+  'Pool unmatched',
+  'Pool frozen',
+  'Zero value',
+  'Insufficient funds',
+  'Invalid mint',
+  'Exceed limit',
+]
+
 class Swap extends Tx {
   readonly swapProgramId: PublicKey
   readonly spltProgramId: PublicKey
@@ -43,7 +57,7 @@ class Swap extends Tx {
     splataProgramAddress = DEFAULT_SPLATA_PROGRAM_ADDRESS,
     nodeUrl: string,
   ) {
-    super(nodeUrl)
+    super(nodeUrl, ErrorMapping)
 
     if (!account.isAddress(swapProgramAddress))
       throw new Error('Invalid swap program address')

@@ -4,9 +4,21 @@ import Tx from './core/tx'
 import account from './account'
 import { WalletInterface } from './wallet/baseWallet'
 
+const ErrorMapping = [
+  'An account with the same address already exists',
+  'Account does not have enough SOL to perform the operation',
+  'Cannot assign account to this program id',
+  'Cannot allocate account data of this length',
+  'Length of requested seed is too long',
+  'Provided address does not match addressed derived from seed',
+  'Advancing stored nonce requires a populated RecentBlockhashes sysvar',
+  'Stored nonce is still in recent_blockhashes',
+  'Specified nonce does not match stored nonce',
+]
+
 class Lamports extends Tx {
   constructor(nodeUrl: string) {
-    super(nodeUrl)
+    super(nodeUrl, ErrorMapping)
   }
 
   /**

@@ -4,8 +4,6 @@ import {
   SYSVAR_RENT_PUBKEY,
   TransactionInstruction,
   SystemProgram,
-  GetProgramAccountsFilter,
-  KeyedAccountInfo,
 } from '@solana/web3.js'
 
 import Tx from './core/tx'
@@ -18,15 +16,21 @@ import {
 } from './default'
 import { WalletInterface } from './wallet/baseWallet'
 import Swap from './swap'
-import SPLT from './splt'
 
 const soproxABI = require('soprox-abi')
+
+const ErrorMapping = [
+  'Invalid instruction',
+  'Incorrect program id',
+  'Operation overflowed',
+  'The primary mints is unmatched in pools',
+  'Cannot find reserves',
+]
 
 class Routing extends Tx {
   readonly routingProgramId: PublicKey
 
   private _swap: Swap
-  private _splt: SPLT
 
   constructor(
     routingPromgramAddress = DEFAULT_ROUTING_PROGRAM_ADDRESS,
@@ -35,7 +39,7 @@ class Routing extends Tx {
     splataProgramAddress = DEFAULT_SPLATA_PROGRAM_ADDRESS,
     nodeUrl: string,
   ) {
-    super(nodeUrl)
+    super(nodeUrl, ErrorMapping)
 
     if (!account.isAddress(routingPromgramAddress))
       throw new Error('Invalid rounting program address')
@@ -43,36 +47,12 @@ class Routing extends Tx {
       routingPromgramAddress,
     ) as PublicKey
 
-    this._splt = new SPLT(spltProgramAddress, splataProgramAddress, nodeUrl)
     this._swap = new Swap(
       swapProgramAddress,
       spltProgramAddress,
       splataProgramAddress,
       nodeUrl,
     )
-  }
-
-  /**
-   * Derive a set of treasury address corresponding to mint addresses
-   * @param treasurerAddress
-   * @param mintAddresses
-   * @returns
-   */
-  private deriveTreasuryAddresses = async (
-    treasurerAddress: string,
-    mintAddresses: string[],
-  ): Promise<string[]> => {
-    const treasuryAddresses = await Promise.all(
-      mintAddresses.map((mintAddress) => {
-        return account.deriveAssociatedAddress(
-          treasurerAddress,
-          mintAddress,
-          this._swap.spltProgramId.toBase58(),
-          this._swap.splataProgramId.toBase58(),
-        )
-      }),
-    )
-    return treasuryAddresses
   }
 
   /**

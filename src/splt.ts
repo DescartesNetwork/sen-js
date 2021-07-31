@@ -44,6 +44,30 @@ export type SPLTAccountChangeInfo = {
   data: Buffer
 }
 
+const ErrorMapping = [
+  'Lamport balance below rent-exempt threshold',
+  'Insufficient funds',
+  'Invalid Mint',
+  'Account not associated with this Mint',
+  'Operation overflowed',
+  'Owner does not match',
+  'Fixed supply',
+  'Already in use',
+  'Invalid number of provided signers',
+  'Invalid number of required signers',
+  'State is unititialized',
+  'Instruction does not support native tokens',
+  'Non-native account can only be closed if its balance is zero',
+  'Invalid instruction',
+  'State is invalid for requested operation',
+  'Operation overflowed',
+  'Account does not support specified authority type',
+  'This token mint cannot freeze accounts',
+  'Account is frozen',
+  'The provided decimals value different from the Mint decimals',
+  'Instruction does not support non-native tokens',
+]
+
 class SPLT extends Tx {
   spltProgramId: PublicKey
   splataProgramId: PublicKey
@@ -55,7 +79,7 @@ class SPLT extends Tx {
     splataProgramAddress = DEFAULT_SPLATA_PROGRAM_ADDRESS,
     nodeUrl: string,
   ) {
-    super(nodeUrl)
+    super(nodeUrl, ErrorMapping)
 
     if (!account.isAddress(spltProgramAddress))
       throw new Error('Invalid SPL token program address')
