@@ -14,7 +14,7 @@ import {
   DEFAULT_SPLATA_PROGRAM_ADDRESS,
   DEFAULT_ROUTING_PROGRAM_ADDRESS,
 } from './default'
-import { WalletInterface } from './wallet/baseWallet'
+import { WalletInterface } from './rawWallet'
 import Swap from './swap'
 import { PoolData } from './schema'
 

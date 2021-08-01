@@ -17,7 +17,7 @@ import {
   DEFAULT_SPLT_PROGRAM_ADDRESS,
   DEFAULT_SPLATA_PROGRAM_ADDRESS,
 } from '../default'
-import { WalletInterface } from '../wallet/baseWallet'
+import { WalletInterface } from '../rawWallet'
 import oracle from './oracle'
 
 const soproxABI = require('soprox-abi')

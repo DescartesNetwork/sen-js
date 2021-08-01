@@ -1,6 +1,6 @@
 {
   "name": "@senswap/sen-js",
-  "version": "0.0.17",
+  "version": "0.0.18",
   "description": "The library for Sen",
   "main": "dist/index.js",
   "scripts": {
@@ -20,7 +20,6 @@
   "homepage": "https://github.com/DescartesNetwork/sen-js#readme",
   "devDependencies": {
     "@types/aes-js": "^3.1.1",
-    "@types/bs58": "^4.0.1",
     "@types/pbkdf2": "^3.1.0",
     "mocha": "^9.0.2",
     "typescript": "^4.3.5"

@@ -1,10 +1,39 @@
-import { Transaction, Keypair } from '@solana/web3.js'
-import nacl = require('tweetnacl')
+import { Transaction, Keypair, PublicKey } from '@solana/web3.js'
+import * as nacl from 'tweetnacl'
 
-import account from '../account'
-import { WalletInterface, Provider, Signature } from './baseWallet'
+import account from './account'
 
 type ExpanedProvider = Provider & { keypair: Keypair }
+
+export interface Provider {
+  disconnect: () => void
+}
+
+export type Signature = {
+  publicKey: PublicKey
+  signature: Buffer
+}
+
+export type SignedMessage = {
+  address: string // Base58 string
+  signature: string // Hex string
+  message: string // Utf8 string
+}
+
+export interface WalletInterface {
+  walletType: string
+  getProvider(): Promise<Provider>
+  getAddress(): Promise<string>
+  signTransaction(transaction: Transaction): Promise<Transaction>
+  rawSignTransaction(transaction: Transaction): Promise<Signature>
+  signMessage(message: string): Promise<SignedMessage>
+  verifySignature(
+    signature: string,
+    message: string,
+    address?: string,
+  ): Promise<boolean>
+  disconnect(): Promise<void>
+}
 
 /**
  * Raw wallet is for server side

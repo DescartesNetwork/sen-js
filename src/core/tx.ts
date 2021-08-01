@@ -9,7 +9,7 @@ import * as nacl from 'tweetnacl'
 
 import account from '../account'
 import { DEFAULT_NODEURL } from '../default'
-import { Signature, WalletInterface } from '../wallet/baseWallet'
+import { Signature, WalletInterface } from '../rawWallet'
 
 export class TxError extends Error {
   info: { txId: string }

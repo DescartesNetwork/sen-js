@@ -2,7 +2,7 @@ import { Transaction, SystemProgram, PublicKey } from '@solana/web3.js'
 
 import Tx from './core/tx'
 import account from './account'
-import { WalletInterface } from './wallet/baseWallet'
+import { WalletInterface } from './rawWallet'
 
 const ErrorMapping = [
   'An account with the same address already exists',

@@ -1,4 +1,5 @@
-export * from './wallet'
+export * from './rawWallet'
+export { default as RawWallet } from './rawWallet'
 
 export { default as account } from './account'
 

@@ -19,7 +19,7 @@ import {
   DEFAULT_EMPTY_ADDRESS,
   DEFAULT_WSOL,
 } from './default'
-import { WalletInterface } from './wallet/baseWallet'
+import { WalletInterface } from './rawWallet'
 
 const soproxABI = require('soprox-abi')
 
