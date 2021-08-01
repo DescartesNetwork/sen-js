@@ -33,23 +33,23 @@ const oracle = {
    * Curve & Inverse Curve
    */
   _curve: (
-    bidAmount: typeof BN,
-    bidReserve: typeof BN,
-    askReserve: typeof BN,
-  ): typeof BN => {
-    const newBidReserve = bidAmount.add(bidReserve)
-    const newAskReserve = bidReserve.mul(askReserve).div(newBidReserve)
-    const askAmount = askReserve.sub(newAskReserve)
+    bidAmount: bigint,
+    bidReserve: bigint,
+    askReserve: bigint,
+  ): bigint => {
+    const newBidReserve = bidAmount + bidReserve
+    const newAskReserve = (bidReserve * askReserve) / newBidReserve
+    const askAmount = askReserve - newAskReserve
     return askAmount
   },
   _inverseCurve: (
-    askAmount: typeof BN,
-    bidReserve: typeof BN,
-    askReserve: typeof BN,
-  ): typeof BN => {
-    const newAskReserve = askReserve.sub(askAmount)
-    const newBidReserve = bidReserve.mul(askReserve).div(newAskReserve)
-    const bidAmount = newBidReserve.sub(bidReserve)
+    askAmount: bigint,
+    bidReserve: bigint,
+    askReserve: bigint,
+  ): bigint => {
+    const newAskReserve = askReserve - askAmount
+    const newBidReserve = (bidReserve * askReserve) / newAskReserve
+    const bidAmount = newBidReserve - bidReserve
     return bidAmount
   },
 
@@ -93,20 +93,9 @@ const oracle = {
     fee: bigint,
     feeDecimals: bigint,
   ): bigint => {
-    const _bidAmount = new BN(bidAmount.toString())
-    const _bidReserve = new BN(bidReserve.toString())
-    const _askReserve = new BN(askReserve.toString())
-    const _fee = new BN(fee.toString())
-    const _feeDecimals = new BN(feeDecimals.toString())
-    const askAmountWithoutFee = oracle._curve(
-      _bidAmount,
-      _bidReserve,
-      _askReserve,
-    )
-    const askAmount = askAmountWithoutFee
-      .mul(_feeDecimals.sub(_fee))
-      .div(_feeDecimals)
-    return BigInt(askAmount.toString())
+    const askAmountWithoutFee = oracle._curve(bidAmount, bidReserve, askReserve)
+    const askAmount = (askAmountWithoutFee * (feeDecimals - fee)) / feeDecimals
+    return askAmount
   },
 
   inverseCurve: (
@@ -116,20 +105,13 @@ const oracle = {
     fee: bigint,
     feeDecimals: bigint,
   ): bigint => {
-    const _askAmount = new BN(askAmount.toString())
-    const _bidReserve = new BN(bidReserve.toString())
-    const _askReserve = new BN(askReserve.toString())
-    const _fee = new BN(fee.toString())
-    const _feeDecimals = new BN(feeDecimals.toString())
-    const bidAmountWithoutFee = oracle._inverseCurve(
-      _askAmount,
-      _bidReserve,
-      _askReserve,
+    const askAmountWithFee = (askAmount * feeDecimals) / (feeDecimals - fee)
+    const bidAmount = oracle._inverseCurve(
+      askAmountWithFee,
+      bidReserve,
+      askReserve,
     )
-    const bidAmount = bidAmountWithoutFee
-      .mul(_feeDecimals)
-      .div(_feeDecimals.sub(_fee))
-    return BigInt(bidAmount.toString())
+    return bidAmount
   },
 
   slippage: (

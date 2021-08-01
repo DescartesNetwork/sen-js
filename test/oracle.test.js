@@ -22,22 +22,14 @@ const reserseB = 200000000000n
 describe('Oracle library', function () {
   describe('Curve & Inverse Curve', function () {
     it('Should compute curve', function (done) {
-      const amount = _curve(
-        new BN(bidAmount.toString()),
-        new BN(bidReserve.toString()),
-        new BN(askReserve.toString()),
-      )
-      if (amount.toString() !== '299999700001') return done('Wrong _curve')
+      const amount = _curve(bidAmount, bidReserve, askReserve)
+      if (amount !== 299999700001n) return done('Wrong _curve')
       return done()
     })
 
     it('Should compute inverse curve', function (done) {
-      const amount = _inverseCurve(
-        new BN(askAmount.toString()),
-        new BN(bidReserve.toString()),
-        new BN(askReserve.toString()),
-      )
-      if (amount.toString() !== '3333344444') return done('Wrong _inverseCurve')
+      const amount = _inverseCurve(askAmount, bidReserve, askReserve)
+      if (amount !== 3333344444n) return done('Wrong _inverseCurve')
       return done()
     })
   })
@@ -72,7 +64,7 @@ describe('Oracle library', function () {
         fee,
         feeDecimals,
       )
-      if (amount !== 3341698690n) return done('Wrong market state')
+      if (amount !== 3341698719n) return done('Wrong market state')
       return done()
     })
 
