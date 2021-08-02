@@ -301,7 +301,9 @@ class Swap extends Tx {
    * @param lptAddress
    * @returns
    */
-  getLPTData = async (lptAddress: string): Promise<AccountData> => {
+  getLPTData = async (
+    lptAddress: string,
+  ): Promise<AccountData & { pool: string }> => {
     if (!account.isAddress(lptAddress)) throw new Error('Invalid lpt address')
     const lptPublicKey = account.fromAddress(lptAddress) as PublicKey
     const { data } = (await this.connection.getAccountInfo(lptPublicKey)) || {}
@@ -316,7 +318,7 @@ class Swap extends Tx {
       freeze_authority,
     )
     if (!account.isAddress(poolAddress)) throw new Error('Invalid lpt address')
-    return lptData
+    return { ...lptData, pool: poolAddress as string }
   }
 
   /**
