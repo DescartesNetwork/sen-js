@@ -157,7 +157,7 @@ class Swap extends Tx {
   derivePoolAddress = async (
     mintAuthorityAddress: string,
     freezeAuthorityAddress: string,
-  ): Promise<string | null> => {
+  ): Promise<string | undefined> => {
     if (!account.isAddress(mintAuthorityAddress))
       throw new Error('Invalid mint authority address')
     if (!account.isAddress(freezeAuthorityAddress))
@@ -184,7 +184,7 @@ class Swap extends Tx {
       this.swapProgramId,
     )
     if (treasurerPublicKey.toBase58() != mintAuthorityPublicKey.toBase58())
-      return null
+      return undefined
     return poolPublicKey.toBase58()
   }
 
