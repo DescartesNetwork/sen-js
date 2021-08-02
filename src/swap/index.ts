@@ -284,12 +284,39 @@ class Swap extends Tx {
   }
 
   /**
-   * Get lpt data (Indentical to get account (SPLT) data)
+   * Parse lpt buffer data
+   * @param data
+   * @returns
+   */
+  parseLPTData = (data: Buffer): AccountData => {
+    const layout = new soproxABI.struct(schema.ACCOUNT_SCHEMA)
+    if (data.length !== layout.space) throw new Error('Unmatched buffer length')
+    layout.fromBuffer(data)
+    return layout.value
+  }
+
+  /**
+   * Get lpt data
+   * Indentical to get account (SPLT) data, but with pool check
    * @param lptAddress
    * @returns
    */
   getLPTData = async (lptAddress: string): Promise<AccountData> => {
-    return await this._splt.getAccountData(lptAddress)
+    if (!account.isAddress(lptAddress)) throw new Error('Invalid lpt address')
+    const lptPublicKey = account.fromAddress(lptAddress) as PublicKey
+    const { data } = (await this.connection.getAccountInfo(lptPublicKey)) || {}
+    if (!data) throw new Error(`Cannot read data of ${lptAddress}`)
+    const lptData = this.parseLPTData(data)
+    const { mint: mintAddress } = lptData
+    const { mint_authority, freeze_authority } = await this._splt.getMintData(
+      mintAddress,
+    )
+    const poolAddress = await this.derivePoolAddress(
+      mint_authority,
+      freeze_authority,
+    )
+    if (!account.isAddress(poolAddress)) throw new Error('Invalid lpt address')
+    return lptData
   }
 
   /**
