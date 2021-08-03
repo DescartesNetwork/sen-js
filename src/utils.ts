@@ -1,7 +1,12 @@
 import axios from 'axios'
 import * as BN from 'bn.js'
 import * as nacl from 'tweetnacl'
-import { LAMPORTS_PER_SOL } from '@solana/web3.js'
+import {
+  Commitment,
+  Connection,
+  LAMPORTS_PER_SOL,
+  PublicKey,
+} from '@solana/web3.js'
 import * as emoji from './assets/emoji.json'
 
 const PRECISION = new BN('1000000000')
@@ -141,6 +146,32 @@ const util = {
           c.substring(c.length - 9, c.length),
       )
     else return parseFloat('0.' + '0'.repeat(9 - c.length) + c)
+  },
+
+  /**
+   * Get multiple account info with 100 limit
+   */
+  wrappedGetMultipleAccountsInfo: async (
+    connection: Connection,
+    publicKeys: PublicKey[],
+    commitment?: Commitment | undefined,
+  ) => {
+    const limit = 99
+    const length = publicKeys.length
+    const counter = Math.floor(length / limit) + 1
+    const data = []
+    for (let i = 0; i < counter; i++) {
+      const subPublicKeys = publicKeys.slice(
+        limit * counter,
+        limit * (counter + 1),
+      )
+      const re = await connection.getMultipleAccountsInfo(
+        subPublicKeys,
+        commitment,
+      )
+      data.push(re)
+    }
+    return data
   },
 }
 
