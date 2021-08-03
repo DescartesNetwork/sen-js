@@ -202,7 +202,7 @@ describe('Routing library', function () {
         MINT_ADDRESS_1,
       )
       await splt.transfer(1000000000n, srcAddress, accountAddress, wallet)
-      // Swap
+      // Route
       await routing.route(
         1000000000n,
         0n,
@@ -213,6 +213,82 @@ describe('Routing library', function () {
         MINT_ADDRESS_2,
         payer,
       )
+    })
+  })
+
+  describe('Test add liquidity', function () {
+    it('Should normally add liquidity', async function () {
+      const routing = new Routing()
+      await routing.addLiquidity(
+        1000000000n,
+        1000000000n,
+        1000000000n,
+        POOL_ADDRESS_0,
+        wallet,
+      )
+    })
+
+    it('Should auto initilize account then add liquidity', async function () {
+      const lamports = new Lamports()
+      const splt = new SPLT()
+      const routing = new Routing()
+      // Build needed account
+      const keypair = account.createAccount()
+      const payer = new RawWallet(
+        Buffer.from(keypair.secretKey).toString('hex'),
+      )
+      const payerAddress = await payer.getAddress()
+      await lamports.airdrop(1000000000n, payerAddress)
+      const { accountAddress } = await splt.initializeAccount(
+        MINT_ADDRESS_1,
+        payerAddress,
+        payer,
+      )
+      // Transfer budget
+      const fundingAddress = await wallet.getAddress()
+      const srcAddress = await account.deriveAssociatedAddress(
+        fundingAddress,
+        MINT_ADDRESS_1,
+      )
+      await splt.transfer(1000000000n, srcAddress, accountAddress, wallet)
+      // Add liquidity
+      await routing.addLiquidity(0n, 1000000000n, 0n, POOL_ADDRESS_0, payer)
+    })
+  })
+
+  describe('Test remove liquidity', function () {
+    it('Should normally remove liquidity', async function () {
+      const routing = new Routing()
+      await routing.removeLiquidity(1000000n, POOL_ADDRESS_0, wallet)
+    })
+
+    it('Should auto initilize account then remove liquidity', async function () {
+      const lamports = new Lamports()
+      const splt = new SPLT()
+      const routing = new Routing()
+      // Build needed account
+      const keypair = account.createAccount()
+      const payer = new RawWallet(
+        Buffer.from(keypair.secretKey).toString('hex'),
+      )
+      const payerAddress = await payer.getAddress()
+      await lamports.airdrop(1000000000n, payerAddress)
+      const { accountAddress } = await splt.initializeAccount(
+        MINT_ADDRESS_1,
+        payerAddress,
+        payer,
+      )
+      // Transfer budget
+      const fundingAddress = await wallet.getAddress()
+      const srcAddress = await account.deriveAssociatedAddress(
+        fundingAddress,
+        MINT_ADDRESS_1,
+      )
+      await splt.transfer(1000000000n, srcAddress, accountAddress, wallet)
+      // Add liquidity
+      await routing.addLiquidity(0n, 1000000000n, 0n, POOL_ADDRESS_0, payer)
+      // Remove liquidity
+      await routing.removeLiquidity(1000000n, POOL_ADDRESS_0, payer)
     })
   })
 })
