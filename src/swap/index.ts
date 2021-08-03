@@ -317,7 +317,7 @@ class Swap extends Tx {
       mint_authority,
       freeze_authority,
     )
-    if (!account.isAddress(poolAddress)) throw new Error('Invalid lpt address')
+    if (!account.isAddress(poolAddress)) throw new Error('Invalid pool address')
     return { ...lptData, pool: poolAddress as string }
   }
 
