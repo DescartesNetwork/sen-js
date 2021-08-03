@@ -545,9 +545,7 @@ class Swap extends Tx {
       treasury_a: treasuryAAddress,
       treasury_b: treasuryBAddress,
     } = poolData
-    const lptAddress = await this.deriveLPTAddress(mintLPTAddress, wallet, true)
-    // validation #2
-    if (!account.isAddress(lptAddress)) throw new Error('Invalid lpt address')
+    // Validation #2
     if (!account.isAddress(mintLPTAddress))
       throw new Error('Invalid mint LPT address')
     if (!account.isAddress(mintSAddress))
@@ -556,6 +554,9 @@ class Swap extends Tx {
       throw new Error('Invalid mint A address')
     if (!account.isAddress(mintBAddress))
       throw new Error('Invalid mint B address')
+    // Get lpt account
+    const lptAddress = await this.deriveLPTAddress(mintLPTAddress, wallet, true)
+    if (!account.isAddress(lptAddress)) throw new Error('Invalid lpt address')
     // Build public keys
     const poolPublicKey = account.fromAddress(poolAddress) as PublicKey
     const lptPublicKey = account.fromAddress(lptAddress) as PublicKey
