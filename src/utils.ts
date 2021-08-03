@@ -2,6 +2,7 @@ import axios from 'axios'
 import * as BN from 'bn.js'
 import * as nacl from 'tweetnacl'
 import {
+  AccountInfo,
   Commitment,
   Connection,
   LAMPORTS_PER_SOL,
@@ -159,14 +160,15 @@ const util = {
     const limit = 99
     const length = publicKeys.length
     const counter = Math.floor(length / limit) + 1
-    const data = []
+    let data: AccountInfo<Buffer>[] = []
     for (let i = 0; i < counter; i++) {
       const subPublicKeys = publicKeys.slice(limit * i, limit * (i + 1))
       const re = await connection.getMultipleAccountsInfo(
         subPublicKeys,
         commitment,
       )
-      data.push(re)
+      if (!re) continue
+      data = data.concat(re)
     }
     return data
   },
