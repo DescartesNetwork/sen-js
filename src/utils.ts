@@ -161,10 +161,7 @@ const util = {
     const counter = Math.floor(length / limit) + 1
     const data = []
     for (let i = 0; i < counter; i++) {
-      const subPublicKeys = publicKeys.slice(
-        limit * counter,
-        limit * (counter + 1),
-      )
+      const subPublicKeys = publicKeys.slice(limit * i, limit * (i + 1))
       const re = await connection.getMultipleAccountsInfo(
         subPublicKeys,
         commitment,
