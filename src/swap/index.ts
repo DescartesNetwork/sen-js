@@ -252,7 +252,7 @@ class Swap extends Tx {
       return lptAddress
     } catch (er) {
       if (!autoCreating) throw new Error(er)
-      await this.initializeLPT(lptAddress, mintLPTAddress, wallet)
+      await this.initializeLPT(mintLPTAddress, payerAddress, wallet)
       return lptAddress
     }
   }
@@ -487,8 +487,8 @@ class Swap extends Tx {
 
   /**
    * Initialize LPT
-   * @param lptAccountOrAddress
    * @param mintLPTAddress
+   * @param ownerAddress
    * @param wallet
    * @returns
    */
