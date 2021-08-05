@@ -29,7 +29,8 @@ describe('Swap library', function () {
           account.deriveAssociatedAddress(payerAddress, mintAddress),
         ),
       )
-      const { mintLPTAddress, vaultAddress, poolAddress, lptAddress } =
+      const vaultAddress = srcAddresses[0]
+      const { mintLPTAddress, poolAddress, lptAddress } =
         await swap.initializePool(
           100000000000n,
           500000000000n,
@@ -38,6 +39,7 @@ describe('Swap library', function () {
           srcAddresses[0],
           srcAddresses[1],
           srcAddresses[2],
+          vaultAddress,
           wallet,
         )
       MINT_LPT_ADDRESS_0 = mintLPTAddress
@@ -54,7 +56,8 @@ describe('Swap library', function () {
           account.deriveAssociatedAddress(payerAddress, mintAddress),
         ),
       )
-      const { mintLPTAddress, vaultAddress, poolAddress, lptAddress } =
+      const vaultAddress = srcAddresses[0]
+      const { mintLPTAddress, poolAddress, lptAddress } =
         await swap.initializePool(
           100000000000n,
           500000000000n,
@@ -63,6 +66,7 @@ describe('Swap library', function () {
           srcAddresses[0],
           srcAddresses[1],
           srcAddresses[2],
+          vaultAddress,
           wallet,
         )
       MINT_LPT_ADDRESS_1 = mintLPTAddress
@@ -130,6 +134,7 @@ describe('Swap library', function () {
           account.deriveAssociatedAddress(payerAddress, mintAddress),
         ),
       )
+      const vaultAddress = srcAddresses[0]
       try {
         await swap.initializePool(
           0n,
@@ -139,6 +144,7 @@ describe('Swap library', function () {
           srcAddresses[0],
           srcAddresses[1],
           srcAddresses[2],
+          vaultAddress,
           wallet,
         )
         throw new Error('No error')
@@ -248,6 +254,7 @@ describe('Swap library', function () {
           account.deriveAssociatedAddress(payerAddress, mintAddress),
         ),
       )
+      const vaultAddress = srcAddresses[0]
       const { poolAddress, lptAddress } = await swap.initializePool(
         10000000000n,
         5000000000n,
@@ -256,6 +263,7 @@ describe('Swap library', function () {
         srcAddresses[0],
         srcAddresses[1],
         srcAddresses[2],
+        vaultAddress,
         wallet,
       )
       await swap.removeLiquidity(
@@ -278,16 +286,12 @@ describe('Swap library', function () {
       await swap.getPoolData(POOL_ADDRESS_0)
     })
 
-    it('Should earn', async function () {
+    it('Should transfer vault', async function () {
       const swap = new Swap()
-      const amount = 1000n
-      const payerAddress = await wallet.getAddress()
-      const srcAddresses = await Promise.all(
-        mints.map(({ address: mintAddress }) =>
-          account.deriveAssociatedAddress(payerAddress, mintAddress),
-        ),
-      )
-      await swap.earn(amount, POOL_ADDRESS_0, srcAddresses[0], wallet)
+      const newVaultAddress = account.createAccount().publicKey.toBase58()
+      await swap.transferVault(POOL_ADDRESS_1, newVaultAddress, wallet)
+      const { vault } = await swap.getPoolData(POOL_ADDRESS_1)
+      if (vault != newVaultAddress) throw new Error('Cannot transfer vault')
     })
 
     it('Should transfer pool ownership', async function () {

@@ -6,6 +6,7 @@ import {
   SystemProgram,
   GetProgramAccountsFilter,
   KeyedAccountInfo,
+  Keypair,
 } from '@solana/web3.js'
 
 import Tx from '../core/tx'
@@ -322,6 +323,27 @@ class Swap extends Tx {
   }
 
   /**
+   * Pretest initialize pool
+   * @param transaction
+   * @returns
+   */
+  private pretestInitializePool = async (
+    transaction: Transaction,
+  ): Promise<boolean> => {
+    const {
+      value: { err, logs },
+    } = await this.connection.simulateTransaction(transaction)
+    if (
+      err &&
+      (err as any).InstructionError &&
+      ((err as any).InstructionError[1] == 'ProgramFailedToComplete' ||
+        (err as any).InstructionError[1] == 'ComputationalBudgetExceeded')
+    )
+      return false
+    return true
+  }
+
+  /**
    * Initialize a swap pool
    * @param reserveS Number of SEN
    * @param reserveA Number of A (then first token)
@@ -330,8 +352,9 @@ class Swap extends Tx {
    * @param srcSAddress SEN source address
    * @param srcAAddress A source address
    * @param srcBAddress B source address
+   * @param vaultAddress Foundation SEN account address
    * @param wallet
-   * @returns Transaction id, pool address, mint LPT address, lpt address, vault address
+   * @returns Transaction id, pool address, mint LPT address, lpt address
    */
   initializePool = async (
     reserveS: bigint,
@@ -341,11 +364,11 @@ class Swap extends Tx {
     srcSAddress: string,
     srcAAddress: string,
     srcBAddress: string,
+    vaultAddress: string,
     wallet: WalletInterface,
   ): Promise<{
     txId: string
     mintLPTAddress: string
-    vaultAddress: string
     poolAddress: string
     lptAddress: string
   }> => {
@@ -358,18 +381,16 @@ class Swap extends Tx {
       throw new Error('Invalid source A address')
     if (!account.isAddress(srcBAddress))
       throw new Error('Invalid source B address')
+    if (!account.isAddress(vaultAddress))
+      throw new Error('Invalid vault address')
     // Fetch necessary info
     const mintLPT = account.createAccount()
     const mintLPTAddress = mintLPT.publicKey.toBase58()
-    const vault = account.createAccount()
-    const vaultAddress = vault.publicKey.toBase58()
     const pool = await account.createStrictAccount(this.swapProgramId)
     const poolAddress = pool.publicKey.toBase58()
-    const lptAddress = await account.deriveAssociatedAddress(
+    const lptAddress = await this._splt.deriveAssociatedAddress(
       ownerAddress,
       mintLPTAddress,
-      this.spltProgramId.toBase58(),
-      this.splataProgramId.toBase58(),
     )
     const { mint: mintSAddress } = await this._splt.getAccountData(srcSAddress)
     const { mint: mintAAddress } = await this._splt.getAccountData(srcAAddress)
@@ -383,6 +404,7 @@ class Swap extends Tx {
     const mintAPublicKey = account.fromAddress(mintAAddress) as PublicKey
     const srcBPublicKey = account.fromAddress(srcBAddress) as PublicKey
     const mintBPublicKey = account.fromAddress(mintBAddress) as PublicKey
+    const vaultPublicKey = account.fromAddress(vaultAddress) as PublicKey
     // Get payer
     const payerAddress = await wallet.getAddress()
     const payerPublicKey = account.fromAddress(payerAddress) as PublicKey
@@ -403,15 +425,6 @@ class Swap extends Tx {
     ).map(
       (treasuryAddress) => account.fromAddress(treasuryAddress) as PublicKey,
     )
-    // Rent pool
-    const poolSpace = new soproxABI.struct(schema.POOL_SCHEMA).space
-    await this.rentAccount(wallet, pool, poolSpace, this.swapProgramId)
-    // Rent mint
-    const mintSpace = new soproxABI.struct(schema.MINT_SCHEMA).space
-    await this.rentAccount(wallet, mintLPT, mintSpace, this.spltProgramId)
-    // Rent vault
-    const accountSpace = new soproxABI.struct(schema.ACCOUNT_SCHEMA).space
-    await this.rentAccount(wallet, vault, accountSpace, this.spltProgramId)
     // Generate proof
     const proofAddress = await this.genProofAddress(poolAddress)
     const proofPublicKey = account.fromAddress(proofAddress) as PublicKey
@@ -438,8 +451,8 @@ class Swap extends Tx {
         { pubkey: ownerPublicKey, isSigner: false, isWritable: false },
         { pubkey: pool.publicKey, isSigner: true, isWritable: true },
         { pubkey: lptPublicKey, isSigner: false, isWritable: true },
-        { pubkey: mintLPT.publicKey, isSigner: false, isWritable: true },
-        { pubkey: vault.publicKey, isSigner: true, isWritable: true },
+        { pubkey: mintLPT.publicKey, isSigner: true, isWritable: true },
+        { pubkey: vaultPublicKey, isSigner: false, isWritable: true },
         { pubkey: proofPublicKey, isSigner: false, isWritable: false },
 
         { pubkey: srcSPublicKey, isSigner: false, isWritable: true },
@@ -465,16 +478,30 @@ class Swap extends Tx {
     })
     transaction.add(instruction)
     transaction.feePayer = payerPublicKey
+    // Pretest / Rerun if the tx exceeds computation limit
+    const ok = await this.pretestInitializePool(transaction)
+    if (!ok)
+      return await this.initializePool(
+        reserveS,
+        reserveA,
+        reserveB,
+        ownerAddress,
+        srcSAddress,
+        srcAAddress,
+        srcBAddress,
+        vaultAddress,
+        wallet,
+      )
     // Sign tx
     const payerSig = await wallet.rawSignTransaction(transaction)
     this.addSignature(transaction, payerSig)
     const poolSig = await this.selfSign(transaction, pool)
     this.addSignature(transaction, poolSig)
-    const vaultSig = await this.selfSign(transaction, vault)
-    this.addSignature(transaction, vaultSig)
+    const mintLPTSig = await this.selfSign(transaction, mintLPT)
+    this.addSignature(transaction, mintLPTSig)
     // Send tx
     const txId = await this.sendTransaction(transaction)
-    return { txId, mintLPTAddress, vaultAddress, poolAddress, lptAddress }
+    return { txId, mintLPTAddress, poolAddress, lptAddress }
   }
 
   /**
@@ -915,59 +942,36 @@ class Swap extends Tx {
   }
 
   /**
-   * Withdraw the protocol charge in vault
-   * @param amount
+   * Transfer vault
    * @param poolAddress
-   * @param dstAddress
+   * @param newVaultAddress
    * @param wallet
    * @returns
    */
-  earn = async (
-    amount: bigint,
+  transferVault = async (
     poolAddress: string,
-    dstAddress: string,
+    newVaultAddress: string,
     wallet: WalletInterface,
   ): Promise<{ txId: string }> => {
-    // Validation #1
     if (!account.isAddress(poolAddress)) throw new Error('Invalid pool address')
-    if (!account.isAddress(dstAddress))
-      throw new Error('Invalid destination address')
-    // Fetch necessary info
-    const { vault: vaultAddress } = await this.getPoolData(poolAddress)
-    // Validation #2
-    if (!account.isAddress(vaultAddress))
-      throw new Error('Invalid vault address')
-    // Build public keys
+    if (!account.isAddress(newVaultAddress))
+      throw new Error('Invalid new vault address')
     const poolPublicKey = account.fromAddress(poolAddress) as PublicKey
-    const vaultPublicKey = account.fromAddress(vaultAddress) as PublicKey
-    const dstPublicKey = account.fromAddress(dstAddress) as PublicKey
+    const newVaultPublicKey = account.fromAddress(newVaultAddress) as PublicKey
     // Get payer
     const payerAddress = await wallet.getAddress()
     const payerPublicKey = account.fromAddress(payerAddress) as PublicKey
-    // Get treasurer
-    const seed = [poolPublicKey.toBuffer()]
-    const treasurerPublicKey = await PublicKey.createProgramAddress(
-      seed,
-      this.swapProgramId,
-    )
-    // build tx
+    // Build tx
     let transaction = new Transaction()
     transaction = await this.addRecentCommitment(transaction)
-    const layout = new soproxABI.struct(
-      [
-        { key: 'code', type: 'u8' },
-        { key: 'amount', type: 'u64' },
-      ],
-      { code: 6, amount },
-    )
+    const layout = new soproxABI.struct([{ key: 'code', type: 'u8' }], {
+      code: 6,
+    })
     const instruction = new TransactionInstruction({
       keys: [
         { pubkey: payerPublicKey, isSigner: true, isWritable: false },
-        { pubkey: poolPublicKey, isSigner: false, isWritable: false },
-        { pubkey: vaultPublicKey, isSigner: false, isWritable: true },
-        { pubkey: dstPublicKey, isSigner: false, isWritable: true },
-        { pubkey: treasurerPublicKey, isSigner: false, isWritable: false },
-        { pubkey: this.spltProgramId, isSigner: false, isWritable: false },
+        { pubkey: poolPublicKey, isSigner: false, isWritable: true },
+        { pubkey: newVaultPublicKey, isSigner: false, isWritable: false },
       ],
       programId: this.swapProgramId,
       data: layout.toBuffer(),

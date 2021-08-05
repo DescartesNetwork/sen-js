@@ -44,6 +44,8 @@ class Tx {
     const defaultError = 'Transaction failed'
     if (!er) throw new TxError(defaultError, txId)
     const instructionError = er.InstructionError || []
+    if (typeof instructionError[1] == 'string')
+      throw new TxError(instructionError[1], txId)
     const { Custom } = instructionError[1] || {}
     if (typeof Custom !== 'number') throw new TxError(defaultError, txId)
     throw new TxError(this.errorMapping[Custom] || defaultError, txId)
@@ -160,8 +162,8 @@ class Tx {
     const fromPubkey = account.fromAddress(payerAddress)
     if (!fromPubkey) throw new Error('Cannot get the payer address')
     // Validate account
-    const notRented = await this.isReadyForRent(newAccount, space, programId)
-    if (!notRented) return null
+    const available = await this.isReadyForRent(newAccount, space, programId)
+    if (!available) return null
     // Build tx
     let transaction = new Transaction()
     transaction = await this.addRecentCommitment(transaction)
