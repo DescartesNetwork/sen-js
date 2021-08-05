@@ -349,7 +349,7 @@ class Swap extends Tx {
     poolAddress: string
     lptAddress: string
   }> => {
-    // Validation #1
+    // Validation
     if (!account.isAddress(ownerAddress))
       throw new Error('Invalid owner address')
     if (!account.isAddress(srcSAddress))
@@ -374,14 +374,6 @@ class Swap extends Tx {
     const { mint: mintSAddress } = await this._splt.getAccountData(srcSAddress)
     const { mint: mintAAddress } = await this._splt.getAccountData(srcAAddress)
     const { mint: mintBAddress } = await this._splt.getAccountData(srcBAddress)
-    // Validation #2
-    if (!account.isAddress(lptAddress)) throw new Error('Invalid lpt address')
-    if (!account.isAddress(mintSAddress))
-      throw new Error('Invalid mint S address')
-    if (!account.isAddress(mintAAddress))
-      throw new Error('Invalid mint A address')
-    if (!account.isAddress(mintBAddress))
-      throw new Error('Invalid mint B address')
     // Build public keys
     const ownerPublicKey = account.fromAddress(ownerAddress) as PublicKey
     const lptPublicKey = account.fromAddress(lptAddress) as PublicKey
