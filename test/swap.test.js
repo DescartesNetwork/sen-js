@@ -1,4 +1,4 @@
-const { account, Swap, RawWallet } = require('../dist')
+const { account, Swap, RawWallet, Lamports, SPLT } = require('../dist')
 const { payer, mints } = require('./config')
 
 const wallet = new RawWallet(payer.secretKey)
@@ -288,10 +288,19 @@ describe('Swap library', function () {
 
     it('Should transfer vault', async function () {
       const swap = new Swap()
-      const newVaultAddress = account.createAccount().publicKey.toBase58()
-      await swap.transferVault(POOL_ADDRESS_1, newVaultAddress, wallet)
+      const lamports = new Lamports()
+      const splt = new SPLT()
+      const payer = new RawWallet(account.createAccount().secretKey)
+      const payerAddress = await payer.getAddress()
+      await lamports.airdrop(100000000, payerAddress)
+      const { accountAddress } = await splt.initializeAccount(
+        MINT_ADDRESS_0,
+        payerAddress,
+        payer,
+      )
+      await swap.transferVault(POOL_ADDRESS_1, accountAddress, wallet)
       const { vault } = await swap.getPoolData(POOL_ADDRESS_1)
-      if (vault != newVaultAddress) throw new Error('Cannot transfer vault')
+      if (vault != accountAddress) throw new Error('Cannot transfer vault')
     })
 
     it('Should transfer pool ownership', async function () {
