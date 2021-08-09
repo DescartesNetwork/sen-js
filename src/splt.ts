@@ -271,6 +271,7 @@ class SPLT extends Tx {
     wallet: WalletInterface,
   ): Promise<{ txId: string }> => {
     freezeAuthorityAddress = freezeAuthorityAddress || DEFAULT_EMPTY_ADDRESS
+    // Validation
     if (!account.isAddress(mintAuthorityAddress))
       throw new Error('Invalid mint authority address')
     if (!account.isAddress(freezeAuthorityAddress))

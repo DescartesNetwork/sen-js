@@ -6,7 +6,6 @@ import {
   SystemProgram,
   GetProgramAccountsFilter,
   KeyedAccountInfo,
-  Keypair,
 } from '@solana/web3.js'
 
 import Tx from '../core/tx'
@@ -127,8 +126,8 @@ class Swap extends Tx {
 
   /**
    * Generate a proof address
-   * The splt mints is seperated to nomeral mints by its freeze authority
-   * The splt mints' freeze authority is assigned to the proof address
+   * The lp mints is seperated to spl mints by its freeze authority
+   * The lp mint's freeze authority is assigned to the proof address
    * @param poolAddress
    * @returns A corresponding proof address to a pool address
    */
@@ -260,7 +259,7 @@ class Swap extends Tx {
 
   /**
    * Parse pool buffer data
-   * @param poolAddress
+   * @param data
    * @returns
    */
   parsePoolData = (data: Buffer): PoolData => {
@@ -278,9 +277,8 @@ class Swap extends Tx {
   getPoolData = async (poolAddress: string): Promise<PoolData> => {
     if (!account.isAddress(poolAddress)) throw new Error('Invalid pool address')
     const poolPublicKey = account.fromAddress(poolAddress) as PublicKey
-    let result = { address: poolAddress }
     const { data } = (await this.connection.getAccountInfo(poolPublicKey)) || {}
-    if (!data) throw new Error(`Cannot read data of ${result.address}`)
+    if (!data) throw new Error(`Cannot read data of ${poolAddress}`)
     return this.parsePoolData(data)
   }
 
@@ -545,7 +543,7 @@ class Swap extends Tx {
     srcBAddress: string,
     wallet: WalletInterface,
   ): Promise<{ lptAddress: string; txId: string }> => {
-    // Validation #1
+    // Validation
     if (!account.isAddress(srcSAddress))
       throw new Error('Invalid source S address')
     if (!account.isAddress(srcAAddress))
@@ -554,26 +552,12 @@ class Swap extends Tx {
       throw new Error('Invalid source B address')
     if (!account.isAddress(poolAddress)) throw new Error('Invalid pool address')
     // Fetch necessary info
-    const poolData = await this.getPoolData(poolAddress)
     const {
       mint_lpt: mintLPTAddress,
-      mint_s: mintSAddress,
-      mint_a: mintAAddress,
-      mint_b: mintBAddress,
       treasury_s: treasurySAddress,
       treasury_a: treasuryAAddress,
       treasury_b: treasuryBAddress,
-    } = poolData
-    // Validation #2
-    if (!account.isAddress(mintLPTAddress))
-      throw new Error('Invalid mint LPT address')
-    if (!account.isAddress(mintSAddress))
-      throw new Error('Invalid mint S address')
-    if (!account.isAddress(mintAAddress))
-      throw new Error('Invalid mint A address')
-    if (!account.isAddress(mintBAddress))
-      throw new Error('Invalid mint B address')
-    // Get lpt account
+    } = await this.getPoolData(poolAddress)
     const lptAddress = await this.deriveLPTAddress(mintLPTAddress, wallet, true)
     if (!account.isAddress(lptAddress)) throw new Error('Invalid lpt address')
     // Build public keys
@@ -667,7 +651,7 @@ class Swap extends Tx {
     dstBAddress: string,
     wallet: WalletInterface,
   ): Promise<{ txId: string; lptAddress: string }> => {
-    // Validation #1
+    // Validation
     if (!account.isAddress(poolAddress)) throw new Error('Invalid pool address')
     if (!account.isAddress(dstSAddress))
       throw new Error('Invalid destination S address')
@@ -678,9 +662,6 @@ class Swap extends Tx {
     // Fetch necessary info
     const {
       mint_lpt: mintLPTAddress,
-      mint_s: mintSAddress,
-      mint_a: mintAAddress,
-      mint_b: mintBAddress,
       treasury_s: treasurySAddress,
       treasury_a: treasuryAAddress,
       treasury_b: treasuryBAddress,
@@ -690,16 +671,7 @@ class Swap extends Tx {
       wallet,
       false,
     )
-    // Validation #2
     if (!account.isAddress(lptAddress)) throw new Error('Invalid lpt address')
-    if (!account.isAddress(mintLPTAddress))
-      throw new Error('Invalid mint LPT address')
-    if (!account.isAddress(mintSAddress))
-      throw new Error('Invalid mint S address')
-    if (!account.isAddress(mintAAddress))
-      throw new Error('Invalid mint A address')
-    if (!account.isAddress(mintBAddress))
-      throw new Error('Invalid mint B address')
     // Build public keys
     const poolPublicKey = account.fromAddress(poolAddress) as PublicKey
     const lptPublicKey = account.fromAddress(lptAddress) as PublicKey

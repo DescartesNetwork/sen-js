@@ -45,6 +45,28 @@ export type PoolData = {
   reserve_b: bigint
 }
 
+export type DebtData = {
+  stake_pool: string
+  owner: string
+  account: string
+  debt: bigint
+  is_initialized: boolean
+}
+
+export type StakePoolData = {
+  owner: string
+  state: number
+  genesis_timestamp: bigint
+  total_shares: bigint
+  mint_share: string
+  mint_token: string
+  treasury_token: string
+  reward: bigint
+  period: bigint
+  compensation: bigint
+  treasury_sen: string
+}
+
 const schema = {
   /**
    * Swap
