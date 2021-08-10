@@ -1031,9 +1031,20 @@ class Farming extends Tx {
    * @returns
    */
   closeShare = async (
-    shareAddress: string,
+    stakePoolAddress: string,
     wallet: WalletInterface,
   ): Promise<{ txId: String }> => {
+    if (!account.isAddress(stakePoolAddress))
+      throw new Error('Invalid stake pool address')
+    const { mint_share: mintShareAddress } = await this.getStakePoolData(
+      stakePoolAddress,
+    )
+    const ownerAddress = await wallet.getAddress()
+    const { shareAddress } = await this.findShareAndDebtAddress(
+      stakePoolAddress,
+      mintShareAddress,
+      ownerAddress,
+    )
     return await this._splt.closeAccount(shareAddress, wallet)
   }
 
@@ -1071,6 +1082,58 @@ class Farming extends Tx {
         { pubkey: payerPublicKey, isSigner: true, isWritable: false },
         { pubkey: stakePoolPublicKey, isSigner: false, isWritable: true },
         { pubkey: newOwnerPublicKey, isSigner: false, isWritable: false },
+      ],
+      programId: this.farmingProgramId,
+      data: layout.toBuffer(),
+    })
+    transaction.add(instruction)
+    transaction.feePayer = payerPublicKey
+    // Sign tx
+    const payerSig = await wallet.rawSignTransaction(transaction)
+    this.addSignature(transaction, payerSig)
+    // Send tx
+    const txId = await this.sendTransaction(transaction)
+    return { txId }
+  }
+
+  closeDebt = async (
+    stakePoolAddress: string,
+    wallet: WalletInterface,
+  ): Promise<{ txId: string }> => {
+    // Validation
+    if (!account.isAddress(stakePoolAddress))
+      throw new Error('Invalid stake pool address')
+    // Get payer
+    const payerAddress = await wallet.getAddress()
+    const payerPublicKey = account.fromAddress(payerAddress) as PublicKey
+    // Fetch necessary info
+    const { mint_share: mintShareAddress } = await this.getStakePoolData(
+      stakePoolAddress,
+    )
+    const { shareAddress, debtAddress } = await this.findShareAndDebtAddress(
+      stakePoolAddress,
+      mintShareAddress,
+      payerAddress,
+    )
+    // Build public keys
+    const stakePoolPublicKey = account.fromAddress(
+      stakePoolAddress,
+    ) as PublicKey
+    const sharePublicKey = account.fromAddress(shareAddress) as PublicKey
+    const debtPublicKey = account.fromAddress(debtAddress) as PublicKey
+    // Build tx
+    let transaction = new Transaction()
+    transaction = await this.addRecentCommitment(transaction)
+    const layout = new soproxABI.struct([{ key: 'code', type: 'u8' }], {
+      code: 10,
+    })
+    const instruction = new TransactionInstruction({
+      keys: [
+        { pubkey: payerPublicKey, isSigner: true, isWritable: true },
+        { pubkey: stakePoolPublicKey, isSigner: false, isWritable: false },
+        { pubkey: sharePublicKey, isSigner: false, isWritable: false },
+        { pubkey: debtPublicKey, isSigner: false, isWritable: true },
+        { pubkey: payerPublicKey, isSigner: false, isWritable: true },
       ],
       programId: this.farmingProgramId,
       data: layout.toBuffer(),

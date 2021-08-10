@@ -234,6 +234,29 @@ describe('Farming library', function () {
         new Promise((resolve, _) => setTimeout(resolve, 10000)))()
       await farming.harvest(STAKE_POOL_ADDRESS, rewardedAddress, wallet)
     })
+
+    it('Should close share/debt account', async function () {
+      const farming = new Farming()
+      const walletAddress = await wallet.getAddress()
+      const { amount } = await farming.getShareData(SHARE_ADDRESS)
+      const dstAddress = await account.deriveAssociatedAddress(
+        walletAddress,
+        MINT_ADDRESS_1,
+      )
+      const rewardedAddress = await account.deriveAssociatedAddress(
+        walletAddress,
+        MINT_ADDRESS_0,
+      )
+      await farming.unstake(
+        amount,
+        dstAddress,
+        rewardedAddress,
+        STAKE_POOL_ADDRESS,
+        wallet,
+      )
+      await farming.closeShare(STAKE_POOL_ADDRESS, wallet)
+      await farming.closeDebt(STAKE_POOL_ADDRESS, wallet)
+    })
   })
 
   describe('Test stake pool owner', function () {
