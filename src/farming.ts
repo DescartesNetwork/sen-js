@@ -28,6 +28,20 @@ export type FarmingAccountChangeInfo = {
   data: Buffer
 }
 
+const ErrorMapping = [
+  'Invalid instruction',
+  'Invalid owner',
+  'Incorrect program id',
+  'Already constructed',
+  'Operation overflowed',
+  'Pool unmatched',
+  'Pool frozen',
+  'Zero value',
+  'Insufficient funds',
+  'Invalid mint',
+  'Exceed limit',
+]
+
 class Farming extends Tx {
   farmingProgramId: PublicKey
   spltProgramId: PublicKey
@@ -40,7 +54,7 @@ class Farming extends Tx {
     splataProgramAddress = DEFAULT_SPLATA_PROGRAM_ADDRESS,
     nodeUrl: string,
   ) {
-    super(nodeUrl)
+    super(nodeUrl, ErrorMapping)
 
     if (!account.isAddress(farmingProgramAddress))
       throw new Error('Invalid farming program address')
@@ -100,6 +114,16 @@ class Farming extends Tx {
       'confirmed',
       filters,
     )
+  }
+
+  /**
+   * Unwatch a watcher by watch id
+   * @param watchId
+   * @returns
+   */
+  unwatch = async (watchId: number): Promise<void> => {
+    if (!watchId) return
+    return await this.connection.removeProgramAccountChangeListener(watchId)
   }
 
   /**
