@@ -64,6 +64,7 @@ export type StakePoolData = {
   reward: bigint
   period: bigint
   compensation: bigint
+  mint_sen: string
   treasury_sen: string
 }
 
@@ -136,6 +137,7 @@ const schema = {
     { key: 'reward', type: 'u64' },
     { key: 'period', type: 'u64' },
     { key: 'compensation', type: 'i128' },
+    { key: 'mint_sen', type: 'pub' },
     { key: 'treasury_sen', type: 'pub' },
   ],
 

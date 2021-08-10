@@ -1120,6 +1120,12 @@ class Farming extends Tx {
     return { txId }
   }
 
+  /**
+   * Close debt account
+   * @param stakePoolAddress 
+   * @param wallet 
+   * @returns 
+   */
   closeDebt = async (
     stakePoolAddress: string,
     wallet: WalletInterface,
