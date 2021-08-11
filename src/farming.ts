@@ -1207,7 +1207,7 @@ class Farming extends Tx {
     const instruction = new TransactionInstruction({
       keys: [
         { pubkey: payerPublicKey, isSigner: true, isWritable: true },
-        { pubkey: stakePoolPublicKey, isSigner: false, isWritable: false },
+        { pubkey: stakePoolPublicKey, isSigner: false, isWritable: true },
         { pubkey: payerPublicKey, isSigner: false, isWritable: true },
       ],
       programId: this.farmingProgramId,
