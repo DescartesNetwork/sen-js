@@ -357,7 +357,7 @@ class Farming extends Tx {
   /**
    * Initialize a stake pool
    * @param reward
-   * @param period
+   * @param period seconds
    * @param ownerAddress
    * @param mintDepositAddress
    * @param mintRewardAddress
@@ -1122,9 +1122,9 @@ class Farming extends Tx {
 
   /**
    * Close debt account
-   * @param stakePoolAddress 
-   * @param wallet 
-   * @returns 
+   * @param stakePoolAddress
+   * @param wallet
+   * @returns
    */
   closeDebt = async (
     stakePoolAddress: string,
@@ -1163,6 +1163,51 @@ class Farming extends Tx {
         { pubkey: stakePoolPublicKey, isSigner: false, isWritable: false },
         { pubkey: sharePublicKey, isSigner: false, isWritable: false },
         { pubkey: debtPublicKey, isSigner: false, isWritable: true },
+        { pubkey: payerPublicKey, isSigner: false, isWritable: true },
+      ],
+      programId: this.farmingProgramId,
+      data: layout.toBuffer(),
+    })
+    transaction.add(instruction)
+    transaction.feePayer = payerPublicKey
+    // Sign tx
+    const payerSig = await wallet.rawSignTransaction(transaction)
+    this.addSignature(transaction, payerSig)
+    // Send tx
+    const txId = await this.sendTransaction(transaction)
+    return { txId }
+  }
+
+  /**
+   * Close a stake pool
+   * @param stakePoolAddress
+   * @param wallet
+   * @returns
+   */
+  closeStakePool = async (
+    stakePoolAddress: string,
+    wallet: WalletInterface,
+  ): Promise<{ txId: string }> => {
+    // Validation
+    if (!account.isAddress(stakePoolAddress))
+      throw new Error('Invalid stake pool address')
+    // Get payer
+    const payerAddress = await wallet.getAddress()
+    const payerPublicKey = account.fromAddress(payerAddress) as PublicKey
+    // Build public keys
+    const stakePoolPublicKey = account.fromAddress(
+      stakePoolAddress,
+    ) as PublicKey
+    // Build tx
+    let transaction = new Transaction()
+    transaction = await this.addRecentCommitment(transaction)
+    const layout = new soproxABI.struct([{ key: 'code', type: 'u8' }], {
+      code: 11,
+    })
+    const instruction = new TransactionInstruction({
+      keys: [
+        { pubkey: payerPublicKey, isSigner: true, isWritable: true },
+        { pubkey: stakePoolPublicKey, isSigner: false, isWritable: false },
         { pubkey: payerPublicKey, isSigner: false, isWritable: true },
       ],
       programId: this.farmingProgramId,
