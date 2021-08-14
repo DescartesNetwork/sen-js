@@ -11,7 +11,7 @@ import {
 import Tx from './core/tx'
 import SPLT from './splt'
 import account from './account'
-import schema, { AccountData, DebtData, FarmData } from './schema'
+import schema, { DebtData, FarmData } from './schema'
 import {
   DEFAULT_SPLT_PROGRAM_ADDRESS,
   DEFAULT_SPLATA_PROGRAM_ADDRESS,
@@ -20,7 +20,6 @@ import {
 import { WalletInterface } from './rawWallet'
 
 const soproxABI = require('soprox-abi')
-const xor = require('buffer-xor')
 
 export type FarmingAccountChangeInfo = {
   type: 'farm' | 'debt'
@@ -83,7 +82,9 @@ class Farming extends Tx {
     callback: (
       error: string | null,
       data:
-        | (Omit<FarmingAccountChangeInfo, 'data'> & { data: FarmData })
+        | (Omit<FarmingAccountChangeInfo, 'data'> & {
+            data: FarmData | DebtData
+          })
         | null,
     ) => void,
     filters?: GetProgramAccountsFilter[],
@@ -109,7 +110,7 @@ class Farming extends Tx {
       return callback(null, {
         type: type as FarmingAccountChangeInfo['type'],
         address,
-        data: data as FarmData,
+        data: data as FarmData | DebtData,
       })
     }
     return this.connection.onProgramAccountChange(
