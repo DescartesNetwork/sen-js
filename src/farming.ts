@@ -470,25 +470,33 @@ class Farming extends Tx {
   }
 
   /**
-   * Initialize account including share and debt
+   * Initialize accounts including rewarded, share, and debt
    * @param stakePoolAddress
    * @param ownerAddress
    * @param wallet
    * @returns
    */
-  initializeAccount = async (
+  initializeAccounts = async (
     stakePoolAddress: string,
     ownerAddress: string,
     wallet: WalletInterface,
-  ): Promise<{ txId: string; shareAddress: string; debtAddress: string }> => {
+  ): Promise<{
+    txId: string
+    rewardedAddress: string
+    shareAddress: string
+    debtAddress: string
+  }> => {
     // Validation
     if (!account.isAddress(stakePoolAddress))
       throw new Error('Invalid stake pool address')
     if (!account.isAddress(ownerAddress))
       throw new Error('Invalid owner address')
     // Fetch necessary info
-    const { mint_share: mintShareAddress } = await this.getStakePoolData(
-      stakePoolAddress,
+    const { mint_share: mintShareAddress, mint_sen: mintRewardAddress } =
+      await this.getStakePoolData(stakePoolAddress)
+    const rewardedAddress = await this._splt.deriveAssociatedAddress(
+      ownerAddress,
+      mintRewardAddress,
     )
     const { shareAddress, debtAddress } = await this.findShareAndDebtAddress(
       stakePoolAddress,
@@ -500,6 +508,10 @@ class Farming extends Tx {
     const stakePoolPublicKey = account.fromAddress(
       stakePoolAddress,
     ) as PublicKey
+    const mintRewardPublicKey = account.fromAddress(
+      mintRewardAddress,
+    ) as PublicKey
+    const rewardedPublicKey = account.fromAddress(rewardedAddress) as PublicKey
     const mintSharePublicKey = account.fromAddress(
       mintShareAddress,
     ) as PublicKey
@@ -520,7 +532,9 @@ class Farming extends Tx {
         { pubkey: ownerPublicKey, isSigner: false, isWritable: false },
         { pubkey: stakePoolPublicKey, isSigner: false, isWritable: false },
         { pubkey: mintSharePublicKey, isSigner: false, isWritable: false },
+        { pubkey: mintRewardPublicKey, isSigner: false, isWritable: false },
 
+        { pubkey: rewardedPublicKey, isSigner: false, isWritable: true },
         { pubkey: sharePublicKey, isSigner: false, isWritable: true },
         { pubkey: debtPublicKey, isSigner: false, isWritable: true },
 
@@ -539,7 +553,7 @@ class Farming extends Tx {
     this.addSignature(transaction, payerSig)
     // Send tx
     const txId = await this.sendTransaction(transaction)
-    return { txId, shareAddress, debtAddress }
+    return { txId, rewardedAddress, shareAddress, debtAddress }
   }
 
   /**

@@ -104,14 +104,22 @@ describe('Farming library', function () {
   })
 
   describe('Test accounts', function () {
-    it('Should initialize share & debt account', async function () {
+    it('Should initialize rewarded & share & debt account', async function () {
       const farming = new Farming()
       const ownerAddress = await wallet.getAddress()
-      const { shareAddress, debtAddress } = await farming.initializeAccount(
-        STAKE_POOL_ADDRESS,
-        ownerAddress,
-        wallet,
+      const { rewardedAddress, shareAddress, debtAddress } =
+        await farming.initializeAccounts(
+          STAKE_POOL_ADDRESS,
+          ownerAddress,
+          wallet,
+        )
+      const payerAddress = await wallet.getAddress()
+      const expectedAddress = await account.deriveAssociatedAddress(
+        payerAddress,
+        MINT_ADDRESS_0,
       )
+      if (rewardedAddress !== expectedAddress)
+        throw new Error('Incorrect rewarded address')
       SHARE_ADDRESS = shareAddress
       DEBT_ADDRESS = debtAddress
     })
@@ -185,7 +193,7 @@ describe('Farming library', function () {
       )
       await splt.transfer(10000000000n, tokenAddress, srcAddress, wallet)
       // Stake
-      await farming.initializeAccount(
+      await farming.initializeAccounts(
         STAKE_POOL_ADDRESS,
         secondaryAddress,
         secondary,
