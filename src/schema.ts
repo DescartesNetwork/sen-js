@@ -46,26 +46,25 @@ export type PoolData = {
 }
 
 export type DebtData = {
-  stake_pool: string
+  farm: string
   owner: string
-  account: string
+  shares: bigint
   debt: bigint
   is_initialized: boolean
 }
 
-export type StakePoolData = {
+export type FarmData = {
   owner: string
   state: number
+  mint_stake: string
+  treasury_stake: string
+  mint_reward: string
+  treasury_reward: string
   genesis_timestamp: bigint
   total_shares: bigint
-  mint_share: string
-  mint_token: string
-  treasury_token: string
   reward: bigint
   period: bigint
   compensation: bigint
-  mint_sen: string
-  treasury_sen: string
 }
 
 const schema = {
@@ -106,13 +105,13 @@ const schema = {
    * Farming
    */
   DEBT_SCHEMA: [
-    { key: 'stake_pool', type: 'pub' },
+    { key: 'farm', type: 'pub' },
     { key: 'owner', type: 'pub' },
-    { key: 'account', type: 'pub' },
+    { key: 'shares', type: 'u64' },
     { key: 'debt', type: 'u128' },
     { key: 'is_initialized', type: 'bool' },
   ],
-  STAKE_POOL_STATE: {
+  FARM_STATE: {
     get Uninitialized() {
       return 0
     },
@@ -123,22 +122,18 @@ const schema = {
       return 2
     },
   },
-  STAKE_POOL_SCHEMA: [
+  FARM_SCHEMA: [
     { key: 'owner', type: 'pub' },
     { key: 'state', type: 'u8' },
+    { key: 'mint_stake', type: 'pub' },
+    { key: 'treasury_stake', type: 'pub' },
+    { key: 'mint_reward', type: 'pub' },
+    { key: 'treasury_reward', type: 'pub' },
     { key: 'genesis_timestamp', type: 'i64' },
-
     { key: 'total_shares', type: 'u64' },
-    { key: 'mint_share', type: 'pub' },
-
-    { key: 'mint_token', type: 'pub' },
-    { key: 'treasury_token', type: 'pub' },
-
     { key: 'reward', type: 'u64' },
     { key: 'period', type: 'u64' },
     { key: 'compensation', type: 'i128' },
-    { key: 'mint_sen', type: 'pub' },
-    { key: 'treasury_sen', type: 'pub' },
   ],
 
   /**

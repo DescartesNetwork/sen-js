@@ -29,7 +29,8 @@ describe('Routing library', function () {
           account.deriveAssociatedAddress(payerAddress, mintAddress),
         ),
       )
-      const { mintLPTAddress, vaultAddress, poolAddress, lptAddress } =
+      const vaultAddress = srcAddresses[0]
+      const { mintLPTAddress, poolAddress, lptAddress } =
         await swap.initializePool(
           100000000000n,
           500000000000n,
@@ -38,6 +39,7 @@ describe('Routing library', function () {
           srcAddresses[0],
           srcAddresses[1],
           srcAddresses[2],
+          vaultAddress,
           wallet,
         )
       MINT_LPT_ADDRESS_0 = mintLPTAddress
@@ -54,7 +56,8 @@ describe('Routing library', function () {
           account.deriveAssociatedAddress(payerAddress, mintAddress),
         ),
       )
-      const { mintLPTAddress, vaultAddress, poolAddress, lptAddress } =
+      const vaultAddress = srcAddresses[0]
+      const { mintLPTAddress, poolAddress, lptAddress } =
         await swap.initializePool(
           100000000000n,
           500000000000n,
@@ -63,6 +66,7 @@ describe('Routing library', function () {
           srcAddresses[0],
           srcAddresses[1],
           srcAddresses[2],
+          vaultAddress,
           wallet,
         )
       MINT_LPT_ADDRESS_1 = mintLPTAddress

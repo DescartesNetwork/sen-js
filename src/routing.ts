@@ -91,7 +91,7 @@ class Routing extends Tx {
     dstMintAddress: string,
     wallet: WalletInterface,
   ): Promise<{ txId: string; accountAddress: string }> => {
-    // Validation #1
+    // Validation
     if (!account.isAddress(poolAddress)) throw new Error('Invalid pool address')
     if (!account.isAddress(srcMintAddress))
       throw new Error('Invalid source address')
@@ -211,7 +211,7 @@ class Routing extends Tx {
     dstMintAddress: string,
     wallet: WalletInterface,
   ): Promise<{ txId: string; accountAddress: string }> => {
-    // Validation #1
+    // Validation
     if (!account.isAddress(firstPoolAddress))
       throw new Error('Invalid pool #1 address')
     if (!account.isAddress(srcMintAddress))
@@ -383,7 +383,7 @@ class Routing extends Tx {
     poolAddress: string,
     wallet: WalletInterface,
   ): Promise<{ txId: string; lptAddress: string }> => {
-    // Validation #1
+    // Validation
     if (!account.isAddress(poolAddress)) throw new Error('Invalid pool address')
     // Get payer
     const payerAddress = await wallet.getAddress()
@@ -501,7 +501,7 @@ class Routing extends Tx {
     dstAAddress: string
     dstBAddress: string
   }> => {
-    // Validation #1
+    // Validation
     if (!account.isAddress(poolAddress)) throw new Error('Invalid pool address')
     // Get payer
     const payerAddress = await wallet.getAddress()

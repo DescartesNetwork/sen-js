@@ -1,11 +1,4 @@
-const {
-  createAccount,
-  Farming,
-  SPLT,
-  RawWallet,
-  Lamports,
-  account,
-} = require('../dist')
+const { Farming, SPLT, RawWallet, Lamports, account } = require('../dist')
 const { payer, mints } = require('./config')
 
 const wallet = new RawWallet(payer.secretKey)
@@ -13,27 +6,23 @@ const wallet = new RawWallet(payer.secretKey)
 const { address: MINT_ADDRESS_0 } = mints[0]
 // Mint 1
 const { address: MINT_ADDRESS_1 } = mints[1]
-// Stake Pool
-let STAKE_POOL_ADDRESS = ''
-let MINT_SHARE_ADDRESS = ''
-let SHARE_ADDRESS = ''
+// Farm
+let FARM_ADDRESS = ''
 let DEBT_ADDRESS = ''
 
 describe('Farming library', function () {
-  it('Stake Pool', async function () {
+  it('Farm', async function () {
     const farming = new Farming()
     const payerAddress = await wallet.getAddress()
-    const { mintShareAddress, stakePoolAddress } =
-      await farming.initializeStakePool(
-        1000000000n,
-        5n,
-        payerAddress,
-        MINT_ADDRESS_1,
-        MINT_ADDRESS_0,
-        wallet,
-      )
-    STAKE_POOL_ADDRESS = stakePoolAddress
-    MINT_SHARE_ADDRESS = mintShareAddress
+    const { farmAddress } = await farming.initializeFarm(
+      1000000000n,
+      5n,
+      payerAddress,
+      MINT_ADDRESS_1,
+      MINT_ADDRESS_0,
+      wallet,
+    )
+    FARM_ADDRESS = farmAddress
   })
 
   describe('Test constructor', function () {
@@ -47,8 +36,7 @@ describe('Farming library', function () {
       console.log('MINT_ADDRESS_1:', MINT_ADDRESS_1)
       console.log('\n')
       // Pool 0
-      console.log('STAKE_POOL_ADDRESS:', STAKE_POOL_ADDRESS)
-      console.log('MINT_SHARE_ADDRESS:', MINT_SHARE_ADDRESS)
+      console.log('FARM_ADDRESS:', FARM_ADDRESS)
       console.log('\n')
     })
 
@@ -71,10 +59,10 @@ describe('Farming library', function () {
     })
   })
 
-  describe('Test Stake Pool', function () {
-    it('Should be a valid pool data', async function () {
+  describe('Test Farm', function () {
+    it('Should be a valid farm data', async function () {
       const farming = new Farming()
-      await farming.getStakePoolData(STAKE_POOL_ADDRESS)
+      await farming.getFarmData(FARM_ADDRESS)
     })
 
     it('Should seed', async function () {
@@ -84,7 +72,7 @@ describe('Farming library', function () {
         payerAddress,
         MINT_ADDRESS_0,
       )
-      await farming.seed(1000000000000n, STAKE_POOL_ADDRESS, srcAddress, wallet)
+      await farming.seed(1000000000000n, FARM_ADDRESS, srcAddress, wallet)
     })
 
     it('Should unseed', async function () {
@@ -94,39 +82,26 @@ describe('Farming library', function () {
         payerAddress,
         MINT_ADDRESS_0,
       )
-      await farming.unseed(
-        900000000000n,
-        STAKE_POOL_ADDRESS,
-        dstAddress,
-        wallet,
-      )
+      await farming.unseed(900000000000n, FARM_ADDRESS, dstAddress, wallet)
     })
   })
 
   describe('Test accounts', function () {
-    it('Should initialize rewarded & share & debt account', async function () {
+    it('Should initialize rewarded & debt accounts', async function () {
       const farming = new Farming()
       const ownerAddress = await wallet.getAddress()
-      const { rewardedAddress, shareAddress, debtAddress } =
-        await farming.initializeAccounts(
-          STAKE_POOL_ADDRESS,
-          ownerAddress,
-          wallet,
-        )
-      const payerAddress = await wallet.getAddress()
+      const { rewardedAddress, debtAddress } = await farming.initializeAccounts(
+        FARM_ADDRESS,
+        ownerAddress,
+        wallet,
+      )
       const expectedAddress = await account.deriveAssociatedAddress(
-        payerAddress,
+        ownerAddress,
         MINT_ADDRESS_0,
       )
       if (rewardedAddress !== expectedAddress)
         throw new Error('Incorrect rewarded address')
-      SHARE_ADDRESS = shareAddress
       DEBT_ADDRESS = debtAddress
-    })
-
-    it('Should be a share data', async function () {
-      const farming = new Farming()
-      await farming.getShareData(SHARE_ADDRESS)
     })
 
     it('Should be a debt data', async function () {
@@ -151,7 +126,7 @@ describe('Farming library', function () {
         10000000000n,
         srcAddress,
         rewardedAddress,
-        STAKE_POOL_ADDRESS,
+        FARM_ADDRESS,
         wallet,
       )
       await (async () =>
@@ -160,7 +135,7 @@ describe('Farming library', function () {
         10000000000n,
         srcAddress,
         rewardedAddress,
-        STAKE_POOL_ADDRESS,
+        FARM_ADDRESS,
         wallet,
       )
     })
@@ -194,7 +169,7 @@ describe('Farming library', function () {
       await splt.transfer(10000000000n, tokenAddress, srcAddress, wallet)
       // Stake
       await farming.initializeAccounts(
-        STAKE_POOL_ADDRESS,
+        FARM_ADDRESS,
         secondaryAddress,
         secondary,
       )
@@ -204,7 +179,7 @@ describe('Farming library', function () {
         10000000000n,
         srcAddress,
         rewardedAddress,
-        STAKE_POOL_ADDRESS,
+        FARM_ADDRESS,
         secondary,
       )
     })
@@ -226,7 +201,7 @@ describe('Farming library', function () {
         10000000000n,
         dstAddress,
         rewardedAddress,
-        STAKE_POOL_ADDRESS,
+        FARM_ADDRESS,
         wallet,
       )
     })
@@ -240,13 +215,13 @@ describe('Farming library', function () {
       )
       await (async () =>
         new Promise((resolve, _) => setTimeout(resolve, 10000)))()
-      await farming.harvest(STAKE_POOL_ADDRESS, rewardedAddress, wallet)
+      await farming.harvest(FARM_ADDRESS, rewardedAddress, wallet)
     })
 
-    it('Should close share/debt account', async function () {
+    it('Should close debt account', async function () {
       const farming = new Farming()
       const walletAddress = await wallet.getAddress()
-      const { amount } = await farming.getShareData(SHARE_ADDRESS)
+      const { shares } = await farming.getDebtData(DEBT_ADDRESS)
       const dstAddress = await account.deriveAssociatedAddress(
         walletAddress,
         MINT_ADDRESS_1,
@@ -256,39 +231,34 @@ describe('Farming library', function () {
         MINT_ADDRESS_0,
       )
       await farming.unstake(
-        amount,
+        shares,
         dstAddress,
         rewardedAddress,
-        STAKE_POOL_ADDRESS,
+        FARM_ADDRESS,
         wallet,
       )
-      await farming.closeShare(STAKE_POOL_ADDRESS, wallet)
-      await farming.closeDebt(STAKE_POOL_ADDRESS, wallet)
+      await farming.closeDebt(FARM_ADDRESS, wallet)
     })
   })
 
-  describe('Test stake pool owner', function () {
-    it('Should freeze/thaw stake pool', async function () {
+  describe('Test farm owner', function () {
+    it('Should freeze/thaw farm', async function () {
       const farming = new Farming()
-      await farming.freezeStakePool(STAKE_POOL_ADDRESS, wallet)
-      const a = await farming.getStakePoolData(STAKE_POOL_ADDRESS)
-      if (a.state != 2) throw new Error('Cannot freeze stake pool')
-      await farming.thawStakePool(STAKE_POOL_ADDRESS, wallet)
-      const b = await farming.getStakePoolData(STAKE_POOL_ADDRESS)
-      if (b.state != 1) throw new Error('Cannot thaw stake pool')
+      await farming.freeze(FARM_ADDRESS, wallet)
+      const a = await farming.getFarmData(FARM_ADDRESS)
+      if (a.state != 2) throw new Error('Cannot freeze farm')
+      await farming.thaw(FARM_ADDRESS, wallet)
+      const b = await farming.getFarmData(FARM_ADDRESS)
+      if (b.state != 1) throw new Error('Cannot thaw farm')
     })
 
-    it('Should transfer stake pool ownership', async function () {
+    it('Should transfer farm ownership', async function () {
       const farming = new Farming()
       const newOwnerAddress = account.createAccount().publicKey.toBase58()
-      await farming.transferStakePoolOwnership(
-        STAKE_POOL_ADDRESS,
-        newOwnerAddress,
-        wallet,
-      )
-      const data = await farming.getStakePoolData(STAKE_POOL_ADDRESS)
+      await farming.transferFarmOwnership(FARM_ADDRESS, newOwnerAddress, wallet)
+      const data = await farming.getFarmData(FARM_ADDRESS)
       if (data.owner != newOwnerAddress)
-        throw new Error('Cannot transfer stake pool ownership')
+        throw new Error('Cannot transfer farm ownership')
     })
   })
 })
