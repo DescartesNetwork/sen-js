@@ -33,12 +33,10 @@ const ErrorMapping = [
   'Incorrect program id',
   'Already constructed',
   'Operation overflowed',
-  'Pool unmatched',
-  'Pool frozen',
+  'Farm unmatched',
+  'Farm frozen',
   'Zero value',
   'Insufficient funds',
-  'Invalid mint',
-  'Exceed limit',
 ]
 
 class Farming extends Tx {
