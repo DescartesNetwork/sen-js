@@ -930,8 +930,29 @@ class Farming extends Tx {
     // Get payer
     const payerAddress = await wallet.getAddress()
     const payerPublicKey = account.fromAddress(payerAddress) as PublicKey
+    // Fetch necessary info
+    const {
+      treasury_reward: treasuryRewardAddress,
+      mint_reward: mintRewardAddress,
+    } = await this.getFarmData(farmAddress)
+    const dstRewradAddress = await this._splt.deriveAssociatedAddress(
+      payerAddress,
+      mintRewardAddress,
+    )
     // Build public keys
     const farmPublicKey = account.fromAddress(farmAddress) as PublicKey
+    const treasuryRewardPublicKey = account.fromAddress(
+      treasuryRewardAddress,
+    ) as PublicKey
+    const dstRewardPublicKey = account.fromAddress(
+      dstRewradAddress,
+    ) as PublicKey
+    // Get treasurer
+    const seed = [farmPublicKey.toBuffer()]
+    const treasurerPublicKey = await PublicKey.createProgramAddress(
+      seed,
+      this.farmingProgramId,
+    )
     // Build tx
     let transaction = new Transaction()
     transaction = await this.addRecentCommitment(transaction)
@@ -942,7 +963,11 @@ class Farming extends Tx {
       keys: [
         { pubkey: payerPublicKey, isSigner: true, isWritable: true },
         { pubkey: farmPublicKey, isSigner: false, isWritable: true },
+        { pubkey: treasuryRewardPublicKey, isSigner: false, isWritable: true },
+        { pubkey: dstRewardPublicKey, isSigner: false, isWritable: true },
         { pubkey: payerPublicKey, isSigner: false, isWritable: true },
+        { pubkey: treasurerPublicKey, isSigner: false, isWritable: false },
+        { pubkey: this.spltProgramId, isSigner: false, isWritable: false },
       ],
       programId: this.farmingProgramId,
       data: layout.toBuffer(),

@@ -149,6 +149,7 @@ describe('Farming library', function () {
         payerAddress,
         MINT_ADDRESS_1,
       )
+      const amount = 100000000n
       // Create & fund wallet
       const secondary = new RawWallet(
         Buffer.from(account.createAccount().secretKey).toString('hex'),
@@ -166,7 +167,7 @@ describe('Farming library', function () {
         secondaryAddress,
         secondary,
       )
-      await splt.transfer(10000000000n, tokenAddress, srcAddress, wallet)
+      await splt.transfer(amount, tokenAddress, srcAddress, wallet)
       // Stake
       await farming.initializeAccounts(
         FARM_ADDRESS,
@@ -176,12 +177,22 @@ describe('Farming library', function () {
       await (async () =>
         new Promise((resolve, _) => setTimeout(resolve, 10000)))()
       await farming.stake(
-        10000000000n,
+        amount,
         srcAddress,
         rewardedAddress,
         FARM_ADDRESS,
         secondary,
       )
+      // Unstake
+      await farming.unstake(
+        amount,
+        tokenAddress,
+        rewardedAddress,
+        FARM_ADDRESS,
+        secondary,
+      )
+      // Close
+      await farming.closeDebt(FARM_ADDRESS, secondary)
     })
 
     it('Should unstake', async function () {
@@ -253,12 +264,27 @@ describe('Farming library', function () {
     })
 
     it('Should transfer farm ownership', async function () {
+      const lamports = new Lamports()
       const farming = new Farming()
-      const newOwnerAddress = account.createAccount().publicKey.toBase58()
+      const newOwner = new RawWallet(account.createAccount().secretKey)
+      const newOwnerAddress = await newOwner.getAddress()
+      await lamports.airdrop(100000000, newOwnerAddress)
+      // Transfer forward
       await farming.transferFarmOwnership(FARM_ADDRESS, newOwnerAddress, wallet)
-      const data = await farming.getFarmData(FARM_ADDRESS)
-      if (data.owner != newOwnerAddress)
+      const a = await farming.getFarmData(FARM_ADDRESS)
+      if (a.owner != newOwnerAddress)
         throw new Error('Cannot transfer farm ownership')
+      // Transfer backward
+      const walletAddress = await wallet.getAddress()
+      await farming.transferFarmOwnership(FARM_ADDRESS, walletAddress, newOwner)
+      const b = await farming.getFarmData(FARM_ADDRESS)
+      if (b.owner != walletAddress)
+        throw new Error('Cannot transfer pool ownership')
+    })
+
+    it('Close farm', async function () {
+      const farming = new Farming()
+      await farming.closeFarm(FARM_ADDRESS, wallet)
     })
   })
 })
