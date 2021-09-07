@@ -9,5 +9,9 @@
     "resolveJsonModule": true
   },
   "include": ["src"],
-  "exclude": ["node_modules", "test"]
+  "exclude": ["node_modules", "test"],
+  "typedocOptions": {
+    "entryPoints": ["./src/index.ts"],
+    "out": "docs"
+  }
 }
