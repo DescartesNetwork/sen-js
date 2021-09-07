@@ -441,17 +441,17 @@ class Swap extends Tx {
     transaction.add(instruction)
     transaction.feePayer = payerPublicKey
     // Pretest / Rerun if the tx exceeds computation limit
-    // const ok = await this.pretestInitializePool(transaction)
-    // if (!ok)
-    //   return await this.initializePool(
-    //     deltaA,
-    //     deltaB,
-    //     ownerAddress,
-    //     srcAAddress,
-    //     srcBAddress,
-    //     taxmanAddress,
-    //     wallet,
-    //   )
+    const ok = await this.pretestInitializePool(transaction)
+    if (!ok)
+      return await this.initializePool(
+        deltaA,
+        deltaB,
+        ownerAddress,
+        srcAAddress,
+        srcBAddress,
+        taxmanAddress,
+        wallet,
+      )
     // Sign tx
     const payerSig = await wallet.rawSignTransaction(transaction)
     this.addSignature(transaction, payerSig)
