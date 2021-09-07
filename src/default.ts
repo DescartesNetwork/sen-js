@@ -6,9 +6,7 @@ export const DEFAULT_SPLATA_PROGRAM_ADDRESS: string =
   'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL'
 
 export const DEFAULT_SWAP_PROGRAM_ADDRESS: string =
-  'D8UuF1jPr5gtxHvnVz3HpxP2UkgtxLs9vwz7ecaTkrGy'
-export const DEFAULT_ROUTING_PROGRAM_ADDRESS: string =
-  'jwGVStpKdSmUgj7FXEo5awvwE6JkB1WrKm5oATTfHKx'
+  '4erFSLP7oBFSVC1t35jdxmbfxEhYCKfoM6XdG2BLR3UF'
 
 export const DEFAULT_FARMING_PROGRAM_ADDRESS: string =
   'CpEsjrLhBkcuApn5uEE2tZCwxyCQKmT6S4YgT9zuLW2J'

@@ -33,10 +33,7 @@ export type PoolData = {
   owner: string
   state: number
   mint_lpt: string
-  vault: string
-  mint_s: string
-  treasury_s: string
-  reserve_s: bigint
+  taxman: string
   mint_a: string
   treasury_a: string
   reserve_a: bigint
@@ -86,11 +83,7 @@ const schema = {
     { key: 'owner', type: 'pub' },
     { key: 'state', type: 'u8' },
     { key: 'mint_lpt', type: 'pub' },
-    { key: 'vault', type: 'pub' },
-
-    { key: 'mint_s', type: 'pub' },
-    { key: 'treasury_s', type: 'pub' },
-    { key: 'reserve_s', type: 'u64' },
+    { key: 'taxman', type: 'pub' },
 
     { key: 'mint_a', type: 'pub' },
     { key: 'treasury_a', type: 'pub' },
