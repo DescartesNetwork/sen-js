@@ -1,100 +1,110 @@
-const BN = require('bn.js')
 const { Swap } = require('../dist')
 
-const { _curve, curve, _inverseCurve, inverseCurve, slippage, _rake, rake } =
-  Swap.oracle
-
-const fee = 2500000n
-const feeDecimals = 1000000000n
+const { deposit, withdraw, swap, inverseSwap, rake, slippage } = Swap.oracle
 
 const bidAmount = 1000000000n
 const bidReserve = 1000000000000000n
 const askAmount = 1000000000000n
 const askReserve = 300000000000000000n
 
-const deltaS = 1000000000n
 const deltaA = 2000000000n
 const deltaB = 3000000000n
-const reserseS = 100000000000n
-const reserseA = 5000000000000n
-const reserseB = 200000000000n
+const reserveA = 5000000000000n
+const reserveB = 200000000000n
 
 describe('Oracle library', function () {
-  describe('Curve & Inverse Curve', function () {
-    it('Should compute curve', function (done) {
-      const amount = _curve(bidAmount, bidReserve, askReserve)
-      if (amount !== 299999700001n) return done('Wrong _curve')
-      return done()
-    })
-
-    it('Should compute inverse curve', function (done) {
-      const amount = _inverseCurve(askAmount, bidReserve, askReserve)
-      if (amount !== 3333344444n) return done('Wrong _inverseCurve')
-      return done()
-    })
-  })
-
-  describe('Single Rake', function () {
-    it('Should compute _rake', function (done) {
-      const [s, a, b] = _rake(
-        new BN(deltaS.toString()),
-        new BN(reserseS.toString()),
-        new BN(reserseA.toString()),
-        new BN(reserseB.toString()),
-      )
-      if (s.toString() !== '334439583') return done('Wrong __rake')
-      if (a.toString() !== '16556411410') return done('Wrong __rake')
-      if (b.toString() !== '662256457') return done('Wrong __rake')
+  describe('Rake', function () {
+    it('Should rake', function (done) {
+      const [a, b] = rake(deltaA, deltaB, reserveA, reserveB)
+      if (a / b !== reserveA / reserveB) return done('Wrong rake')
+      if (b / a !== reserveB / reserveA) return done('Wrong rake')
       return done()
     })
   })
 
   describe('Main', function () {
-    it('Should compute curve', function (done) {
-      const amount = curve(bidAmount, bidReserve, askReserve, fee, feeDecimals)
-      if (amount !== 299249700750n) return done('Wrong market state')
+    it('Should swap', function (done) {
+      const { askAmount } = swap(bidAmount, bidReserve, askReserve)
+      if (askAmount !== 299099700901n) return done('Wrong market state')
       return done()
     })
 
-    it('Should compute inverse curve', function (done) {
-      const amount = inverseCurve(
-        askAmount,
+    it('Should inverse swap', function (done) {
+      const bidAmount = inverseSwap(askAmount, bidReserve, askReserve)
+      const { askAmount: lowerAskAmount } = swap(
+        bidAmount,
         bidReserve,
         askReserve,
-        fee,
-        feeDecimals,
       )
-      if (amount !== 3341698719n) return done('Wrong market state')
+      const { askAmount: upperAskAmount } = swap(
+        bidAmount + 1n,
+        bidReserve,
+        askReserve,
+      )
+      if (lowerAskAmount > askAmount || askAmount > upperAskAmount)
+        return done('Wrong market state')
       return done()
     })
 
     it('Should compute slippage', function (done) {
-      const s = slippage(
-        1000000000000n,
-        bidReserve,
-        askReserve,
-        fee,
-        feeDecimals,
-      )
-      if (s !== 1994508n) return done('Wrong slippage')
+      const slpg = slippage(bidAmount, bidReserve, askReserve)
+      if (slpg !== 1997n) return done('Wrong slippage')
       return done()
     })
 
-    it('Should compute rake', function (done) {
-      const { lpt, newReserveS, newReserveA, newReserveB } = rake(
-        deltaS,
+    it('Should deposit #1', function (done) {
+      const { lpt, newReserveA, newReserveB } = deposit(
         deltaA,
         deltaB,
-        reserseS,
-        reserseA,
-        reserseB,
-        fee,
-        feeDecimals,
+        0n,
+        0n,
+        0n,
       )
-      if (lpt !== 21119n) return done('Wrong rake')
-      if (newReserveS !== 101000000000n) return done('Wrong rake')
-      if (newReserveA !== 5002000000000n) return done('Wrong rake')
-      if (newReserveB !== 203000000000n) return done('Wrong rake')
+      if (lpt !== 2449489742n) return done('Wrong deposit')
+      if (newReserveA !== deltaA) return done('Wrong deposit')
+      if (newReserveB !== deltaB) return done('Wrong deposit')
+      return done()
+    })
+
+    it('Should deposit #2', function (done) {
+      const { lpt, newReserveA, newReserveB } = deposit(
+        deltaA,
+        deltaB,
+        reserveA,
+        reserveB,
+        10n ** 9n,
+      )
+      if (lpt !== 400000n) return done('Wrong deposit')
+      if (newReserveA !== 5002000000000n) return done('Wrong deposit')
+      if (newReserveB !== 200080000000n) return done('Wrong deposit')
+      return done()
+    })
+
+    it('Should withdraw #1', function (done) {
+      const { deltaA, deltaB, newReserveA, newReserveB } = withdraw(
+        10n,
+        100n,
+        reserveA,
+        reserveB,
+      )
+      if (deltaA !== 500000000000n) return done('Wrong withdraw')
+      if (deltaB !== 20000000000n) return done('Wrong withdraw')
+      if (newReserveA !== 4500000000000n) return done('Wrong withdraw')
+      if (newReserveB !== 180000000000n) return done('Wrong withdraw')
+      return done()
+    })
+
+    it('Should withdraw #2', function (done) {
+      const { deltaA, deltaB, newReserveA, newReserveB } = withdraw(
+        100n,
+        100n,
+        reserveA,
+        reserveB,
+      )
+      if (deltaA !== reserveA) return done('Wrong withdraw')
+      if (deltaB !== reserveB) return done('Wrong withdraw')
+      if (newReserveA !== 0n) return done('Wrong withdraw')
+      if (newReserveB !== 0n) return done('Wrong withdraw')
       return done()
     })
   })

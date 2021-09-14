@@ -1,33 +1,37 @@
-const BN = require('bn.js')
+declare global {
+  interface BigInt {
+    sqrt(): bigint
+  }
+}
 
-// BN.js patch: sqrt()
-BN.prototype.sqrt = function () {
-  if (this.lt(new BN(2))) return this
-  const bits = Math.floor((this.bitLength() + 1) / 2)
-  let start = new BN(1).shln(bits - 1)
-  let end = new BN(1).shln(bits + 1)
-  while (start.lt(end)) {
-    end = start.add(end).shrn(1)
-    start = this.div(end)
+BigInt.prototype.sqrt = function () {
+  const self = this.valueOf()
+  const one = BigInt(1)
+  const two = BigInt(2)
+  if (self < two) return self
+  let bits = BigInt(this.toString(2).length + 1) / two
+  let start = one << (bits - one)
+  let end = one << (bits + one)
+  while (start < end) {
+    end = (start + end) / two
+    start = self / end
   }
   return end
 }
 
-const PRECISION = new BN('1000000000000000000') // 10^18
-const TAX = new BN('500000000000000') // 0.05%
+const PRECISION = BigInt(1000000000000000000) // 10^18
+const FEE = BigInt(2500000000000000) // 0.25%
+const TAX = BigInt(500000000000000) // 0.05%
 
 const oracle = {
-  checkLiquidity: (
-    deltaA: bigint,
-    deltaB: bigint,
-    reserveA: bigint,
-    reserveB: bigint,
-  ) => {
-    if (!deltaA || !deltaB) return false
-    if (!reserveA || !reserveB) return true
-    const ratio = (deltaA * PRECISION) / deltaB
-    const expectedRatio = (reserveA * PRECISION) / reserveB
-    return ratio === expectedRatio
+  rake: (a: bigint, b: bigint, reserveA: bigint, reserveB: bigint) => {
+    if (!a || !b || !reserveA || !reserveB)
+      throw new Error('Invalid deposit/reserves')
+    const l = a * reserveB
+    const r = b * reserveA
+    if (l > r) return [r / reserveB, b]
+    if (l < r) return [a, l / reserveA]
+    return [a, b]
   },
 
   deposit: (
@@ -35,66 +39,76 @@ const oracle = {
     deltaB: bigint,
     reserveA: bigint,
     reserveB: bigint,
+    liquidity: bigint,
   ) => {
-    const deltaLiquidity = BigInt(
-      new BN((deltaA * deltaB).toString()).sqrt().toString(),
-    )
-    const liquidity = BigInt(
-      new BN((reserveA * reserveB).toString()).sqrt().toString(),
-    )
-    const newLiquidity = deltaLiquidity + liquidity
-    const newReserveA = deltaA + reserveA
-    const newReserveB = deltaB + reserveB
-    return {
-      deltaLiquidity,
-      newLiquidity,
-      newReserveA,
-      newReserveB,
+    if (!reserveA && !reserveB) {
+      const lpt = (deltaA * deltaB).sqrt()
+      return { deltaA, deltaB, newReserveA: deltaA, newReserveB: deltaB, lpt }
     }
+    const [a, b] = oracle.rake(deltaA, deltaB, reserveA, reserveB)
+    const lpt = (a * liquidity) / reserveA
+    const newReserveA = a + reserveA
+    const newReserveB = b + reserveB
+    return { deltaA: a, deltaB: b, newReserveA, newReserveB, lpt }
   },
 
-  withdraw: (deltaLiquidity: bigint, reserveA: bigint, reserveB: bigint) => {
-    const liquidity = BigInt(
-      new BN((reserveA * reserveB).toString()).sqrt().toString(),
-    )
-    const deltaA = (reserveA * deltaLiquidity) / liquidity
-    const deltaB = (reserveB * deltaLiquidity) / liquidity
-    const newLiquidity = liquidity - deltaLiquidity
+  withdraw: (
+    lpt: bigint,
+    liquidity: bigint,
+    reserveA: bigint,
+    reserveB: bigint,
+  ) => {
+    const deltaA = (reserveA * lpt) / liquidity
+    const deltaB = (reserveB * lpt) / liquidity
     const newReserveA = reserveA - deltaA
     const newReserveB = reserveB - deltaB
-    return {
-      deltaA,
-      deltaB,
-      newLiquidity,
-      newReserveA,
-      newReserveB,
-    }
+    return { deltaA, deltaB, newReserveA, newReserveB }
   },
 
-  adaptiveFee: (askAmount: bigint, alpha: bigint) => {
-    const numerator = PRECISION - alpha
-    const denominator = BigInt(2) * PRECISION - alpha
-    const fee = (askAmount * numerator) / denominator
-    const amount = askAmount - fee
-    return { amount, fee }
-  },
-
-  tax: (askAmount: bigint) => {
+  fee: (askAmount: bigint) => {
+    const fee = (askAmount * FEE) / PRECISION
     const tax = (askAmount * TAX) / PRECISION
-    const amount = askAmount - tax
-    return { amount, tax }
+    const amount = askAmount - fee - tax
+    return { askAmount: amount, fee, tax }
   },
 
   swap: (bidAmount: bigint, reserveBid: bigint, reserveAsk: bigint) => {
     const newReserveBid = reserveBid + bidAmount
     const tempReserveAsk = (reserveBid * reserveAsk) / newReserveBid
     const tempAskAmount = reserveAsk - tempReserveAsk
-    const alpha = (reserveBid * PRECISION) / newReserveBid
-    const { fee } = oracle.adaptiveFee(tempAskAmount, alpha)
-    const { tax } = oracle.tax(tempAskAmount)
-    const askAmount = tempAskAmount - fee - tax
+    const { askAmount, fee, tax } = oracle.fee(tempAskAmount)
     const newReserveAsk = tempReserveAsk + fee
-    return { askAmount, newReserveBid, newReserveAsk }
+    return { askAmount, tax, newReserveBid, newReserveAsk }
+  },
+
+  inverseSwap: (askAmount: bigint, reserveBid: bigint, reserveAsk: bigint) => {
+    const tempAskAmount = (askAmount * PRECISION) / (PRECISION - FEE - TAX)
+    const tempReserveAsk = reserveAsk - tempAskAmount
+    const tempReserveBid = (reserveBid * reserveAsk) / tempReserveAsk
+    return tempReserveBid - reserveBid
+  },
+
+  /**
+   * Slippage rate describes how price changes
+   * It's decimalized by 9
+   * @param bidAmount
+   * @param reserveBid
+   * @param reserveAsk
+   * @returns
+   */
+  slippage: (bidAmount: bigint, reserveBid: bigint, reserveAsk: bigint) => {
+    const { newReserveBid, newReserveAsk } = oracle.swap(
+      bidAmount,
+      reserveBid,
+      reserveAsk,
+    )
+    const prevPrice = (reserveAsk * PRECISION) / reserveBid
+    const nextPrice = (newReserveAsk * PRECISION) / newReserveBid
+    return (
+      ((nextPrice > prevPrice ? nextPrice - prevPrice : prevPrice - nextPrice) *
+        PRECISION.sqrt()) /
+      prevPrice
+    )
   },
 }
 
