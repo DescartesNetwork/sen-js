@@ -1,3 +1,3 @@
-export enum CodeInstruction {
+export enum InstructionCode {
   Routing = 8
 }

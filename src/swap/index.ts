@@ -19,7 +19,7 @@ import {
 } from '../default'
 import { RoutingAddress, WalletInterface } from '../rawWallet'
 import oracle from './oracle'
-import { CodeInstruction } from './constant'
+import { InstructionCode } from './constant'
 import { ProgramError } from './error'
 
 const soproxABI = require('soprox-abi')
@@ -1066,7 +1066,7 @@ class Swap extends Tx {
         { key: 'limit', type: 'u64' },
       ],
       {
-        code: CodeInstruction.Routing.valueOf(),
+        code: InstructionCode.Routing.valueOf(),
         amount,
         limit,
       },
