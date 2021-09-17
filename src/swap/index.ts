@@ -984,6 +984,13 @@ class Swap extends Tx {
     return { txId }
   }
 
+  /**
+   *
+   * @param amount that's mean amount of biding tokens
+   * @param limit that's mean the flooring amount of asking tokens
+   * @param routingAddress is array of RoutingAddress include in poolAddress, srcAddress and dstAddress
+   * @param wallet
+   */
   routing = async (
     amount: bigint,
     limit: bigint,
