@@ -17,10 +17,11 @@ import {
   DEFAULT_SPLT_PROGRAM_ADDRESS,
   DEFAULT_SPLATA_PROGRAM_ADDRESS,
 } from '../default'
-import { RoutingAddress, WalletInterface } from '../rawWallet'
+import { WalletInterface } from '../rawWallet'
 import oracle from './oracle'
 import { InstructionCode } from './constant'
 import { ProgramError } from './error'
+import { RoutingAddress } from '../routing'
 
 const soproxABI = require('soprox-abi')
 const xor = require('buffer-xor')
@@ -991,7 +992,7 @@ class Swap extends Tx {
    * @param routingAddress is array of RoutingAddress include in poolAddress, srcAddress and dstAddress
    * @param wallet
    */
-  routing = async (
+  route = async (
     amount: bigint,
     limit: bigint,
     routingAddress: Array<RoutingAddress>,

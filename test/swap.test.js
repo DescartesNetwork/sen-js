@@ -17,9 +17,9 @@ let POOL_ADDRESS_1 = ''
 let LPT_ADDRESS_1 = ''
 let MINT_LPT_ADDRESS_1 = ''
 
-describe('Swap library', function () {
-  describe('Test pool initilization', function () {
-    it('Should initialize pool 0', async function () {
+describe('Swap library', function() {
+  describe('Test pool initilization', function() {
+    it('Should initialize pool 0', async function() {
       const swap = new Swap()
       const payerAddress = await wallet.getAddress()
       const srcAddresses = await Promise.all(
@@ -43,7 +43,7 @@ describe('Swap library', function () {
       LPT_ADDRESS_0 = lptAddress
     })
 
-    it('Should initialize pool 1', async function () {
+    it('Should initialize pool 1', async function() {
       const swap = new Swap()
       const payerAddress = await wallet.getAddress()
       const srcAddresses = await Promise.all(
@@ -68,8 +68,8 @@ describe('Swap library', function () {
     })
   })
 
-  describe('Test constructor', function () {
-    it('Should fill configs', async function () {
+  describe('Test constructor', function() {
+    it('Should fill configs', async function() {
       // Payer
       const payerAddress = await wallet.getAddress()
       console.log('PAYER:', payerAddress)
@@ -91,15 +91,15 @@ describe('Swap library', function () {
       console.log('\n')
     })
 
-    it('Should be a valid default in constructor', function () {
+    it('Should be a valid default in constructor', function() {
       new Swap()
     })
 
-    it('Should be a valid address in constructor', function () {
+    it('Should be a valid address in constructor', function() {
       new Swap('F5SvYWVLivzKc8XjoKaKxeXe2Yo8YZbJtbPbvq3b2sGj')
     })
 
-    it('Should be an invalid address in constructor', function () {
+    it('Should be an invalid address in constructor', function() {
       try {
         new Swap('abc')
         throw new Error('No error')
@@ -110,13 +110,13 @@ describe('Swap library', function () {
     })
   })
 
-  describe('Test Pool', function () {
-    it('Should be a valid pool data', async function () {
+  describe('Test Pool', function() {
+    it('Should be a valid pool data', async function() {
       const swap = new Swap()
       await swap.getPoolData(POOL_ADDRESS_0)
     })
 
-    it('Should not initialize pool', async function () {
+    it('Should not initialize pool', async function() {
       const swap = new Swap()
       const payerAddress = await wallet.getAddress()
       const srcAddresses = await Promise.all(
@@ -142,7 +142,7 @@ describe('Swap library', function () {
       }
     })
 
-    it('Should be a successful swap', async function () {
+    it('Should be a successful swap', async function() {
       const swap = new Swap()
       const payerAddress = await wallet.getAddress()
       const srcAddresses = await Promise.all(
@@ -160,7 +160,7 @@ describe('Swap library', function () {
       )
     })
 
-    it('Should be a failed swap (exceed limit)', async function () {
+    it('Should be a failed swap (exceed limit)', async function() {
       const swap = new Swap()
       const payerAddress = await wallet.getAddress()
       const srcAddresses = await Promise.all(
@@ -182,15 +182,42 @@ describe('Swap library', function () {
         if (er.message === 'No error') throw new Error('Swap bypass the limit')
       }
     })
+
+    it('Should be a successful route', async function() {
+      const swap = new Swap()
+      const payerAddress = await wallet.getAddress()
+      const srcAddresses = await Promise.all(
+        mints.map(({ address: mintAddress }) =>
+          account.deriveAssociatedAddress(payerAddress, mintAddress),
+        ),
+      )
+      await swap.route(
+        1000000000n,
+        0n,
+        [
+          {
+            'poolAddress': POOL_ADDRESS_0,
+            'srcAddress': srcAddresses[0],
+            'dstAddress': srcAddresses[1],
+          },
+          {
+            'poolAddress': POOL_ADDRESS_0,
+            'srcAddress': srcAddresses[1],
+            'dstAddress': srcAddresses[0],
+          },
+        ],
+        wallet,
+      )
+    })
   })
 
-  describe('Test LPT', function () {
-    it('Should be a valid lpt data', async function () {
+  describe('Test LPT', function() {
+    it('Should be a valid lpt data', async function() {
       const swap = new Swap()
       await swap.getLPTData(LPT_ADDRESS_0)
     })
 
-    it('Should add liquidity', async function () {
+    it('Should add liquidity', async function() {
       const swap = new Swap()
       const payerAddress = await wallet.getAddress()
       const srcAddresses = await Promise.all(
@@ -209,7 +236,7 @@ describe('Swap library', function () {
       await swap.getLPTData(LPT_ADDRESS_0)
     })
 
-    it('Should remove liquidity', async function () {
+    it('Should remove liquidity', async function() {
       const swap = new Swap()
       const payerAddress = await wallet.getAddress()
       const srcAddresses = await Promise.all(
@@ -231,7 +258,7 @@ describe('Swap library', function () {
         throw new Error('Inconsistent amount')
     })
 
-    it('Should close LPT Account', async function () {
+    it('Should close LPT Account', async function() {
       const swap = new Swap()
       const payerAddress = await wallet.getAddress()
       const srcAddresses = await Promise.all(
@@ -261,14 +288,14 @@ describe('Swap library', function () {
     })
   })
 
-  describe('Test pool owner', function () {
-    it('Should freeze/thaw pool', async function () {
+  describe('Test pool owner', function() {
+    it('Should freeze/thaw pool', async function() {
       const swap = new Swap()
       await swap.freezePool(POOL_ADDRESS_0, wallet)
       await swap.thawPool(POOL_ADDRESS_0, wallet)
       await swap.getPoolData(POOL_ADDRESS_0)
     })
-    it('Should transfer taxman', async function () {
+    it('Should transfer taxman', async function() {
       const swap = new Swap()
       const lamports = new Lamports()
       const splt = new SPLT()
@@ -284,7 +311,7 @@ describe('Swap library', function () {
       const { taxman } = await swap.getPoolData(POOL_ADDRESS_1)
       if (taxman != accountAddress) throw new Error('Cannot transfer taxman')
     })
-    it('Should transfer pool ownership', async function () {
+    it('Should transfer pool ownership', async function() {
       const swap = new Swap()
       const newOwnerAddress = account.createAccount().publicKey.toBase58()
       await swap.transferPoolOwnership(POOL_ADDRESS_1, newOwnerAddress, wallet)

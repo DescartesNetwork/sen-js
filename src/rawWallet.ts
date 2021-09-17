@@ -20,12 +20,6 @@ export type SignedMessage = {
   message: string // Utf8 string
 }
 
-export type RoutingAddress = {
-  poolAddress: string,
-  srcAddress: string,
-  dstAddress: string,
-}
-
 export interface WalletInterface {
   walletType: string
   getProvider(): Promise<Provider>
