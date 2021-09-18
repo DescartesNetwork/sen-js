@@ -182,33 +182,6 @@ describe('Swap library', function() {
         if (er.message === 'No error') throw new Error('Swap bypass the limit')
       }
     })
-
-    it('Should be a successful route', async function() {
-      const swap = new Swap()
-      const payerAddress = await wallet.getAddress()
-      const srcAddresses = await Promise.all(
-        mints.map(({ address: mintAddress }) =>
-          account.deriveAssociatedAddress(payerAddress, mintAddress),
-        ),
-      )
-      await swap.route(
-        1000000000n,
-        0n,
-        [
-          {
-            'poolAddress': POOL_ADDRESS_0,
-            'srcAddress': srcAddresses[0],
-            'dstAddress': srcAddresses[1],
-          },
-          {
-            'poolAddress': POOL_ADDRESS_0,
-            'srcAddress': srcAddresses[1],
-            'dstAddress': srcAddresses[0],
-          },
-        ],
-        wallet,
-      )
-    })
   })
 
   describe('Test LPT', function() {
