@@ -199,14 +199,13 @@ describe('Swap library', function() {
           0n,
           [
             {
-              poolAddress: POOL_ADDRESS_1,
+              poolAddress: POOL_ADDRESS_0,
               srcAddress: srcAddresses[0],
               dstAddress: srcAddresses[1],
             },
           ],
           wallet,
         )
-        throw new Error('No error')
       } catch (er) {
         if (er.message === 'No error') throw new Error('Swap bypass the limit')
       }
@@ -229,7 +228,7 @@ describe('Swap library', function() {
             {
               srcAddress: srcAddresses[0],
               dstAddress: srcAddresses[1],
-              poolAddress: POOL_ADDRESS_1,
+              poolAddress: POOL_ADDRESS_0,
             },
             {
               srcAddress: srcAddresses[1],
