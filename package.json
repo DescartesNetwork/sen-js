@@ -6,7 +6,7 @@
   "scripts": {
     "build": "npm run clean && tsc",
     "clean": "rm -rf ./dist",
-    "test": "jest"
+    "test": "npm run build && mocha"
   },
   "repository": {
     "type": "git",
@@ -20,11 +20,8 @@
   "homepage": "https://github.com/DescartesNetwork/sen-js#readme",
   "devDependencies": {
     "@types/aes-js": "^3.1.1",
-    "@types/jest": "^27.0.1",
     "@types/pbkdf2": "^3.1.0",
-    "jest": "^27.2.0",
     "mocha": "^9.0.2",
-    "ts-jest": "^27.0.5",
     "typedoc": "^0.21.6",
     "typescript": "^4.4.3"
   },
@@ -37,7 +34,6 @@
     "buffer-xor": "^2.0.2",
     "pbkdf2": "^3.1.2",
     "soprox-abi": "0.0.14",
-    "ts-node": "^10.2.1",
     "tweetnacl": "^1.0.3"
   }
 }

@@ -997,7 +997,7 @@ class Swap extends Tx {
     limit: bigint,
     routingAddress: Array<RoutingAddress>,
     wallet: WalletInterface,
-  ): Promise<{ txId: string }> => {
+  ): Promise<{ txId: string, dst: string }> => {
     const payerAddress = await wallet.getAddress()
     const payerPublicKey = account.fromAddress(payerAddress) as PublicKey
 
@@ -1084,7 +1084,8 @@ class Swap extends Tx {
     this.addSignature(transaction, payerSig)
     // Send tx
     const txId = await this.sendTransaction(transaction)
-    return { txId }
+    const dst = routingAddress[routingAddress.length - 1].poolAddress
+    return { txId, dst }
   }
 }
 

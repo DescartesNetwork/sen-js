@@ -1,5 +1,6 @@
 const { account, Swap, RawWallet, Lamports, SPLT } = require('../dist')
 const { payer, mints } = require('./config')
+const assert = require('assert')
 
 const wallet = new RawWallet(payer.secretKey)
 // Primary Mint
@@ -180,6 +181,121 @@ describe('Swap library', function() {
         throw new Error('No error')
       } catch (er) {
         if (er.message === 'No error') throw new Error('Swap bypass the limit')
+      }
+    })
+
+    it('route should be success', async function() {
+      const swap = new Swap()
+      const payerAddress = await wallet.getAddress()
+      const srcAddresses = await Promise.all(
+        mints.map(({ address: mintAddress }) =>
+          account.deriveAssociatedAddress(payerAddress, mintAddress),
+        ),
+      )
+
+      try {
+        await swap.route(
+          1000n,
+          0n,
+          [
+            {
+              poolAddress: POOL_ADDRESS_1,
+              srcAddress: srcAddresses[0],
+              dstAddress: srcAddresses[1],
+            },
+          ],
+          wallet,
+        )
+        throw new Error('No error')
+      } catch (er) {
+        if (er.message === 'No error') throw new Error('Swap bypass the limit')
+      }
+    })
+
+    it('route should be failed because of treasury account not matched', async function() {
+      const swap = new Swap()
+      const payerAddress = await wallet.getAddress()
+      const srcAddresses = await Promise.all(
+        mints.map(({ address: mintAddress }) =>
+          account.deriveAssociatedAddress(payerAddress, mintAddress),
+        ),
+      )
+
+      try {
+        await swap.route(
+          1000n,
+          0n,
+          [
+            {
+              srcAddress: srcAddresses[0],
+              dstAddress: srcAddresses[1],
+              poolAddress: POOL_ADDRESS_1,
+            },
+            {
+              srcAddress: srcAddresses[1],
+              dstAddress: srcAddresses[2],
+              poolAddress: POOL_ADDRESS_0,
+            },
+          ],
+          wallet,
+        )
+      } catch (er) {
+        assert.deepStrictEqual(er.message, 'There is no treasury account matched')
+      }
+    })
+
+    it('route should be failed because of amount input is zero', async function() {
+      const swap = new Swap()
+      const payerAddress = await wallet.getAddress()
+      const srcAddresses = await Promise.all(
+        mints.map(({ address: mintAddress }) =>
+          account.deriveAssociatedAddress(payerAddress, mintAddress),
+        ),
+      )
+
+      try {
+        const result = await swap.route(
+          0n,
+          20000000000n,
+          [
+            {
+              srcAddress: srcAddresses[0],
+              dstAddress: srcAddresses[2],
+              poolAddress: POOL_ADDRESS_1,
+            },
+          ],
+          wallet,
+        )
+      } catch (er) {
+        assert.deepStrictEqual(er.message, 'Cannot input a zero amount')
+      }
+    })
+
+    it('route should be failed because of exceed limit', async function() {
+      const swap = new Swap()
+      const payerAddress = await wallet.getAddress()
+      const srcAddresses = await Promise.all(
+        mints.map(({ address: mintAddress }) =>
+          account.deriveAssociatedAddress(payerAddress, mintAddress),
+        ),
+      )
+
+      try {
+        const result = await swap.route(
+          10n,
+          20000000000n,
+          [
+            {
+              srcAddress: srcAddresses[0],
+              dstAddress: srcAddresses[2],
+              poolAddress: POOL_ADDRESS_1,
+            },
+          ],
+          wallet,
+        )
+        console.log(result)
+      } catch (er) {
+        assert.deepStrictEqual(er.message, 'Exceed limit')
       }
     })
   })
