@@ -5,7 +5,7 @@ import {
   TransactionInstruction,
   SystemProgram,
   GetProgramAccountsFilter,
-  KeyedAccountInfo,
+  KeyedAccountInfo, AccountMeta,
 } from '@solana/web3.js'
 
 import Tx from '../core/tx'
@@ -19,6 +19,9 @@ import {
 } from '../default'
 import { WalletInterface } from '../rawWallet'
 import oracle from './oracle'
+import { InstructionCode } from './constant'
+import { ProgramError } from './error'
+import { RoutingAddress } from '../routing'
 
 const soproxABI = require('soprox-abi')
 const xor = require('buffer-xor')
@@ -87,9 +90,9 @@ class Swap extends Tx {
     filters?: GetProgramAccountsFilter[],
   ): number => {
     const cb = ({
-      accountId,
-      accountInfo: { data: buf },
-    }: KeyedAccountInfo) => {
+                  accountId,
+                  accountInfo: { data: buf },
+                }: KeyedAccountInfo) => {
       const address = accountId.toBase58()
       const poolSpace = new soproxABI.struct(schema.POOL_SCHEMA).space
       let type = null
@@ -980,6 +983,109 @@ class Swap extends Tx {
     // Send tx
     const txId = await this.sendTransaction(transaction)
     return { txId }
+  }
+
+  /**
+   *
+   * @param amount that's mean amount of biding tokens
+   * @param limit that's mean the flooring amount of asking tokens
+   * @param routingAddress is array of RoutingAddress include in poolAddress, srcAddress and dstAddress
+   * @param wallet
+   */
+  route = async (
+    amount: bigint,
+    limit: bigint,
+    routingAddress: Array<RoutingAddress>,
+    wallet: WalletInterface,
+  ): Promise<{ txId: string, dst: string }> => {
+    const payerAddress = await wallet.getAddress()
+    const payerPublicKey = account.fromAddress(payerAddress) as PublicKey
+
+    const keys = new Array<AccountMeta>()
+    keys.push({ pubkey: payerPublicKey, isSigner: true, isWritable: false })
+    keys.push({ pubkey: SystemProgram.programId, isSigner: false, isWritable: false })
+    keys.push({ pubkey: this.spltProgramId, isSigner: false, isWritable: false })
+    keys.push({ pubkey: SYSVAR_RENT_PUBKEY, isSigner: false, isWritable: false })
+    keys.push({ pubkey: this.splataProgramId, isSigner: false, isWritable: false })
+
+    for (const ra of routingAddress) {
+      const poolAddress = ra.poolAddress
+      if (!account.isAddress(poolAddress)) throw ProgramError.InvalidAddressErr
+      const poolPublicKey = account.fromAddress(poolAddress) as PublicKey
+      const { treasurerPublicKey } = await this.getTreasurer(poolAddress)
+      const poolData = await this.getPoolData(poolAddress)
+      const { taxman: taxmanAddress } = poolData
+      if (!account.isAddress(taxmanAddress)) throw ProgramError.InvalidTaxmanAddressErr
+      const taxmanPublicKey = account.fromAddress(taxmanAddress) as PublicKey
+
+      const srcAddress = ra.srcAddress
+      if (!account.isAddress(srcAddress)) throw ProgramError.InvalidAddressErr
+      const srcPublicKey = account.fromAddress(srcAddress) as PublicKey
+      const { mint: srcMintAddress } = await this._splt.getAccountData(srcAddress)
+      if (!account.isAddress(srcMintAddress)) throw ProgramError.InvalidSourceMintAddressErr
+      const srcMintPublicKey = account.fromAddress(srcMintAddress) as PublicKey
+
+      const dstAddress = ra.dstAddress
+      if (!account.isAddress(dstAddress)) throw  ProgramError.InvalidAddressErr
+      const dstPublicKey = account.fromAddress(dstAddress) as PublicKey
+      const { mint: dstMintAddress } = await this._splt.getAccountData(dstAddress)
+      if (!account.isAddress(dstMintAddress)) throw ProgramError.InvalidDestinationMintAddressErr
+      const dstMintPublicKey = account.fromAddress(dstMintAddress) as PublicKey
+
+      const treasuryTaxmanAddress = await this._splt.deriveAssociatedAddress(taxmanAddress, dstMintAddress)
+      const treasuryTaxmanPublicKey = account.fromAddress(treasuryTaxmanAddress) as PublicKey
+
+      const [treasuryBidPublicKey, treasuryAskPublicKey] = [
+        this.findTreasury(srcMintAddress, poolData),
+        this.findTreasury(dstMintAddress, poolData),
+      ].map(
+        (treasuryAddress) => account.fromAddress(treasuryAddress) as PublicKey,
+      )
+
+      keys.push({ pubkey: poolPublicKey, isSigner: false, isWritable: true })
+
+      keys.push({ pubkey: srcPublicKey, isSigner: false, isWritable: true })
+      keys.push({ pubkey: srcMintPublicKey, isSigner: false, isWritable: false })
+      keys.push({ pubkey: treasuryBidPublicKey, isSigner: false, isWritable: true })
+
+      keys.push({ pubkey: dstPublicKey, isSigner: false, isWritable: true })
+      keys.push({ pubkey: dstMintPublicKey, isSigner: false, isWritable: false })
+      keys.push({ pubkey: treasuryAskPublicKey, isSigner: false, isWritable: true })
+
+      keys.push({ pubkey: taxmanPublicKey, isSigner: false, isWritable: false })
+      keys.push({ pubkey: treasuryTaxmanPublicKey, isSigner: false, isWritable: true })
+
+      keys.push({ pubkey: treasurerPublicKey, isSigner: false, isWritable: false })
+    }
+
+    let transaction = new Transaction()
+    transaction = await this.addRecentCommitment(transaction)
+    const layout = new soproxABI.struct(
+      [
+        { key: 'code', type: 'u8' },
+        { key: 'amount', type: 'u64' },
+        { key: 'limit', type: 'u64' },
+      ],
+      {
+        code: InstructionCode.Routing.valueOf(),
+        amount,
+        limit,
+      },
+    )
+    const instruction = new TransactionInstruction({
+      keys: keys,
+      programId: this.swapProgramId,
+      data: layout.toBuffer(),
+    })
+    transaction.add(instruction)
+    transaction.feePayer = payerPublicKey
+    // Sign tx
+    const payerSig = await wallet.rawSignTransaction(transaction)
+    this.addSignature(transaction, payerSig)
+    // Send tx
+    const txId = await this.sendTransaction(transaction)
+    const dst = routingAddress[routingAddress.length - 1].poolAddress
+    return { txId, dst }
   }
 }
 
