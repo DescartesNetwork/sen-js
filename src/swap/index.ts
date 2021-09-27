@@ -5,7 +5,8 @@ import {
   TransactionInstruction,
   SystemProgram,
   GetProgramAccountsFilter,
-  KeyedAccountInfo, AccountMeta,
+  KeyedAccountInfo,
+  AccountMeta,
 } from '@solana/web3.js'
 
 import Tx from '../core/tx'
@@ -21,7 +22,6 @@ import { WalletInterface } from '../rawWallet'
 import oracle from './oracle'
 import { InstructionCode } from './constant'
 import { ProgramError } from './error'
-import { RoutingAddress } from '../routing'
 
 const soproxABI = require('soprox-abi')
 const xor = require('buffer-xor')
@@ -30,6 +30,11 @@ export type SwapAccountChangeInfo = {
   type: 'pool'
   address: string
   data: Buffer
+}
+export type RoutingAddress = {
+  poolAddress: string
+  srcAddress: string
+  dstAddress: string
 }
 
 const ErrorMapping = [
@@ -67,11 +72,9 @@ class Swap extends Tx {
       throw new Error('Invalid SPL token program address')
     if (!account.isAddress(splataProgramAddress))
       throw new Error('Invalid SPL associated token program address')
-    this.swapProgramId = account.fromAddress(swapProgramAddress) as PublicKey
-    this.spltProgramId = account.fromAddress(spltProgramAddress) as PublicKey
-    this.splataProgramId = account.fromAddress(
-      splataProgramAddress,
-    ) as PublicKey
+    this.swapProgramId = account.fromAddress(swapProgramAddress)
+    this.spltProgramId = account.fromAddress(spltProgramAddress)
+    this.splataProgramId = account.fromAddress(splataProgramAddress)
 
     this._splt = new SPLT(spltProgramAddress, splataProgramAddress, nodeUrl)
   }
@@ -90,9 +93,9 @@ class Swap extends Tx {
     filters?: GetProgramAccountsFilter[],
   ): number => {
     const cb = ({
-                  accountId,
-                  accountInfo: { data: buf },
-                }: KeyedAccountInfo) => {
+      accountId,
+      accountInfo: { data: buf },
+    }: KeyedAccountInfo) => {
       const address = accountId.toBase58()
       const poolSpace = new soproxABI.struct(schema.POOL_SCHEMA).space
       let type = null
@@ -136,7 +139,7 @@ class Swap extends Tx {
   private genProofAddress = async (poolAddress: string): Promise<string> => {
     if (!account.isAddress(poolAddress)) throw new Error('Invalid pool address')
     const { treasurerPublicKey } = await this.getTreasurer(poolAddress)
-    const poolPublicKey = account.fromAddress(poolAddress) as PublicKey
+    const poolPublicKey = account.fromAddress(poolAddress)
     const proof = new PublicKey(
       xor(
         this.swapProgramId.toBuffer(),
@@ -161,12 +164,8 @@ class Swap extends Tx {
     if (!account.isAddress(freezeAuthorityAddress))
       throw new Error('Invalid freeze authority address')
 
-    const mintAuthorityPublicKey = account.fromAddress(
-      mintAuthorityAddress,
-    ) as PublicKey
-    const freezeAuthorityPublicKey = account.fromAddress(
-      freezeAuthorityAddress,
-    ) as PublicKey // Proof address of mint LPT
+    const mintAuthorityPublicKey = account.fromAddress(mintAuthorityAddress)
+    const freezeAuthorityPublicKey = account.fromAddress(freezeAuthorityAddress) // Proof address of mint LPT
     const poolPublicKey = new PublicKey(
       xor(
         this.swapProgramId.toBuffer(),
@@ -262,7 +261,7 @@ class Swap extends Tx {
    */
   getPoolData = async (poolAddress: string): Promise<PoolData> => {
     if (!account.isAddress(poolAddress)) throw new Error('Invalid pool address')
-    const poolPublicKey = account.fromAddress(poolAddress) as PublicKey
+    const poolPublicKey = account.fromAddress(poolAddress)
     const { data } = (await this.connection.getAccountInfo(poolPublicKey)) || {}
     if (!data) throw new Error(`Cannot read data of ${poolAddress}`)
     return this.parsePoolData(data)
@@ -290,7 +289,7 @@ class Swap extends Tx {
     lptAddress: string,
   ): Promise<AccountData & { pool: string }> => {
     if (!account.isAddress(lptAddress)) throw new Error('Invalid lpt address')
-    const lptPublicKey = account.fromAddress(lptAddress) as PublicKey
+    const lptPublicKey = account.fromAddress(lptAddress)
     const { data } = (await this.connection.getAccountInfo(lptPublicKey)) || {}
     if (!data) throw new Error(`Cannot read data of ${lptAddress}`)
     const lptData = this.parseLPTData(data)
@@ -303,7 +302,7 @@ class Swap extends Tx {
       freeze_authority,
     )
     if (!account.isAddress(poolAddress)) throw new Error('Invalid pool address')
-    return { ...lptData, pool: poolAddress as string }
+    return { ...lptData, pool: poolAddress }
   }
 
   /**
@@ -363,7 +362,7 @@ class Swap extends Tx {
       throw new Error('Invalid taxman address')
     // Get payer
     const payerAddress = await wallet.getAddress()
-    const payerPublicKey = account.fromAddress(payerAddress) as PublicKey
+    const payerPublicKey = account.fromAddress(payerAddress)
     // Fetch necessary info
     const mintLPT = account.createAccount()
     const mintLPTAddress = mintLPT.publicKey.toBase58()
@@ -376,13 +375,13 @@ class Swap extends Tx {
     const { mint: mintAAddress } = await this._splt.getAccountData(srcAAddress)
     const { mint: mintBAddress } = await this._splt.getAccountData(srcBAddress)
     // Build public keys
-    const ownerPublicKey = account.fromAddress(ownerAddress) as PublicKey
-    const lptPublicKey = account.fromAddress(lptAddress) as PublicKey
-    const srcAPublicKey = account.fromAddress(srcAAddress) as PublicKey
-    const mintAPublicKey = account.fromAddress(mintAAddress) as PublicKey
-    const srcBPublicKey = account.fromAddress(srcBAddress) as PublicKey
-    const mintBPublicKey = account.fromAddress(mintBAddress) as PublicKey
-    const taxmanPublicKey = account.fromAddress(taxmanAddress) as PublicKey
+    const ownerPublicKey = account.fromAddress(ownerAddress)
+    const lptPublicKey = account.fromAddress(lptAddress)
+    const srcAPublicKey = account.fromAddress(srcAAddress)
+    const mintAPublicKey = account.fromAddress(mintAAddress)
+    const srcBPublicKey = account.fromAddress(srcBAddress)
+    const mintBPublicKey = account.fromAddress(mintBAddress)
+    const taxmanPublicKey = account.fromAddress(taxmanAddress)
     // Get treasurer
     const { treasurerAddress, treasurerPublicKey } = await this.getTreasurer(
       poolAddress,
@@ -393,12 +392,10 @@ class Swap extends Tx {
         mintAAddress,
         mintBAddress,
       ])
-    ).map(
-      (treasuryAddress) => account.fromAddress(treasuryAddress) as PublicKey,
-    )
+    ).map((treasuryAddress) => account.fromAddress(treasuryAddress))
     // Generate proof
     const proofAddress = await this.genProofAddress(poolAddress)
-    const proofPublicKey = account.fromAddress(proofAddress) as PublicKey
+    const proofPublicKey = account.fromAddress(proofAddress)
     // Build tx
     let transaction = new Transaction()
     transaction = await this.addRecentCommitment(transaction)
@@ -513,7 +510,7 @@ class Swap extends Tx {
       throw new Error('Invalid source B address')
     // Get payer
     const payerAddress = await wallet.getAddress()
-    const payerPublicKey = account.fromAddress(payerAddress) as PublicKey
+    const payerPublicKey = account.fromAddress(payerAddress)
     // Fetch necessary info
     const {
       mint_lpt: mintLPTAddress,
@@ -528,22 +525,20 @@ class Swap extends Tx {
     )
     if (!account.isAddress(lptAddress)) throw new Error('Invalid lpt address')
     // Build public keys
-    const poolPublicKey = account.fromAddress(poolAddress) as PublicKey
-    const lptPublicKey = account.fromAddress(lptAddress) as PublicKey
-    const mintLPTPublicKey = account.fromAddress(mintLPTAddress) as PublicKey
-    const srcAPublicKey = account.fromAddress(srcAAddress) as PublicKey
-    const mintAPublicKey = account.fromAddress(mintAAddress) as PublicKey
-    const srcBPublicKey = account.fromAddress(srcBAddress) as PublicKey
-    const mintBPublicKey = account.fromAddress(mintBAddress) as PublicKey
+    const poolPublicKey = account.fromAddress(poolAddress)
+    const lptPublicKey = account.fromAddress(lptAddress)
+    const mintLPTPublicKey = account.fromAddress(mintLPTAddress)
+    const srcAPublicKey = account.fromAddress(srcAAddress)
+    const mintAPublicKey = account.fromAddress(mintAAddress)
+    const srcBPublicKey = account.fromAddress(srcBAddress)
+    const mintBPublicKey = account.fromAddress(mintBAddress)
     // Get treasurer
     const { treasurerPublicKey } = await this.getTreasurer(poolAddress)
     // Get treasury S, A, B
     const [treasuryAPublicKey, treasuryBPublicKey] = [
       treasuryAAddress,
       treasuryBAddress,
-    ].map(
-      (treasuryAddress) => account.fromAddress(treasuryAddress) as PublicKey,
-    )
+    ].map((treasuryAddress) => account.fromAddress(treasuryAddress))
     // Build tx
     let transaction = new Transaction()
     transaction = await this.addRecentCommitment(transaction)
@@ -617,7 +612,7 @@ class Swap extends Tx {
       throw new Error('Invalid destination B address')
     // Get payer
     const payerAddress = await wallet.getAddress()
-    const payerPublicKey = account.fromAddress(payerAddress) as PublicKey
+    const payerPublicKey = account.fromAddress(payerAddress)
     // Fetch necessary info
     const {
       mint_lpt: mintLPTAddress,
@@ -632,22 +627,20 @@ class Swap extends Tx {
     )
     if (!account.isAddress(lptAddress)) throw new Error('Invalid lpt address')
     // Build public keys
-    const poolPublicKey = account.fromAddress(poolAddress) as PublicKey
-    const lptPublicKey = account.fromAddress(lptAddress) as PublicKey
-    const mintLPTPublicKey = account.fromAddress(mintLPTAddress) as PublicKey
-    const dstAPublicKey = account.fromAddress(dstAAddress) as PublicKey
-    const mintAPublicKey = account.fromAddress(mintAAddress) as PublicKey
-    const dstBPublicKey = account.fromAddress(dstBAddress) as PublicKey
-    const mintBPublicKey = account.fromAddress(mintBAddress) as PublicKey
+    const poolPublicKey = account.fromAddress(poolAddress)
+    const lptPublicKey = account.fromAddress(lptAddress)
+    const mintLPTPublicKey = account.fromAddress(mintLPTAddress)
+    const dstAPublicKey = account.fromAddress(dstAAddress)
+    const mintAPublicKey = account.fromAddress(mintAAddress)
+    const dstBPublicKey = account.fromAddress(dstBAddress)
+    const mintBPublicKey = account.fromAddress(mintBAddress)
     // Get treasurer
     const { treasurerPublicKey } = await this.getTreasurer(poolAddress)
     // Get treasury S, A, B
     const [treasuryAPublicKey, treasuryBPublicKey] = [
       treasuryAAddress,
       treasuryBAddress,
-    ].map(
-      (treasuryAddress) => account.fromAddress(treasuryAddress) as PublicKey,
-    )
+    ].map((treasuryAddress) => account.fromAddress(treasuryAddress))
     // Build tx
     let transaction = new Transaction()
     transaction = await this.addRecentCommitment(transaction)
@@ -735,27 +728,23 @@ class Swap extends Tx {
     if (!account.isAddress(dstMintAddress))
       throw new Error('Invalid destination mint address')
     // Build public keys
-    const poolPublicKey = account.fromAddress(poolAddress) as PublicKey
-    const taxmanPublicKey = account.fromAddress(taxmanAddress) as PublicKey
-    const srcPublicKey = account.fromAddress(srcAddress) as PublicKey
-    const srcMintPublicKey = account.fromAddress(srcMintAddress) as PublicKey
-    const dstPublicKey = account.fromAddress(dstAddress) as PublicKey
-    const dstMintPublicKey = account.fromAddress(dstMintAddress) as PublicKey
-    const treasuryTaxmanPublicKey = account.fromAddress(
-      treasuryTaxmanAddress,
-    ) as PublicKey
+    const poolPublicKey = account.fromAddress(poolAddress)
+    const taxmanPublicKey = account.fromAddress(taxmanAddress)
+    const srcPublicKey = account.fromAddress(srcAddress)
+    const srcMintPublicKey = account.fromAddress(srcMintAddress)
+    const dstPublicKey = account.fromAddress(dstAddress)
+    const dstMintPublicKey = account.fromAddress(dstMintAddress)
+    const treasuryTaxmanPublicKey = account.fromAddress(treasuryTaxmanAddress)
     // Get payer
     const payerAddress = await wallet.getAddress()
-    const payerPublicKey = account.fromAddress(payerAddress) as PublicKey
+    const payerPublicKey = account.fromAddress(payerAddress)
     // Get treasurer
     const { treasurerPublicKey } = await this.getTreasurer(poolAddress)
     // Get bid, ask treasury
     const [treasuryBidPublicKey, treasuryAskPublicKey] = [
       this.findTreasury(srcMintAddress, poolData),
       this.findTreasury(dstMintAddress, poolData),
-    ].map(
-      (treasuryAddress) => account.fromAddress(treasuryAddress) as PublicKey,
-    )
+    ].map((treasuryAddress) => account.fromAddress(treasuryAddress))
     // Build tx
     let transaction = new Transaction()
     transaction = await this.addRecentCommitment(transaction)
@@ -813,10 +802,10 @@ class Swap extends Tx {
     wallet: WalletInterface,
   ): Promise<{ txId: string }> => {
     if (!account.isAddress(poolAddress)) throw new Error('Invalid pool address')
-    const poolPublicKey = account.fromAddress(poolAddress) as PublicKey
+    const poolPublicKey = account.fromAddress(poolAddress)
     // Get payer
     const payerAddress = await wallet.getAddress()
-    const payerPublicKey = account.fromAddress(payerAddress) as PublicKey
+    const payerPublicKey = account.fromAddress(payerAddress)
     // Build tx
     let transaction = new Transaction()
     transaction = await this.addRecentCommitment(transaction)
@@ -852,10 +841,10 @@ class Swap extends Tx {
     wallet: WalletInterface,
   ): Promise<{ txId: string }> => {
     if (!account.isAddress(poolAddress)) throw new Error('Invalid pool address')
-    const poolPublicKey = account.fromAddress(poolAddress) as PublicKey
+    const poolPublicKey = account.fromAddress(poolAddress)
     // Get payer
     const payerAddress = await wallet.getAddress()
-    const payerPublicKey = account.fromAddress(payerAddress) as PublicKey
+    const payerPublicKey = account.fromAddress(payerAddress)
     // Build tx
     let transaction = new Transaction()
     transaction = await this.addRecentCommitment(transaction)
@@ -895,13 +884,11 @@ class Swap extends Tx {
     if (!account.isAddress(poolAddress)) throw new Error('Invalid pool address')
     if (!account.isAddress(newTaxmanAddress))
       throw new Error('Invalid new taxman address')
-    const poolPublicKey = account.fromAddress(poolAddress) as PublicKey
-    const newTaxmanPublicKey = account.fromAddress(
-      newTaxmanAddress,
-    ) as PublicKey
+    const poolPublicKey = account.fromAddress(poolAddress)
+    const newTaxmanPublicKey = account.fromAddress(newTaxmanAddress)
     // Get payer
     const payerAddress = await wallet.getAddress()
-    const payerPublicKey = account.fromAddress(payerAddress) as PublicKey
+    const payerPublicKey = account.fromAddress(payerAddress)
     // Build tx
     let transaction = new Transaction()
     transaction = await this.addRecentCommitment(transaction)
@@ -955,11 +942,11 @@ class Swap extends Tx {
     if (!account.isAddress(poolAddress)) throw new Error('Invalid pool address')
     if (!account.isAddress(newOwnerAddress))
       throw new Error('Invalid new owner address')
-    const poolPublicKey = account.fromAddress(poolAddress) as PublicKey
-    const newOwnerPublicKey = account.fromAddress(newOwnerAddress) as PublicKey
+    const poolPublicKey = account.fromAddress(poolAddress)
+    const newOwnerPublicKey = account.fromAddress(newOwnerAddress)
     // Get payer
     const payerAddress = await wallet.getAddress()
-    const payerPublicKey = account.fromAddress(payerAddress) as PublicKey
+    const payerPublicKey = account.fromAddress(payerAddress)
     // Build tx
     let transaction = new Transaction()
     transaction = await this.addRecentCommitment(transaction)
@@ -997,65 +984,113 @@ class Swap extends Tx {
     limit: bigint,
     routingAddress: Array<RoutingAddress>,
     wallet: WalletInterface,
-  ): Promise<{ txId: string, dst: string }> => {
+  ): Promise<{ txId: string; dst: string }> => {
     const payerAddress = await wallet.getAddress()
-    const payerPublicKey = account.fromAddress(payerAddress) as PublicKey
+    const payerPublicKey = account.fromAddress(payerAddress)
 
     const keys = new Array<AccountMeta>()
     keys.push({ pubkey: payerPublicKey, isSigner: true, isWritable: false })
-    keys.push({ pubkey: SystemProgram.programId, isSigner: false, isWritable: false })
-    keys.push({ pubkey: this.spltProgramId, isSigner: false, isWritable: false })
-    keys.push({ pubkey: SYSVAR_RENT_PUBKEY, isSigner: false, isWritable: false })
-    keys.push({ pubkey: this.splataProgramId, isSigner: false, isWritable: false })
+    keys.push({
+      pubkey: SystemProgram.programId,
+      isSigner: false,
+      isWritable: false,
+    })
+    keys.push({
+      pubkey: this.spltProgramId,
+      isSigner: false,
+      isWritable: false,
+    })
+    keys.push({
+      pubkey: SYSVAR_RENT_PUBKEY,
+      isSigner: false,
+      isWritable: false,
+    })
+    keys.push({
+      pubkey: this.splataProgramId,
+      isSigner: false,
+      isWritable: false,
+    })
 
     for (const ra of routingAddress) {
       const poolAddress = ra.poolAddress
       if (!account.isAddress(poolAddress)) throw ProgramError.InvalidAddressErr
-      const poolPublicKey = account.fromAddress(poolAddress) as PublicKey
+      const poolPublicKey = account.fromAddress(poolAddress)
       const { treasurerPublicKey } = await this.getTreasurer(poolAddress)
       const poolData = await this.getPoolData(poolAddress)
       const { taxman: taxmanAddress } = poolData
-      if (!account.isAddress(taxmanAddress)) throw ProgramError.InvalidTaxmanAddressErr
-      const taxmanPublicKey = account.fromAddress(taxmanAddress) as PublicKey
+      if (!account.isAddress(taxmanAddress))
+        throw ProgramError.InvalidTaxmanAddressErr
+      const taxmanPublicKey = account.fromAddress(taxmanAddress)
 
       const srcAddress = ra.srcAddress
       if (!account.isAddress(srcAddress)) throw ProgramError.InvalidAddressErr
-      const srcPublicKey = account.fromAddress(srcAddress) as PublicKey
-      const { mint: srcMintAddress } = await this._splt.getAccountData(srcAddress)
-      if (!account.isAddress(srcMintAddress)) throw ProgramError.InvalidSourceMintAddressErr
-      const srcMintPublicKey = account.fromAddress(srcMintAddress) as PublicKey
+      const srcPublicKey = account.fromAddress(srcAddress)
+      const { mint: srcMintAddress } = await this._splt.getAccountData(
+        srcAddress,
+      )
+      if (!account.isAddress(srcMintAddress))
+        throw ProgramError.InvalidSourceMintAddressErr
+      const srcMintPublicKey = account.fromAddress(srcMintAddress)
 
       const dstAddress = ra.dstAddress
-      if (!account.isAddress(dstAddress)) throw  ProgramError.InvalidAddressErr
-      const dstPublicKey = account.fromAddress(dstAddress) as PublicKey
-      const { mint: dstMintAddress } = await this._splt.getAccountData(dstAddress)
-      if (!account.isAddress(dstMintAddress)) throw ProgramError.InvalidDestinationMintAddressErr
-      const dstMintPublicKey = account.fromAddress(dstMintAddress) as PublicKey
+      if (!account.isAddress(dstAddress)) throw ProgramError.InvalidAddressErr
+      const dstPublicKey = account.fromAddress(dstAddress)
+      const { mint: dstMintAddress } = await this._splt.getAccountData(
+        dstAddress,
+      )
+      if (!account.isAddress(dstMintAddress))
+        throw ProgramError.InvalidDestinationMintAddressErr
+      const dstMintPublicKey = account.fromAddress(dstMintAddress)
 
-      const treasuryTaxmanAddress = await this._splt.deriveAssociatedAddress(taxmanAddress, dstMintAddress)
-      const treasuryTaxmanPublicKey = account.fromAddress(treasuryTaxmanAddress) as PublicKey
+      const treasuryTaxmanAddress = await this._splt.deriveAssociatedAddress(
+        taxmanAddress,
+        dstMintAddress,
+      )
+      const treasuryTaxmanPublicKey = account.fromAddress(treasuryTaxmanAddress)
 
       const [treasuryBidPublicKey, treasuryAskPublicKey] = [
         this.findTreasury(srcMintAddress, poolData),
         this.findTreasury(dstMintAddress, poolData),
-      ].map(
-        (treasuryAddress) => account.fromAddress(treasuryAddress) as PublicKey,
-      )
+      ].map((treasuryAddress) => account.fromAddress(treasuryAddress))
 
       keys.push({ pubkey: poolPublicKey, isSigner: false, isWritable: true })
 
       keys.push({ pubkey: srcPublicKey, isSigner: false, isWritable: true })
-      keys.push({ pubkey: srcMintPublicKey, isSigner: false, isWritable: false })
-      keys.push({ pubkey: treasuryBidPublicKey, isSigner: false, isWritable: true })
+      keys.push({
+        pubkey: srcMintPublicKey,
+        isSigner: false,
+        isWritable: false,
+      })
+      keys.push({
+        pubkey: treasuryBidPublicKey,
+        isSigner: false,
+        isWritable: true,
+      })
 
       keys.push({ pubkey: dstPublicKey, isSigner: false, isWritable: true })
-      keys.push({ pubkey: dstMintPublicKey, isSigner: false, isWritable: false })
-      keys.push({ pubkey: treasuryAskPublicKey, isSigner: false, isWritable: true })
+      keys.push({
+        pubkey: dstMintPublicKey,
+        isSigner: false,
+        isWritable: false,
+      })
+      keys.push({
+        pubkey: treasuryAskPublicKey,
+        isSigner: false,
+        isWritable: true,
+      })
 
       keys.push({ pubkey: taxmanPublicKey, isSigner: false, isWritable: false })
-      keys.push({ pubkey: treasuryTaxmanPublicKey, isSigner: false, isWritable: true })
+      keys.push({
+        pubkey: treasuryTaxmanPublicKey,
+        isSigner: false,
+        isWritable: true,
+      })
 
-      keys.push({ pubkey: treasurerPublicKey, isSigner: false, isWritable: false })
+      keys.push({
+        pubkey: treasurerPublicKey,
+        isSigner: false,
+        isWritable: false,
+      })
     }
 
     let transaction = new Transaction()

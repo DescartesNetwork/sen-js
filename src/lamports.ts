@@ -32,7 +32,7 @@ class Lamports extends Tx {
     callback: (error: string | null, lamports: number | null) => void,
   ): number | void => {
     if (!account.isAddress(address)) return callback('Invalid address', null)
-    const publicKey = account.fromAddress(address) as PublicKey
+    const publicKey = account.fromAddress(address)
     return this.connection.onAccountChange(publicKey, (data) => {
       if (!data) return callback('Cannot parse data', null)
       const { lamports } = data
@@ -57,7 +57,7 @@ class Lamports extends Tx {
    */
   getLamports = async (address: string): Promise<number> => {
     if (!account.isAddress(address)) throw new Error('Invalid address')
-    const publicKey = account.fromAddress(address) as PublicKey
+    const publicKey = account.fromAddress(address)
     const lamports = await this.connection.getBalance(publicKey)
     return lamports
   }
@@ -76,7 +76,7 @@ class Lamports extends Tx {
   ): Promise<string> => {
     if (!account.isAddress(dstAddress))
       throw new Error('Invalid destination address')
-    const dstPublicKey = account.fromAddress(dstAddress) as PublicKey
+    const dstPublicKey = account.fromAddress(dstAddress)
     // Get payer
     const payerAddress = await wallet.getAddress()
     const payerPublicKey = account.fromAddress(payerAddress)
@@ -111,7 +111,7 @@ class Lamports extends Tx {
   ): Promise<string> => {
     if (!account.isAddress(dstAddress))
       throw new Error('Invalid destination address')
-    const dstPublicKey = account.fromAddress(dstAddress) as PublicKey
+    const dstPublicKey = account.fromAddress(dstAddress)
     return await this.connection.requestAirdrop(dstPublicKey, Number(lamports))
   }
 }

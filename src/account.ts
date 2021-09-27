@@ -12,7 +12,7 @@ const account = {
    * @param address Base58 string
    * @returns true/false
    */
-  isAddress: (address: string | undefined): boolean => {
+  isAddress: (address: string | undefined): address is string => {
     if (!address) return false
     try {
       const publicKey = new PublicKey(address)
@@ -46,14 +46,9 @@ const account = {
    * @param address Base58 string
    * @returns corresponding public key
    */
-  fromAddress: (address: string): PublicKey | null => {
-    if (!account.isAddress(address)) return null
-    try {
-      const publicKey = new PublicKey(address)
-      return publicKey
-    } catch (er) {
-      return null
-    }
+  fromAddress: (address: string): PublicKey => {
+    if (!account.isAddress(address)) throw new Error('Invalid address')
+    return new PublicKey(address)
   },
 
   /**
@@ -171,7 +166,7 @@ const account = {
     if (!account.isAddress(address)) throw new Error('Invalid address')
     if (typeof signature !== 'string')
       throw new Error('Signature must be a hex string')
-    const publicKey = (account.fromAddress(address) as PublicKey).toBuffer()
+    const publicKey = account.fromAddress(address).toBuffer()
     const bufSig = Buffer.from(signature, 'hex')
     const bufMsg = sign.open(bufSig, publicKey)
     if (!bufMsg) throw new Error('Invalid signature or public key')

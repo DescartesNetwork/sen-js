@@ -85,10 +85,8 @@ class SPLT extends Tx {
       throw new Error('Invalid SPL token program address')
     if (!account.isAddress(splataProgramAddress))
       throw new Error('Invalid SPL associated token program address')
-    this.spltProgramId = account.fromAddress(spltProgramAddress) as PublicKey
-    this.splataProgramId = account.fromAddress(
-      splataProgramAddress,
-    ) as PublicKey
+    this.spltProgramId = account.fromAddress(spltProgramAddress)
+    this.splataProgramId = account.fromAddress(splataProgramAddress)
 
     this._lamports = new Lamports(nodeUrl)
   }
@@ -194,7 +192,7 @@ class SPLT extends Tx {
    */
   getMintData = async (mintAddress: string): Promise<MintData> => {
     if (!account.isAddress(mintAddress)) throw new Error('Invalid mint address')
-    const mintPublicKey = account.fromAddress(mintAddress) as PublicKey
+    const mintPublicKey = account.fromAddress(mintAddress)
     const { data } = (await this.connection.getAccountInfo(mintPublicKey)) || {}
     if (!data) throw new Error(`Cannot read data of ${mintAddress}`)
     return this.parseMintData(data)
@@ -220,7 +218,7 @@ class SPLT extends Tx {
   getAccountData = async (accountAddress: string): Promise<AccountData> => {
     if (!account.isAddress(accountAddress))
       throw new Error('Invalid account address')
-    const accountPublicKey = account.fromAddress(accountAddress) as PublicKey
+    const accountPublicKey = account.fromAddress(accountAddress)
     const { data } =
       (await this.connection.getAccountInfo(accountPublicKey)) || {}
     if (!data) throw new Error(`Cannot read data of ${accountAddress}`)
@@ -247,7 +245,7 @@ class SPLT extends Tx {
   getMultiSigData = async (multiSigAddress: string): Promise<MultisigData> => {
     if (!account.isAddress(multiSigAddress))
       throw new Error('Invalid multiSig address')
-    const multiSigPublicKey = account.fromAddress(multiSigAddress) as PublicKey
+    const multiSigPublicKey = account.fromAddress(multiSigAddress)
     const { data } =
       (await this.connection.getAccountInfo(multiSigPublicKey)) || {}
     if (!data) throw new Error(`Cannot read data of ${multiSigAddress}`)
@@ -278,7 +276,7 @@ class SPLT extends Tx {
       throw new Error('Invalid freeze authority address')
     // Get payer
     const payerAddress = await wallet.getAddress()
-    const payerPublicKey = account.fromAddress(payerAddress) as PublicKey
+    const payerPublicKey = account.fromAddress(payerAddress)
     // Rent mint
     const mintSpace = new soproxABI.struct(schema.MINT_SCHEMA).space
     await this.rentAccount(wallet, mint, mintSpace, this.spltProgramId)
@@ -335,17 +333,17 @@ class SPLT extends Tx {
     if (!account.isAddress(mintAddress)) throw new Error('Invalid mint address')
     if (!account.isAddress(ownerAddress))
       throw new Error('Invalid owner address')
-    const mintPublicKey = account.fromAddress(mintAddress) as PublicKey
-    const ownerPublicKey = account.fromAddress(ownerAddress) as PublicKey
+    const mintPublicKey = account.fromAddress(mintAddress)
+    const ownerPublicKey = account.fromAddress(ownerAddress)
     // Get payer
     const payerAddress = await wallet.getAddress()
-    const payerPublicKey = account.fromAddress(payerAddress) as PublicKey
+    const payerPublicKey = account.fromAddress(payerAddress)
     // Generate the associated account address
     const accountAddress = await this.deriveAssociatedAddress(
       ownerAddress,
       mintAddress,
     )
-    const accountPublicKey = account.fromAddress(accountAddress) as PublicKey
+    const accountPublicKey = account.fromAddress(accountAddress)
     // Build tx
     let transaction = new Transaction()
     transaction = await this.addRecentCommitment(transaction)
@@ -393,7 +391,7 @@ class SPLT extends Tx {
         throw new Error('Invalid signer address')
     // Get payer
     const payerAddress = await wallet.getAddress()
-    const payerPublicKey = account.fromAddress(payerAddress) as PublicKey
+    const payerPublicKey = account.fromAddress(payerAddress)
     // Rent multisig
     const multiSigSpace = new soproxABI.struct(schema.MULTISIG_SCHEMA).space
     await this.rentAccount(wallet, multiSig, multiSigSpace, this.spltProgramId)
@@ -412,7 +410,7 @@ class SPLT extends Tx {
         { pubkey: multiSig.publicKey, isSigner: false, isWritable: true },
         { pubkey: SYSVAR_RENT_PUBKEY, isSigner: false, isWritable: false },
         ...signerAddresses.map((signerAddress) => ({
-          pubkey: account.fromAddress(signerAddress) as PublicKey,
+          pubkey: account.fromAddress(signerAddress),
           isSigner: false,
           isWritable: false,
         })),
@@ -448,11 +446,11 @@ class SPLT extends Tx {
       throw new Error('Invalid source address')
     if (!account.isAddress(dstAddress))
       throw new Error('Invalid destination address')
-    const srcPublicKey = account.fromAddress(srcAddress) as PublicKey
-    const dstPublicKey = account.fromAddress(dstAddress) as PublicKey
+    const srcPublicKey = account.fromAddress(srcAddress)
+    const dstPublicKey = account.fromAddress(dstAddress)
     // Get payer
     const payerAddress = await wallet.getAddress()
-    const payerPublicKey = account.fromAddress(payerAddress) as PublicKey
+    const payerPublicKey = account.fromAddress(payerAddress)
     // Build tx
     let transaction = new Transaction()
     transaction = await this.addRecentCommitment(transaction)
@@ -500,11 +498,11 @@ class SPLT extends Tx {
       throw new Error('Invalid source address')
     if (!account.isAddress(delegateAddress))
       throw new Error('Invalid delegate address')
-    const srcPublicKey = account.fromAddress(srcAddress) as PublicKey
-    const delegatePublicKey = account.fromAddress(delegateAddress) as PublicKey
+    const srcPublicKey = account.fromAddress(srcAddress)
+    const delegatePublicKey = account.fromAddress(delegateAddress)
     // Get payer
     const payerAddress = await wallet.getAddress()
-    const payerPublicKey = account.fromAddress(payerAddress) as PublicKey
+    const payerPublicKey = account.fromAddress(payerAddress)
     // Build tx
     let transaction = new Transaction()
     transaction = await this.addRecentCommitment(transaction)
@@ -546,10 +544,10 @@ class SPLT extends Tx {
   ): Promise<{ txId: string }> => {
     if (!account.isAddress(srcAddress))
       throw new Error('Invalid source address')
-    const srcPublicKey = account.fromAddress(srcAddress) as PublicKey
+    const srcPublicKey = account.fromAddress(srcAddress)
     // Get payer
     const payerAddress = await wallet.getAddress()
-    const payerPublicKey = account.fromAddress(payerAddress) as PublicKey
+    const payerPublicKey = account.fromAddress(payerAddress)
     // Build tx
     let transaction = new Transaction()
     transaction = await this.addRecentCommitment(transaction)
@@ -593,10 +591,10 @@ class SPLT extends Tx {
       throw new Error('Invalid new authority address')
     if (!account.isAddress(targetAddress))
       throw new Error('Invalid target address')
-    const targetPublicKey = account.fromAddress(targetAddress) as PublicKey
+    const targetPublicKey = account.fromAddress(targetAddress)
     // Get payer
     const payerAddress = await wallet.getAddress()
-    const payerPublicKey = account.fromAddress(payerAddress) as PublicKey
+    const payerPublicKey = account.fromAddress(payerAddress)
     // Build tx
     let transaction = new Transaction()
     transaction = await this.addRecentCommitment(transaction)
@@ -650,11 +648,11 @@ class SPLT extends Tx {
     if (!account.isAddress(mintAddress)) throw new Error('Invalid mint address')
     if (!account.isAddress(dstAddress))
       throw new Error('Invalid destination address')
-    const mintPublicKey = account.fromAddress(mintAddress) as PublicKey
-    const dstPublicKey = account.fromAddress(dstAddress) as PublicKey
+    const mintPublicKey = account.fromAddress(mintAddress)
+    const dstPublicKey = account.fromAddress(dstAddress)
     // Get payer
     const payerAddress = await wallet.getAddress()
-    const payerPublicKey = account.fromAddress(payerAddress) as PublicKey
+    const payerPublicKey = account.fromAddress(payerAddress)
     // Build tx
     let transaction = new Transaction()
     transaction = await this.addRecentCommitment(transaction)
@@ -701,11 +699,11 @@ class SPLT extends Tx {
     if (!account.isAddress(srcAddress))
       throw new Error('Invalid source address')
     if (!account.isAddress(mintAddress)) throw new Error('Invalid mint address')
-    const srcPublicKey = account.fromAddress(srcAddress) as PublicKey
-    const mintPublicKey = account.fromAddress(mintAddress) as PublicKey
+    const srcPublicKey = account.fromAddress(srcAddress)
+    const mintPublicKey = account.fromAddress(mintAddress)
     // Get payer
     const payerAddress = await wallet.getAddress()
-    const payerPublicKey = account.fromAddress(payerAddress) as PublicKey
+    const payerPublicKey = account.fromAddress(payerAddress)
     // Build tx
     let transaction = new Transaction()
     transaction = await this.addRecentCommitment(transaction)
@@ -747,10 +745,10 @@ class SPLT extends Tx {
   ): Promise<{ txId: string }> => {
     if (!account.isAddress(targetAddress))
       throw new Error('Invalid target address')
-    const targetPublicKey = account.fromAddress(targetAddress) as PublicKey
+    const targetPublicKey = account.fromAddress(targetAddress)
     // Get payer
     const payerAddress = await wallet.getAddress()
-    const payerPublicKey = account.fromAddress(payerAddress) as PublicKey
+    const payerPublicKey = account.fromAddress(payerAddress)
     // Build tx
     let transaction = new Transaction()
     transaction = await this.addRecentCommitment(transaction)
@@ -791,11 +789,11 @@ class SPLT extends Tx {
     if (!account.isAddress(targetAddress))
       throw new Error('Invalid target address')
     if (!account.isAddress(mintAddress)) throw new Error('Invalid mint address')
-    const targetPublicKey = account.fromAddress(targetAddress) as PublicKey
-    const mintPublicKey = account.fromAddress(mintAddress) as PublicKey
+    const targetPublicKey = account.fromAddress(targetAddress)
+    const mintPublicKey = account.fromAddress(mintAddress)
     // Get payer
     const payerAddress = await wallet.getAddress()
-    const payerPublicKey = account.fromAddress(payerAddress) as PublicKey
+    const payerPublicKey = account.fromAddress(payerAddress)
     // Build tx
     let transaction = new Transaction()
     transaction = await this.addRecentCommitment(transaction)
@@ -836,11 +834,11 @@ class SPLT extends Tx {
     if (!account.isAddress(targetAddress))
       throw new Error('Invalid target address')
     if (!account.isAddress(mintAddress)) throw new Error('Invalid mint address')
-    const targetPublicKey = account.fromAddress(targetAddress) as PublicKey
-    const mintPublicKey = account.fromAddress(mintAddress) as PublicKey
+    const targetPublicKey = account.fromAddress(targetAddress)
+    const mintPublicKey = account.fromAddress(mintAddress)
     // Get payer
     const payerAddress = await wallet.getAddress()
-    const payerPublicKey = account.fromAddress(payerAddress) as PublicKey
+    const payerPublicKey = account.fromAddress(payerAddress)
     // Build tx
     let transaction = new Transaction()
     transaction = await this.addRecentCommitment(transaction)

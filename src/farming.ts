@@ -59,13 +59,9 @@ class Farming extends Tx {
       throw new Error('Invalid SPL token program address')
     if (!account.isAddress(splataProgramAddress))
       throw new Error('Invalid SPL associated token program address')
-    this.farmingProgramId = account.fromAddress(
-      farmingProgramAddress,
-    ) as PublicKey
-    this.spltProgramId = account.fromAddress(spltProgramAddress) as PublicKey
-    this.splataProgramId = account.fromAddress(
-      splataProgramAddress,
-    ) as PublicKey
+    this.farmingProgramId = account.fromAddress(farmingProgramAddress)
+    this.spltProgramId = account.fromAddress(spltProgramAddress)
+    this.splataProgramId = account.fromAddress(splataProgramAddress)
 
     this._splt = new SPLT(spltProgramAddress, splataProgramAddress, nodeUrl)
   }
@@ -142,8 +138,8 @@ class Farming extends Tx {
     if (!account.isAddress(ownerAddress))
       throw new Error('Invalid owner address')
     if (!account.isAddress(farmAddress)) throw new Error('Invalid farm address')
-    const ownerPublicKey = account.fromAddress(ownerAddress) as PublicKey
-    const farmPublicKey = account.fromAddress(farmAddress) as PublicKey
+    const ownerPublicKey = account.fromAddress(ownerAddress)
+    const farmPublicKey = account.fromAddress(farmAddress)
     const seeds = [
       ownerPublicKey.toBuffer(),
       farmPublicKey.toBuffer(),
@@ -175,7 +171,7 @@ class Farming extends Tx {
    */
   getFarmData = async (farmAddress: string): Promise<FarmData> => {
     if (!account.isAddress(farmAddress)) throw new Error('Invalid farm address')
-    const farmPublicKey = account.fromAddress(farmAddress) as PublicKey
+    const farmPublicKey = account.fromAddress(farmAddress)
     const { data } = (await this.connection.getAccountInfo(farmPublicKey)) || {}
     if (!data) throw new Error(`Cannot read data of ${farmAddress}`)
     return this.parseFarmData(data)
@@ -200,7 +196,7 @@ class Farming extends Tx {
    */
   getDebtData = async (debtAddress: string): Promise<DebtData> => {
     if (!account.isAddress(debtAddress)) throw new Error('Invalid debt address')
-    const debtPublicKey = account.fromAddress(debtAddress) as PublicKey
+    const debtPublicKey = account.fromAddress(debtAddress)
     const { data } = (await this.connection.getAccountInfo(debtPublicKey)) || {}
     if (!data) throw new Error(`Cannot read data of ${debtAddress}`)
     return this.parseDebtData(data)
@@ -238,16 +234,12 @@ class Farming extends Tx {
     const farm = await account.createStrictAccount(this.farmingProgramId)
     const farmAddress = farm.publicKey.toBase58()
     // Build public keys
-    const ownerPublicKey = account.fromAddress(ownerAddress) as PublicKey
-    const mintStakePublicKey = account.fromAddress(
-      mintStakeAddress,
-    ) as PublicKey
-    const mintRewardPublicKey = account.fromAddress(
-      mintRewardAddress,
-    ) as PublicKey
+    const ownerPublicKey = account.fromAddress(ownerAddress)
+    const mintStakePublicKey = account.fromAddress(mintStakeAddress)
+    const mintRewardPublicKey = account.fromAddress(mintRewardAddress)
     // Get payer
     const payerAddress = await wallet.getAddress()
-    const payerPublicKey = account.fromAddress(payerAddress) as PublicKey
+    const payerPublicKey = account.fromAddress(payerAddress)
     // Get treasurer
     const seed = [farm.publicKey.toBuffer()]
     const treasurerPublicKey = await PublicKey.createProgramAddress(
@@ -261,13 +253,13 @@ class Farming extends Tx {
         treasurerAddress,
         mintStakeAddress,
       ),
-    ) as PublicKey
+    )
     const treasuryRewardPublicKey = account.fromAddress(
       await this._splt.deriveAssociatedAddress(
         treasurerAddress,
         mintRewardAddress,
       ),
-    ) as PublicKey
+    )
     // Build tx
     let transaction = new Transaction()
     transaction = await this.addRecentCommitment(transaction)
@@ -339,16 +331,14 @@ class Farming extends Tx {
     )
     const debtAddress = await this.deriveDebtAddress(ownerAddress, farmAddress)
     // Build public keys
-    const ownerPublicKey = account.fromAddress(ownerAddress) as PublicKey
-    const farmPublicKey = account.fromAddress(farmAddress) as PublicKey
-    const mintRewardPublicKey = account.fromAddress(
-      mintRewardAddress,
-    ) as PublicKey
-    const rewardedPublicKey = account.fromAddress(rewardedAddress) as PublicKey
-    const debtPublicKey = account.fromAddress(debtAddress) as PublicKey
+    const ownerPublicKey = account.fromAddress(ownerAddress)
+    const farmPublicKey = account.fromAddress(farmAddress)
+    const mintRewardPublicKey = account.fromAddress(mintRewardAddress)
+    const rewardedPublicKey = account.fromAddress(rewardedAddress)
+    const debtPublicKey = account.fromAddress(debtAddress)
     // Get payer
     const payerAddress = await wallet.getAddress()
-    const payerPublicKey = account.fromAddress(payerAddress) as PublicKey
+    const payerPublicKey = account.fromAddress(payerAddress)
     // Build tx
     let transaction = new Transaction()
     transaction = await this.addRecentCommitment(transaction)
@@ -406,7 +396,7 @@ class Farming extends Tx {
     if (!account.isAddress(farmAddress)) throw new Error('Invalid farm address')
     // Get payer
     const payerAddress = await wallet.getAddress()
-    const payerPublicKey = account.fromAddress(payerAddress) as PublicKey
+    const payerPublicKey = account.fromAddress(payerAddress)
     // Fetch necessary info
     const {
       treasury_stake: treasuryStakeAddress,
@@ -414,16 +404,12 @@ class Farming extends Tx {
     } = await this.getFarmData(farmAddress)
     const debtAddress = await this.deriveDebtAddress(payerAddress, farmAddress)
     // Build public keys
-    const srcPublicKey = account.fromAddress(srcAddress) as PublicKey
-    const rewardedPublicKey = account.fromAddress(rewardedAddress) as PublicKey
-    const farmPublicKey = account.fromAddress(farmAddress) as PublicKey
-    const treasuryStakePublicKey = account.fromAddress(
-      treasuryStakeAddress,
-    ) as PublicKey
-    const treasuryRewardPublicKey = account.fromAddress(
-      treasuryRewardAddress,
-    ) as PublicKey
-    const debtPublicKey = account.fromAddress(debtAddress) as PublicKey
+    const srcPublicKey = account.fromAddress(srcAddress)
+    const rewardedPublicKey = account.fromAddress(rewardedAddress)
+    const farmPublicKey = account.fromAddress(farmAddress)
+    const treasuryStakePublicKey = account.fromAddress(treasuryStakeAddress)
+    const treasuryRewardPublicKey = account.fromAddress(treasuryRewardAddress)
+    const debtPublicKey = account.fromAddress(debtAddress)
     // Get treasurer
     const seed = [farmPublicKey.toBuffer()]
     const treasurerPublicKey = await PublicKey.createProgramAddress(
@@ -490,7 +476,7 @@ class Farming extends Tx {
     if (!account.isAddress(farmAddress)) throw new Error('Invalid farm address')
     // Get payer
     const payerAddress = await wallet.getAddress()
-    const payerPublicKey = account.fromAddress(payerAddress) as PublicKey
+    const payerPublicKey = account.fromAddress(payerAddress)
     // Fetch necessary info
     const {
       treasury_stake: treasuryStakeAddress,
@@ -498,16 +484,12 @@ class Farming extends Tx {
     } = await this.getFarmData(farmAddress)
     const debtAddress = await this.deriveDebtAddress(payerAddress, farmAddress)
     // Build public keys
-    const farmPublicKey = account.fromAddress(farmAddress) as PublicKey
-    const dstPublicKey = account.fromAddress(dstAddress) as PublicKey
-    const rewardedPublicKey = account.fromAddress(rewardedAddress) as PublicKey
-    const treasuryStakePublicKey = account.fromAddress(
-      treasuryStakeAddress,
-    ) as PublicKey
-    const treasuryRewardPublicKey = account.fromAddress(
-      treasuryRewardAddress,
-    ) as PublicKey
-    const debtPublicKey = account.fromAddress(debtAddress) as PublicKey
+    const farmPublicKey = account.fromAddress(farmAddress)
+    const dstPublicKey = account.fromAddress(dstAddress)
+    const rewardedPublicKey = account.fromAddress(rewardedAddress)
+    const treasuryStakePublicKey = account.fromAddress(treasuryStakeAddress)
+    const treasuryRewardPublicKey = account.fromAddress(treasuryRewardAddress)
+    const debtPublicKey = account.fromAddress(debtAddress)
     // Get treasurer
     const seed = [farmPublicKey.toBuffer()]
     const treasurerPublicKey = await PublicKey.createProgramAddress(
@@ -567,19 +549,17 @@ class Farming extends Tx {
       throw new Error('Invalid rewarded address')
     // Get payer
     const payerAddress = await wallet.getAddress()
-    const payerPublicKey = account.fromAddress(payerAddress) as PublicKey
+    const payerPublicKey = account.fromAddress(payerAddress)
     // Fetch necessary info
     const { treasury_reward: treasuryRewardAddress } = await this.getFarmData(
       farmAddress,
     )
     const debtAddress = await this.deriveDebtAddress(payerAddress, farmAddress)
     // Build public keys
-    const farmPublicKey = account.fromAddress(farmAddress) as PublicKey
-    const rewardedPublicKey = account.fromAddress(rewardedAddress) as PublicKey
-    const treasuryRewardPublicKey = account.fromAddress(
-      treasuryRewardAddress,
-    ) as PublicKey
-    const debtPublicKey = account.fromAddress(debtAddress) as PublicKey
+    const farmPublicKey = account.fromAddress(farmAddress)
+    const rewardedPublicKey = account.fromAddress(rewardedAddress)
+    const treasuryRewardPublicKey = account.fromAddress(treasuryRewardAddress)
+    const debtPublicKey = account.fromAddress(debtAddress)
     // Get treasurer
     const seed = [farmPublicKey.toBuffer()]
     const treasurerPublicKey = await PublicKey.createProgramAddress(
@@ -638,14 +618,12 @@ class Farming extends Tx {
       farmAddress,
     )
     // Build public keys
-    const farmPublicKey = account.fromAddress(farmAddress) as PublicKey
-    const srcPublicKey = account.fromAddress(srcAddress) as PublicKey
-    const treasuryRewardPublicKey = account.fromAddress(
-      treasuryRewardAddress,
-    ) as PublicKey
+    const farmPublicKey = account.fromAddress(farmAddress)
+    const srcPublicKey = account.fromAddress(srcAddress)
+    const treasuryRewardPublicKey = account.fromAddress(treasuryRewardAddress)
     // Get payer
     const payerAddress = await wallet.getAddress()
-    const payerPublicKey = account.fromAddress(payerAddress) as PublicKey
+    const payerPublicKey = account.fromAddress(payerAddress)
     // Build tx
     let transaction = new Transaction()
     transaction = await this.addRecentCommitment(transaction)
@@ -700,14 +678,12 @@ class Farming extends Tx {
       farmAddress,
     )
     // Build public keys
-    const farmPublicKey = account.fromAddress(farmAddress) as PublicKey
-    const dstPublicKey = account.fromAddress(dstAddress) as PublicKey
-    const treasuryRewardPublicKey = account.fromAddress(
-      treasuryRewardAddress,
-    ) as PublicKey
+    const farmPublicKey = account.fromAddress(farmAddress)
+    const dstPublicKey = account.fromAddress(dstAddress)
+    const treasuryRewardPublicKey = account.fromAddress(treasuryRewardAddress)
     // Get payer
     const payerAddress = await wallet.getAddress()
-    const payerPublicKey = account.fromAddress(payerAddress) as PublicKey
+    const payerPublicKey = account.fromAddress(payerAddress)
     // Get treasurer
     const seed = [farmPublicKey.toBuffer()]
     const treasurerPublicKey = await PublicKey.createProgramAddress(
@@ -757,10 +733,10 @@ class Farming extends Tx {
     wallet: WalletInterface,
   ): Promise<{ txId: string }> => {
     if (!account.isAddress(farmAddress)) throw new Error('Invalid farmaddress')
-    const farmPublicKey = account.fromAddress(farmAddress) as PublicKey
+    const farmPublicKey = account.fromAddress(farmAddress)
     // Get payer
     const payerAddress = await wallet.getAddress()
-    const payerPublicKey = account.fromAddress(payerAddress) as PublicKey
+    const payerPublicKey = account.fromAddress(payerAddress)
     // Build tx
     let transaction = new Transaction()
     transaction = await this.addRecentCommitment(transaction)
@@ -796,10 +772,10 @@ class Farming extends Tx {
     wallet: WalletInterface,
   ): Promise<{ txId: string }> => {
     if (!account.isAddress(farmAddress)) throw new Error('Invalid farm address')
-    const farmPublicKey = account.fromAddress(farmAddress) as PublicKey
+    const farmPublicKey = account.fromAddress(farmAddress)
     // Get payer
     const payerAddress = await wallet.getAddress()
-    const payerPublicKey = account.fromAddress(payerAddress) as PublicKey
+    const payerPublicKey = account.fromAddress(payerAddress)
     // Build tx
     let transaction = new Transaction()
     transaction = await this.addRecentCommitment(transaction)
@@ -839,11 +815,11 @@ class Farming extends Tx {
     if (!account.isAddress(farmAddress)) throw new Error('Invalid farm address')
     if (!account.isAddress(newOwnerAddress))
       throw new Error('Invalid new owner address')
-    const farmPublicKey = account.fromAddress(farmAddress) as PublicKey
-    const newOwnerPublicKey = account.fromAddress(newOwnerAddress) as PublicKey
+    const farmPublicKey = account.fromAddress(farmAddress)
+    const newOwnerPublicKey = account.fromAddress(newOwnerAddress)
     // Get payer
     const payerAddress = await wallet.getAddress()
-    const payerPublicKey = account.fromAddress(payerAddress) as PublicKey
+    const payerPublicKey = account.fromAddress(payerAddress)
     // Build tx
     let transaction = new Transaction()
     transaction = await this.addRecentCommitment(transaction)
@@ -883,12 +859,12 @@ class Farming extends Tx {
     if (!account.isAddress(farmAddress)) throw new Error('Invalid farm address')
     // Get payer
     const payerAddress = await wallet.getAddress()
-    const payerPublicKey = account.fromAddress(payerAddress) as PublicKey
+    const payerPublicKey = account.fromAddress(payerAddress)
     // Fetch necessary info
     const debtAddress = await this.deriveDebtAddress(payerAddress, farmAddress)
     // Build public keys
-    const farmPublicKey = account.fromAddress(farmAddress) as PublicKey
-    const debtPublicKey = account.fromAddress(debtAddress) as PublicKey
+    const farmPublicKey = account.fromAddress(farmAddress)
+    const debtPublicKey = account.fromAddress(debtAddress)
     // Build tx
     let transaction = new Transaction()
     transaction = await this.addRecentCommitment(transaction)
@@ -929,7 +905,7 @@ class Farming extends Tx {
     if (!account.isAddress(farmAddress)) throw new Error('Invalid farm address')
     // Get payer
     const payerAddress = await wallet.getAddress()
-    const payerPublicKey = account.fromAddress(payerAddress) as PublicKey
+    const payerPublicKey = account.fromAddress(payerAddress)
     // Fetch necessary info
     const {
       treasury_reward: treasuryRewardAddress,
@@ -940,13 +916,9 @@ class Farming extends Tx {
       mintRewardAddress,
     )
     // Build public keys
-    const farmPublicKey = account.fromAddress(farmAddress) as PublicKey
-    const treasuryRewardPublicKey = account.fromAddress(
-      treasuryRewardAddress,
-    ) as PublicKey
-    const dstRewardPublicKey = account.fromAddress(
-      dstRewradAddress,
-    ) as PublicKey
+    const farmPublicKey = account.fromAddress(farmAddress)
+    const treasuryRewardPublicKey = account.fromAddress(treasuryRewardAddress)
+    const dstRewardPublicKey = account.fromAddress(dstRewradAddress)
     // Get treasurer
     const seed = [farmPublicKey.toBuffer()]
     const treasurerPublicKey = await PublicKey.createProgramAddress(

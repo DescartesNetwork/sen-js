@@ -23,6 +23,3 @@ export { default as Swap } from './swap'
 
 export * from './farming'
 export { default as Farming } from './farming'
-
-export * from './routing'
-export { default as Routing } from './routing'
