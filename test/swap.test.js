@@ -3,6 +3,9 @@ const { payer, mints } = require('./config')
 const assert = require('assert')
 
 const wallet = new RawWallet(payer.secretKey)
+// Fee & Tax
+const FEE = BigInt(2500000)
+const TAX = BigInt(500000)
 // Primary Mint
 const { address: MINT_ADDRESS_0 } = mints[0]
 // Mint 1
@@ -33,6 +36,8 @@ describe('Swap library', function () {
         await swap.initializePool(
           100000000000n,
           500000000000n,
+          FEE,
+          TAX,
           payerAddress,
           srcAddresses[0],
           srcAddresses[1],
@@ -57,6 +62,8 @@ describe('Swap library', function () {
         await swap.initializePool(
           100000000000n,
           20000000000n,
+          FEE,
+          TAX,
           payerAddress,
           srcAddresses[0],
           srcAddresses[2],
@@ -130,6 +137,8 @@ describe('Swap library', function () {
         await swap.initializePool(
           0n,
           50000000000n,
+          FEE,
+          TAX,
           payerAddress,
           srcAddresses[0],
           srcAddresses[1],
@@ -362,6 +371,8 @@ describe('Swap library', function () {
       const { poolAddress, lptAddress } = await swap.initializePool(
         10000000000n,
         5000000000n,
+        FEE,
+        TAX,
         payerAddress,
         srcAddresses[0],
         srcAddresses[1],
@@ -386,6 +397,14 @@ describe('Swap library', function () {
       await swap.freezePool(POOL_ADDRESS_0, wallet)
       await swap.thawPool(POOL_ADDRESS_0, wallet)
       await swap.getPoolData(POOL_ADDRESS_0)
+    })
+
+    it('Should update fee', async function () {
+      const swap = new Swap()
+      await swap.updateFee(2n * FEE, 0n, POOL_ADDRESS_0, wallet)
+      const { fee_ratio, tax_ratio } = await swap.getPoolData(POOL_ADDRESS_0)
+      if (fee_ratio != 2n * FEE) throw new Error('Cannot update fee')
+      if (tax_ratio != 0n) throw new Error('Cannot update tax')
     })
 
     it('Should transfer taxman', async function () {

@@ -40,6 +40,8 @@ export type PoolData = {
   mint_b: string
   treasury_b: string
   reserve_b: bigint
+  fee_ratio: bigint
+  tax_ratio: bigint
 }
 
 export type DebtData = {
@@ -92,6 +94,9 @@ const schema = {
     { key: 'mint_b', type: 'pub' },
     { key: 'treasury_b', type: 'pub' },
     { key: 'reserve_b', type: 'u64' },
+
+    { key: 'fee_ratio', type: 'u64' },
+    { key: 'tax_ratio', type: 'u64' },
   ],
 
   /**

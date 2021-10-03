@@ -48,6 +48,7 @@ const ErrorMapping = [
   'The provided accounts are unmatched to the pool',
   'Cannot initialize a pool with two same mints',
   'Exceed limit',
+  'Frozen pool',
 ]
 
 class Swap extends Tx {
@@ -330,6 +331,8 @@ class Swap extends Tx {
    * Initialize a swap pool
    * @param deltaA Number of A (then first token)
    * @param deltaB Number of B (then second token)
+   * @param fee Fee (10^8 precision)
+   * @param tax Tax (10^8 precision)
    * @param ownerAddress Pool owner address
    * @param srcAAddress A source address
    * @param srcBAddress B source address
@@ -340,6 +343,8 @@ class Swap extends Tx {
   initializePool = async (
     deltaA: bigint,
     deltaB: bigint,
+    feeRatio: bigint,
+    taxRatio: bigint,
     ownerAddress: string,
     srcAAddress: string,
     srcBAddress: string,
@@ -404,11 +409,15 @@ class Swap extends Tx {
         { key: 'code', type: 'u8' },
         { key: 'delta_a', type: 'u64' },
         { key: 'delta_b', type: 'u64' },
+        { key: 'fee_ratio', type: 'u64' },
+        { key: 'tax_ratio', type: 'u64' },
       ],
       {
-        code: 0,
+        code: InstructionCode.InitializePool.valueOf(),
         delta_a: deltaA,
         delta_b: deltaB,
+        fee_ratio: feeRatio,
+        tax_ratio: taxRatio,
       },
     )
     const instruction = new TransactionInstruction({
@@ -446,6 +455,8 @@ class Swap extends Tx {
       return await this.initializePool(
         deltaA,
         deltaB,
+        feeRatio,
+        taxRatio,
         ownerAddress,
         srcAAddress,
         srcBAddress,
@@ -549,7 +560,7 @@ class Swap extends Tx {
         { key: 'delta_b', type: 'u64' },
       ],
       {
-        code: 1,
+        code: InstructionCode.AddLiquidity.valueOf(),
         delta_a: deltaA,
         delta_b: deltaB,
       },
@@ -649,7 +660,7 @@ class Swap extends Tx {
         { key: 'code', type: 'u8' },
         { key: 'lpt', type: 'u64' },
       ],
-      { code: 2, lpt },
+      { code: InstructionCode.RemoveLiquidity.valueOf(), lpt },
     )
     const instruction = new TransactionInstruction({
       keys: [
@@ -754,7 +765,7 @@ class Swap extends Tx {
         { key: 'amount', type: 'u64' },
         { key: 'limit', type: 'u64' },
       ],
-      { code: 3, amount, limit },
+      { code: InstructionCode.Swap.valueOf(), amount, limit },
     )
     const instruction = new TransactionInstruction({
       keys: [
@@ -810,7 +821,7 @@ class Swap extends Tx {
     let transaction = new Transaction()
     transaction = await this.addRecentCommitment(transaction)
     const layout = new soproxABI.struct([{ key: 'code', type: 'u8' }], {
-      code: 4,
+      code: InstructionCode.FreezePool.valueOf(),
     })
     const instruction = new TransactionInstruction({
       keys: [
@@ -849,7 +860,7 @@ class Swap extends Tx {
     let transaction = new Transaction()
     transaction = await this.addRecentCommitment(transaction)
     const layout = new soproxABI.struct([{ key: 'code', type: 'u8' }], {
-      code: 5,
+      code: InstructionCode.ThawPool.valueOf(),
     })
     const instruction = new TransactionInstruction({
       keys: [
@@ -893,7 +904,7 @@ class Swap extends Tx {
     let transaction = new Transaction()
     transaction = await this.addRecentCommitment(transaction)
     const layout = new soproxABI.struct([{ key: 'code', type: 'u8' }], {
-      code: 6,
+      code: InstructionCode.TransferTaxman.valueOf(),
     })
     const instruction = new TransactionInstruction({
       keys: [
@@ -951,7 +962,7 @@ class Swap extends Tx {
     let transaction = new Transaction()
     transaction = await this.addRecentCommitment(transaction)
     const layout = new soproxABI.struct([{ key: 'code', type: 'u8' }], {
-      code: 7,
+      code: InstructionCode.TransferOwnership.valueOf(),
     })
     const instruction = new TransactionInstruction({
       keys: [
@@ -1121,6 +1132,58 @@ class Swap extends Tx {
     const txId = await this.sendTransaction(transaction)
     const dst = routingAddress[routingAddress.length - 1].poolAddress
     return { txId, dst }
+  }
+
+  /**
+   * Update fee & tax
+   * @param feeRatio Fee (10^8 precision)
+   * @param taxRatio Tax (10^8 precision)
+   * @param poolAddress
+   * @param wallet
+   * @returns
+   */
+  updateFee = async (
+    feeRatio: bigint,
+    taxRatio: bigint,
+    poolAddress: string,
+    wallet: WalletInterface,
+  ): Promise<{ txId: string }> => {
+    if (!account.isAddress(poolAddress)) throw new Error('Invalid pool address')
+    const poolPublicKey = account.fromAddress(poolAddress)
+    // Get payer
+    const payerAddress = await wallet.getAddress()
+    const payerPublicKey = account.fromAddress(payerAddress)
+    // Build tx
+    let transaction = new Transaction()
+    transaction = await this.addRecentCommitment(transaction)
+    const layout = new soproxABI.struct(
+      [
+        { key: 'code', type: 'u8' },
+        { key: 'fee_ratio', type: 'u64' },
+        { key: 'tax_ratio', type: 'u64' },
+      ],
+      {
+        code: InstructionCode.UpdateFee.valueOf(),
+        fee_ratio: feeRatio,
+        tax_ratio: taxRatio,
+      },
+    )
+    const instruction = new TransactionInstruction({
+      keys: [
+        { pubkey: payerPublicKey, isSigner: true, isWritable: false },
+        { pubkey: poolPublicKey, isSigner: false, isWritable: true },
+      ],
+      programId: this.swapProgramId,
+      data: layout.toBuffer(),
+    })
+    transaction.add(instruction)
+    transaction.feePayer = payerPublicKey
+    // Sign tx
+    const payerSig = await wallet.rawSignTransaction(transaction)
+    this.addSignature(transaction, payerSig)
+    // Send tx
+    const txId = await this.sendTransaction(transaction)
+    return { txId }
   }
 }
 
