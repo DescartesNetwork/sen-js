@@ -2,6 +2,9 @@ const { Swap } = require('../dist')
 
 const { deposit, withdraw, swap, inverseSwap, rake, slippage } = Swap.oracle
 
+const FEE = BigInt(2500000) // 0.25%
+const TAX = BigInt(500000) // 0.05%
+
 const bidAmount = 1000000000n
 const bidReserve = 1000000000000000n
 const askAmount = 1000000000000n
@@ -24,22 +27,26 @@ describe('Oracle library', function () {
 
   describe('Main', function () {
     it('Should swap', function (done) {
-      const { askAmount } = swap(bidAmount, bidReserve, askReserve)
-      if (askAmount !== 299099700901n) return done('Wrong market state')
+      const { askAmount } = swap(bidAmount, bidReserve, askReserve, FEE, TAX)
+      if (askAmount !== 299100075901n) return done('Wrong market state')
       return done()
     })
 
     it('Should inverse swap', function (done) {
-      const bidAmount = inverseSwap(askAmount, bidReserve, askReserve)
+      const bidAmount = inverseSwap(askAmount, bidReserve, askReserve, FEE, TAX)
       const { askAmount: lowerAskAmount } = swap(
         bidAmount,
         bidReserve,
         askReserve,
+        FEE,
+        TAX,
       )
       const { askAmount: upperAskAmount } = swap(
         bidAmount + 1n,
         bidReserve,
         askReserve,
+        FEE,
+        TAX,
       )
       if (lowerAskAmount > askAmount || askAmount > upperAskAmount)
         return done('Wrong market state')
@@ -47,7 +54,7 @@ describe('Oracle library', function () {
     })
 
     it('Should compute slippage', function (done) {
-      const slpg = slippage(bidAmount, bidReserve, askReserve)
+      const slpg = slippage(bidAmount, bidReserve, askReserve, FEE, TAX)
       if (slpg !== 1997n) return done('Wrong slippage')
       return done()
     })

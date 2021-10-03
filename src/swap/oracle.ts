@@ -19,9 +19,7 @@ BigInt.prototype.sqrt = function () {
   return end
 }
 
-const PRECISION = BigInt(1000000000000000000) // 10^18
-const FEE = BigInt(2500000000000000) // 0.25%
-const TAX = BigInt(500000000000000) // 0.05%
+const PRECISION = BigInt(1000000000) // 10^9
 
 const oracle = {
   rake: (a: bigint, b: bigint, reserveA: bigint, reserveB: bigint) => {
@@ -65,24 +63,44 @@ const oracle = {
     return { deltaA, deltaB, newReserveA, newReserveB }
   },
 
-  fee: (askAmount: bigint) => {
-    const fee = (askAmount * FEE) / PRECISION
-    const tax = (askAmount * TAX) / PRECISION
-    const amount = askAmount - fee - tax
+  fee: (askAmount: bigint, feeRatio: bigint, taxRatio: bigint) => {
+    const fee = (askAmount * feeRatio) / PRECISION
+    const tempAmount = askAmount - fee
+    const tax = (tempAmount * taxRatio) / PRECISION
+    const amount = tempAmount - tax
     return { askAmount: amount, fee, tax }
   },
 
-  swap: (bidAmount: bigint, reserveBid: bigint, reserveAsk: bigint) => {
+  swap: (
+    bidAmount: bigint,
+    reserveBid: bigint,
+    reserveAsk: bigint,
+    feeRatio: bigint,
+    taxRatio: bigint,
+  ) => {
     const newReserveBid = reserveBid + bidAmount
     const tempReserveAsk = (reserveBid * reserveAsk) / newReserveBid
     const tempAskAmount = reserveAsk - tempReserveAsk
-    const { askAmount, fee, tax } = oracle.fee(tempAskAmount)
+    const { askAmount, fee, tax } = oracle.fee(
+      tempAskAmount,
+      feeRatio,
+      taxRatio,
+    )
     const newReserveAsk = tempReserveAsk + fee
     return { askAmount, tax, newReserveBid, newReserveAsk }
   },
 
-  inverseSwap: (askAmount: bigint, reserveBid: bigint, reserveAsk: bigint) => {
-    const tempAskAmount = (askAmount * PRECISION) / (PRECISION - FEE - TAX)
+  inverseSwap: (
+    askAmount: bigint,
+    reserveBid: bigint,
+    reserveAsk: bigint,
+    feeRatio: bigint,
+    taxRatio: bigint,
+  ) => {
+    const tempAskAmount =
+      (askAmount * PRECISION ** 2n) /
+      (PRECISION - taxRatio) /
+      (PRECISION - feeRatio)
     const tempReserveAsk = reserveAsk - tempAskAmount
     const tempReserveBid = (reserveBid * reserveAsk) / tempReserveAsk
     return tempReserveBid - reserveBid
@@ -96,17 +114,25 @@ const oracle = {
    * @param reserveAsk
    * @returns
    */
-  slippage: (bidAmount: bigint, reserveBid: bigint, reserveAsk: bigint) => {
+  slippage: (
+    bidAmount: bigint,
+    reserveBid: bigint,
+    reserveAsk: bigint,
+    feeRatio: bigint,
+    taxRatio: bigint,
+  ) => {
     const { newReserveBid, newReserveAsk } = oracle.swap(
       bidAmount,
       reserveBid,
       reserveAsk,
+      feeRatio,
+      taxRatio,
     )
     const prevPrice = (reserveAsk * PRECISION) / reserveBid
     const nextPrice = (newReserveAsk * PRECISION) / newReserveBid
     return (
       ((nextPrice > prevPrice ? nextPrice - prevPrice : prevPrice - nextPrice) *
-        PRECISION.sqrt()) /
+        PRECISION) /
       prevPrice
     )
   },
