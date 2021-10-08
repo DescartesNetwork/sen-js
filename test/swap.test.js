@@ -193,7 +193,7 @@ describe('Swap library', function () {
       }
     })
 
-    it('route should be success', async function () {
+    it('Should be successful routing', async function () {
       const swap = new Swap()
       const payerAddress = await wallet.getAddress()
       const srcAddresses = await Promise.all(
@@ -221,7 +221,7 @@ describe('Swap library', function () {
       )
     })
 
-    it('route should be failed because of treasury account not matched', async function () {
+    it('Should be failed routing because of treasury account not matched', async function () {
       const swap = new Swap()
       const payerAddress = await wallet.getAddress()
       const srcAddresses = await Promise.all(
@@ -256,7 +256,7 @@ describe('Swap library', function () {
       }
     })
 
-    it('route should be failed because of amount input is zero', async function () {
+    it('Should be failed routing because of amount input is zero', async function () {
       const swap = new Swap()
       const payerAddress = await wallet.getAddress()
       const srcAddresses = await Promise.all(
@@ -283,7 +283,7 @@ describe('Swap library', function () {
       }
     })
 
-    it('route should be failed because of exceed limit', async function () {
+    it('Should be failed routing because of exceed limit', async function () {
       const swap = new Swap()
       const payerAddress = await wallet.getAddress()
       const srcAddresses = await Promise.all(
@@ -335,6 +335,34 @@ describe('Swap library', function () {
         wallet,
       )
       await swap.getLPTData(LPT_ADDRESS_0)
+    })
+
+    it('Should add sided liquidity', async function () {
+      const swap = new Swap()
+      const payerAddress = await wallet.getAddress()
+      const srcAddresses = await Promise.all(
+        mints.map(({ address: mintAddress }) =>
+          account.deriveAssociatedAddress(payerAddress, mintAddress),
+        ),
+      )
+      const { reserve_a: prevRA, reserve_b: prevRB } = await swap.getPoolData(
+        POOL_ADDRESS_1,
+      )
+      // console.log(prevRA, prevRB)
+      const { txId } = await swap.addSidedLiquidity(
+        10000000000n,
+        0n,
+        POOL_ADDRESS_1,
+        srcAddresses[0],
+        srcAddresses[2],
+        wallet,
+      )
+      const { reserve_a: nextRA, reserve_b: nextRB } = await swap.getPoolData(
+        POOL_ADDRESS_1,
+      )
+      // console.log(nextRA, nextRB)
+      const data = await swap.getLPTData(LPT_ADDRESS_0)
+      // console.log(data)
     })
 
     it('Should remove liquidity', async function () {

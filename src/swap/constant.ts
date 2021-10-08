@@ -9,4 +9,5 @@ export enum InstructionCode {
   TransferOwnership = 7,
   Routing = 8,
   UpdateFee = 9,
+  AddSidedLiquidity = 10,
 }

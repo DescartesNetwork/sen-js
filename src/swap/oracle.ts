@@ -22,14 +22,48 @@ BigInt.prototype.sqrt = function () {
 const PRECISION = BigInt(1000000000) // 10^9
 
 const oracle = {
-  rake: (a: bigint, b: bigint, reserveA: bigint, reserveB: bigint) => {
-    if (!a || !b || !reserveA || !reserveB)
-      throw new Error('Invalid deposit/reserves')
+  extract: (a: bigint, b: bigint, reserveA: bigint, reserveB: bigint) => {
+    if (!reserveA || !reserveB) throw new Error('Invalid deposit/reserves')
+    if (!a || !b) return [0n, 0n]
     const l = a * reserveB
     const r = b * reserveA
     if (l > r) return [r / reserveB, b]
     if (l < r) return [a, l / reserveA]
     return [a, b]
+  },
+
+  rake: (
+    amount: bigint,
+    bidReserve: bigint,
+    askReserve: bigint,
+    feeRatio: bigint,
+    taxRatio: bigint,
+  ) => {
+    let delta = amount
+    let bidAmount = amount / 2n
+    while (true) {
+      const { askAmount, newReserveBid, newReserveAsk } = oracle.swap(
+        bidAmount,
+        bidReserve,
+        askReserve,
+        feeRatio,
+        taxRatio,
+      )
+      const remainer = amount - bidAmount
+      const expectedRemainer = (askAmount * newReserveBid) / newReserveAsk
+      const nextDelta =
+        remainer > expectedRemainer
+          ? (remainer - expectedRemainer) / 2n
+          : (expectedRemainer - remainer) / 2n
+      if (delta > nextDelta) {
+        delta = nextDelta
+      } else {
+        break
+      }
+      bidAmount =
+        remainer > expectedRemainer ? bidAmount + delta : bidAmount - delta
+    }
+    return bidAmount
   },
 
   deposit: (
@@ -41,13 +75,128 @@ const oracle = {
   ) => {
     if (!reserveA && !reserveB) {
       const lpt = (deltaA * deltaB).sqrt()
-      return { deltaA, deltaB, newReserveA: deltaA, newReserveB: deltaB, lpt }
+      return {
+        deltaA,
+        deltaB,
+        lpt,
+        newReserveA: deltaA,
+        newReserveB: deltaB,
+        newLiquidity: lpt,
+      }
     }
-    const [a, b] = oracle.rake(deltaA, deltaB, reserveA, reserveB)
+    const [a, b] = oracle.extract(deltaA, deltaB, reserveA, reserveB)
     const lpt = (a * liquidity) / reserveA
     const newReserveA = a + reserveA
     const newReserveB = b + reserveB
-    return { deltaA: a, deltaB: b, newReserveA, newReserveB, lpt }
+    const newLiquidity = liquidity + lpt
+    return { deltaA: a, deltaB: b, lpt, newReserveA, newReserveB, newLiquidity }
+  },
+
+  sided_deposit: (
+    deltaA: bigint,
+    deltaB: bigint,
+    reserveA: bigint,
+    reserveB: bigint,
+    liquidity: bigint,
+    feeRatio: bigint,
+    taxRatio: bigint,
+  ) => {
+    const {
+      deltaA: unrakedAStar,
+      deltaB: unrakedBStar,
+      newReserveA: unrakedReserveA,
+      newReserveB: unrakedReserveB,
+      lpt: unrakedLpt,
+      newLiquidity: unrakedLiquidity,
+    } = oracle.deposit(deltaA, deltaB, reserveA, reserveB, liquidity)
+    const aRemainer = deltaA - unrakedAStar
+    const bRemainer = deltaB - unrakedBStar
+    if (aRemainer > 0n) {
+      const bidAmount = oracle.rake(
+        aRemainer,
+        unrakedReserveA,
+        unrakedReserveB,
+        feeRatio,
+        taxRatio,
+      )
+      const { askAmount, newReserveBid, newReserveAsk } = oracle.swap(
+        bidAmount,
+        unrakedReserveA,
+        unrakedReserveB,
+        feeRatio,
+        taxRatio,
+      )
+      const {
+        deltaA: rakedAStar,
+        deltaB: rakedBStar,
+        lpt: rakedLpt,
+        newReserveA,
+        newReserveB,
+        newLiquidity,
+      } = oracle.deposit(
+        aRemainer - bidAmount,
+        askAmount,
+        newReserveBid,
+        newReserveAsk,
+        unrakedLiquidity,
+      )
+      return {
+        deltaA: unrakedAStar + bidAmount + rakedAStar,
+        deltaB: unrakedBStar + rakedBStar - askAmount,
+        lpt: unrakedLpt + rakedLpt,
+        newReserveA,
+        newReserveB,
+        newLiquidity,
+      }
+    }
+
+    if (bRemainer > 0n) {
+      const bidAmount = oracle.rake(
+        bRemainer,
+        unrakedReserveB,
+        unrakedReserveA,
+        feeRatio,
+        taxRatio,
+      )
+      const { askAmount, newReserveBid, newReserveAsk } = oracle.swap(
+        bidAmount,
+        unrakedReserveB,
+        unrakedReserveA,
+        feeRatio,
+        taxRatio,
+      )
+      const {
+        deltaA: rakedAStar,
+        deltaB: rakedBStar,
+        lpt: rakedLpt,
+        newReserveA,
+        newReserveB,
+        newLiquidity,
+      } = oracle.deposit(
+        askAmount,
+        bRemainer - bidAmount,
+        newReserveAsk,
+        newReserveBid,
+        unrakedLiquidity,
+      )
+      return {
+        deltaA: unrakedAStar + rakedAStar - askAmount,
+        deltaB: unrakedBStar + bidAmount + rakedBStar,
+        lpt: unrakedLpt + rakedLpt,
+        newReserveA,
+        newReserveB,
+        newLiquidity,
+      }
+    }
+
+    return {
+      deltaA: unrakedAStar,
+      deltaB: unrakedBStar,
+      lpt: unrakedLpt,
+      newReserveA: unrakedReserveA,
+      newReserveB: unrakedReserveB,
+      newLiquidity: unrakedLiquidity,
+    }
   },
 
   withdraw: (

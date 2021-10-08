@@ -498,7 +498,7 @@ class Swap extends Tx {
   /**
    * Add liquidity
    * @param deltaA Number of A will be deposited
-   * @param deltaB Number of A will be deposited
+   * @param deltaB Number of B will be deposited
    * @param poolAddress
    * @param srcAAddress
    * @param srcBAddress
@@ -731,13 +731,6 @@ class Swap extends Tx {
       taxmanAddress,
       dstMintAddress,
     )
-    // Validation #2
-    if (!account.isAddress(taxmanAddress))
-      throw new Error('Invalid taxman address')
-    if (!account.isAddress(srcMintAddress))
-      throw new Error('Invalid source mint address')
-    if (!account.isAddress(dstMintAddress))
-      throw new Error('Invalid destination mint address')
     // Build public keys
     const poolPublicKey = account.fromAddress(poolAddress)
     const taxmanPublicKey = account.fromAddress(taxmanAddress)
@@ -1184,6 +1177,123 @@ class Swap extends Tx {
     // Send tx
     const txId = await this.sendTransaction(transaction)
     return { txId }
+  }
+
+  /**
+   * Add sided liquidity
+   * @param deltaA Number of A will be deposited
+   * @param deltaB Number of B will be deposited
+   * @param poolAddress
+   * @param srcAAddress
+   * @param srcBAddress
+   * @param wallet
+   * @returns Transaction id, LPT address
+   */
+  addSidedLiquidity = async (
+    deltaA: bigint,
+    deltaB: bigint,
+    poolAddress: string,
+    srcAAddress: string,
+    srcBAddress: string,
+    wallet: WalletInterface,
+  ): Promise<{ lptAddress: string; txId: string }> => {
+    // Validation
+    if (!account.isAddress(poolAddress)) throw new Error('Invalid pool address')
+    if (!account.isAddress(srcAAddress))
+      throw new Error('Invalid source A address')
+    if (!account.isAddress(srcBAddress))
+      throw new Error('Invalid source B address')
+    // Get payer
+    const payerAddress = await wallet.getAddress()
+    const payerPublicKey = account.fromAddress(payerAddress)
+    // Fetch necessary info
+    const {
+      mint_lpt: mintLPTAddress,
+      mint_a: mintAAddress,
+      treasury_a: treasuryAAddress,
+      mint_b: mintBAddress,
+      treasury_b: treasuryBAddress,
+      taxman: taxmanAddress,
+    } = await this.getPoolData(poolAddress)
+    const lptAddress = await this._splt.deriveAssociatedAddress(
+      payerAddress,
+      mintLPTAddress,
+    )
+    const [treasuryTaxmanAAddress, treasuryTaxmanBAddress] =
+      await this.deriveTreasuryAddresses(taxmanAddress, [
+        mintAAddress,
+        mintBAddress,
+      ])
+    if (!account.isAddress(lptAddress)) throw new Error('Invalid lpt address')
+    // Build public keys
+    const poolPublicKey = account.fromAddress(poolAddress)
+    const lptPublicKey = account.fromAddress(lptAddress)
+    const mintLPTPublicKey = account.fromAddress(mintLPTAddress)
+    const srcAPublicKey = account.fromAddress(srcAAddress)
+    const mintAPublicKey = account.fromAddress(mintAAddress)
+    const srcBPublicKey = account.fromAddress(srcBAddress)
+    const mintBPublicKey = account.fromAddress(mintBAddress)
+    const taxmanPublicKey = account.fromAddress(taxmanAddress)
+    const treasuryTaxmanAPublicKey = account.fromAddress(treasuryTaxmanAAddress)
+    const treasuryTaxmanBPublicKey = account.fromAddress(treasuryTaxmanBAddress)
+    // Get treasurer
+    const { treasurerPublicKey } = await this.getTreasurer(poolAddress)
+    // Get treasury S, A, B
+    const [treasuryAPublicKey, treasuryBPublicKey] = [
+      treasuryAAddress,
+      treasuryBAddress,
+    ].map((treasuryAddress) => account.fromAddress(treasuryAddress))
+    // Build tx
+    let transaction = new Transaction()
+    transaction = await this.addRecentCommitment(transaction)
+    const layout = new soproxABI.struct(
+      [
+        { key: 'code', type: 'u8' },
+        { key: 'delta_a', type: 'u64' },
+        { key: 'delta_b', type: 'u64' },
+      ],
+      {
+        code: InstructionCode.AddSidedLiquidity.valueOf(),
+        delta_a: deltaA,
+        delta_b: deltaB,
+      },
+    )
+    const instruction = new TransactionInstruction({
+      keys: [
+        { pubkey: payerPublicKey, isSigner: true, isWritable: false },
+        { pubkey: poolPublicKey, isSigner: false, isWritable: true },
+        { pubkey: lptPublicKey, isSigner: false, isWritable: true },
+        { pubkey: mintLPTPublicKey, isSigner: false, isWritable: true },
+
+        { pubkey: srcAPublicKey, isSigner: false, isWritable: true },
+        { pubkey: mintAPublicKey, isSigner: false, isWritable: false },
+        { pubkey: treasuryAPublicKey, isSigner: false, isWritable: true },
+
+        { pubkey: srcBPublicKey, isSigner: false, isWritable: true },
+        { pubkey: mintBPublicKey, isSigner: false, isWritable: false },
+        { pubkey: treasuryBPublicKey, isSigner: false, isWritable: true },
+
+        { pubkey: taxmanPublicKey, isSigner: false, isWritable: false },
+        { pubkey: treasuryTaxmanAPublicKey, isSigner: false, isWritable: true },
+        { pubkey: treasuryTaxmanBPublicKey, isSigner: false, isWritable: true },
+
+        { pubkey: treasurerPublicKey, isSigner: false, isWritable: false },
+        { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
+        { pubkey: this.spltProgramId, isSigner: false, isWritable: false },
+        { pubkey: SYSVAR_RENT_PUBKEY, isSigner: false, isWritable: false },
+        { pubkey: this.splataProgramId, isSigner: false, isWritable: false },
+      ],
+      programId: this.swapProgramId,
+      data: layout.toBuffer(),
+    })
+    transaction.add(instruction)
+    transaction.feePayer = payerPublicKey
+    // Sign tx
+    const payerSig = await wallet.rawSignTransaction(transaction)
+    this.addSignature(transaction, payerSig)
+    // Send tx
+    const txId = await this.sendTransaction(transaction)
+    return { txId, lptAddress }
   }
 }
 
