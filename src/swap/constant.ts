@@ -10,4 +10,5 @@ export enum InstructionCode {
   Routing = 8,
   UpdateFee = 9,
   AddSidedLiquidity = 10,
+  WrapSol = 11,
 }

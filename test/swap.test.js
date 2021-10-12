@@ -1,4 +1,11 @@
-const { account, Swap, RawWallet, Lamports, SPLT } = require('../dist')
+const {
+  account,
+  Swap,
+  RawWallet,
+  Lamports,
+  SPLT,
+  DEFAULT_WSOL,
+} = require('../dist')
 const { payer, mints } = require('./config')
 const assert = require('assert')
 
@@ -309,6 +316,25 @@ describe('Swap library', function () {
       } catch (er) {
         assert.deepStrictEqual(er.message, 'Exceed limit')
       }
+    })
+
+    it('Should be wrapped', async function () {
+      const swap = new Swap()
+      const splt = new SPLT()
+      const amount = 1000000n // 0.001
+      const walletAddress = await wallet.getAddress()
+      const wsolAddress = await splt.deriveAssociatedAddress(
+        walletAddress,
+        DEFAULT_WSOL,
+      )
+      await splt.closeAccount(wsolAddress, wallet)
+      await swap.wrapSol(amount, wallet)
+      const { amount: prevAmount } = await splt.getAccountData(wsolAddress)
+      if (prevAmount !== amount) throw new Error('Incorrect wrapped amount')
+      await swap.wrapSol(amount, wallet)
+      const { amount: nextAmount } = await splt.getAccountData(wsolAddress)
+      if (nextAmount !== 2n * amount)
+        throw new Error('Incorrect wrapped amount')
     })
   })
 
