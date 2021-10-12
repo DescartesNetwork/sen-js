@@ -258,7 +258,7 @@ describe('Swap library', function () {
       } catch (er) {
         assert.deepStrictEqual(
           er.message,
-          'There is no treasury account matched',
+          'Cannot match mint addresses in pool',
         )
       }
     })
