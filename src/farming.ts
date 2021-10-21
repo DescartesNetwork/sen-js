@@ -37,6 +37,9 @@ const ErrorMapping = [
   'Farm frozen',
   'Zero value',
   'Insufficient funds',
+  'Must fully harvested first',
+  'Must fully unstaked first',
+  'Inconsistent treasury balance',
 ]
 
 class Farming extends Tx {
@@ -400,15 +403,19 @@ class Farming extends Tx {
     // Fetch necessary info
     const {
       treasury_stake: treasuryStakeAddress,
+      mint_stake: mintStakeAddress,
       treasury_reward: treasuryRewardAddress,
+      mint_reward: mintRewardAddress,
     } = await this.getFarmData(farmAddress)
     const debtAddress = await this.deriveDebtAddress(payerAddress, farmAddress)
     // Build public keys
-    const srcPublicKey = account.fromAddress(srcAddress)
-    const rewardedPublicKey = account.fromAddress(rewardedAddress)
     const farmPublicKey = account.fromAddress(farmAddress)
+    const srcPublicKey = account.fromAddress(srcAddress)
     const treasuryStakePublicKey = account.fromAddress(treasuryStakeAddress)
+    const mintStakePublicKey = account.fromAddress(mintStakeAddress)
+    const rewardedPublicKey = account.fromAddress(rewardedAddress)
     const treasuryRewardPublicKey = account.fromAddress(treasuryRewardAddress)
+    const mintRewardPublicKey = account.fromAddress(mintRewardAddress)
     const debtPublicKey = account.fromAddress(debtAddress)
     // Get treasurer
     const seed = [farmPublicKey.toBuffer()]
@@ -430,13 +437,21 @@ class Farming extends Tx {
       keys: [
         { pubkey: payerPublicKey, isSigner: true, isWritable: true },
         { pubkey: farmPublicKey, isSigner: false, isWritable: true },
+        { pubkey: debtPublicKey, isSigner: false, isWritable: true },
+
         { pubkey: srcPublicKey, isSigner: false, isWritable: true },
         { pubkey: treasuryStakePublicKey, isSigner: false, isWritable: true },
-        { pubkey: debtPublicKey, isSigner: false, isWritable: true },
+        { pubkey: mintStakePublicKey, isSigner: false, isWritable: false },
+
         { pubkey: rewardedPublicKey, isSigner: false, isWritable: true },
         { pubkey: treasuryRewardPublicKey, isSigner: false, isWritable: true },
+        { pubkey: mintRewardPublicKey, isSigner: false, isWritable: false },
+
         { pubkey: treasurerPublicKey, isSigner: false, isWritable: false },
+        { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
         { pubkey: this.spltProgramId, isSigner: false, isWritable: false },
+        { pubkey: SYSVAR_RENT_PUBKEY, isSigner: false, isWritable: false },
+        { pubkey: this.splataProgramId, isSigner: false, isWritable: false },
       ],
       programId: this.farmingProgramId,
       data: layout.toBuffer(),
@@ -480,16 +495,20 @@ class Farming extends Tx {
     // Fetch necessary info
     const {
       treasury_stake: treasuryStakeAddress,
+      mint_stake: mintStakeAddress,
       treasury_reward: treasuryRewardAddress,
+      mint_reward: mintRewardAddress,
     } = await this.getFarmData(farmAddress)
     const debtAddress = await this.deriveDebtAddress(payerAddress, farmAddress)
     // Build public keys
     const farmPublicKey = account.fromAddress(farmAddress)
-    const dstPublicKey = account.fromAddress(dstAddress)
-    const rewardedPublicKey = account.fromAddress(rewardedAddress)
-    const treasuryStakePublicKey = account.fromAddress(treasuryStakeAddress)
-    const treasuryRewardPublicKey = account.fromAddress(treasuryRewardAddress)
     const debtPublicKey = account.fromAddress(debtAddress)
+    const dstPublicKey = account.fromAddress(dstAddress)
+    const treasuryStakePublicKey = account.fromAddress(treasuryStakeAddress)
+    const mintStakePublicKey = account.fromAddress(mintStakeAddress)
+    const rewardedPublicKey = account.fromAddress(rewardedAddress)
+    const treasuryRewardPublicKey = account.fromAddress(treasuryRewardAddress)
+    const mintRewardPublicKey = account.fromAddress(mintRewardAddress)
     // Get treasurer
     const seed = [farmPublicKey.toBuffer()]
     const treasurerPublicKey = await PublicKey.createProgramAddress(
@@ -510,13 +529,21 @@ class Farming extends Tx {
       keys: [
         { pubkey: payerPublicKey, isSigner: true, isWritable: true },
         { pubkey: farmPublicKey, isSigner: false, isWritable: true },
+        { pubkey: debtPublicKey, isSigner: false, isWritable: true },
+
         { pubkey: dstPublicKey, isSigner: false, isWritable: true },
         { pubkey: treasuryStakePublicKey, isSigner: false, isWritable: true },
-        { pubkey: debtPublicKey, isSigner: false, isWritable: true },
+        { pubkey: mintStakePublicKey, isSigner: false, isWritable: false },
+
         { pubkey: rewardedPublicKey, isSigner: false, isWritable: true },
         { pubkey: treasuryRewardPublicKey, isSigner: false, isWritable: true },
+        { pubkey: mintRewardPublicKey, isSigner: false, isWritable: false },
+
         { pubkey: treasurerPublicKey, isSigner: false, isWritable: false },
+        { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
         { pubkey: this.spltProgramId, isSigner: false, isWritable: false },
+        { pubkey: SYSVAR_RENT_PUBKEY, isSigner: false, isWritable: false },
+        { pubkey: this.splataProgramId, isSigner: false, isWritable: false },
       ],
       programId: this.farmingProgramId,
       data: layout.toBuffer(),
@@ -551,14 +578,18 @@ class Farming extends Tx {
     const payerAddress = await wallet.getAddress()
     const payerPublicKey = account.fromAddress(payerAddress)
     // Fetch necessary info
-    const { treasury_reward: treasuryRewardAddress } = await this.getFarmData(
-      farmAddress,
-    )
+    const {
+      treasury_stake: treasuryStakeAddress,
+      treasury_reward: treasuryRewardAddress,
+      mint_reward: mintRewardAddress,
+    } = await this.getFarmData(farmAddress)
     const debtAddress = await this.deriveDebtAddress(payerAddress, farmAddress)
     // Build public keys
     const farmPublicKey = account.fromAddress(farmAddress)
+    const treasuryStakePublicKey = account.fromAddress(treasuryStakeAddress)
     const rewardedPublicKey = account.fromAddress(rewardedAddress)
     const treasuryRewardPublicKey = account.fromAddress(treasuryRewardAddress)
+    const mintRewardPublicKey = account.fromAddress(mintRewardAddress)
     const debtPublicKey = account.fromAddress(debtAddress)
     // Get treasurer
     const seed = [farmPublicKey.toBuffer()]
@@ -577,10 +608,15 @@ class Farming extends Tx {
         { pubkey: payerPublicKey, isSigner: true, isWritable: true },
         { pubkey: farmPublicKey, isSigner: false, isWritable: true },
         { pubkey: debtPublicKey, isSigner: false, isWritable: true },
+        { pubkey: treasuryStakePublicKey, isSigner: false, isWritable: false },
         { pubkey: rewardedPublicKey, isSigner: false, isWritable: true },
         { pubkey: treasuryRewardPublicKey, isSigner: false, isWritable: true },
+        { pubkey: mintRewardPublicKey, isSigner: false, isWritable: false },
         { pubkey: treasurerPublicKey, isSigner: false, isWritable: false },
+        { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
         { pubkey: this.spltProgramId, isSigner: false, isWritable: false },
+        { pubkey: SYSVAR_RENT_PUBKEY, isSigner: false, isWritable: false },
+        { pubkey: this.splataProgramId, isSigner: false, isWritable: false },
       ],
       programId: this.farmingProgramId,
       data: layout.toBuffer(),
