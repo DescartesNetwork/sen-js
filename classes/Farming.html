@@ -240,18 +240,21 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/DescartesNetwork/sen-js/blob/a0f5e86/src/farming.ts#L896">farming.ts:896</a></li>
+									<li>Defined in <a href="https://github.com/DescartesNetwork/sen-js/blob/a0f5e86/src/farming.ts#L897">farming.ts:897</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
 								<div class="lead">
-									<p>Close debt account</p>
+									<p>Close a debt account</p>
 								</div>
 							</div>
 							<h4 class="tsd-parameters-title">Parameters</h4>
 							<ul class="tsd-parameters">
 								<li>
 									<h5>farmAddress: <span class="tsd-signature-type">string</span></h5>
+									<div class="tsd-comment tsd-typography">
+										<p>Farm address</p>
+									</div>
 								</li>
 								<li>
 									<h5>wallet: <a href="../interfaces/WalletInterface.html" class="tsd-signature-type" data-tsd-kind="Interface">WalletInterface</a></h5>
@@ -261,6 +264,7 @@
 								</li>
 							</ul>
 							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-symbol">{ </span>txId<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> }</span><span class="tsd-signature-symbol">&gt;</span></h4>
+							<p>Transaction hash <code>txId</code></p>
 						</li>
 					</ul>
 				</section>
@@ -274,7 +278,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/DescartesNetwork/sen-js/blob/a0f5e86/src/farming.ts#L942">farming.ts:942</a></li>
+									<li>Defined in <a href="https://github.com/DescartesNetwork/sen-js/blob/a0f5e86/src/farming.ts#L943">farming.ts:943</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -295,6 +299,7 @@
 								</li>
 							</ul>
 							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-symbol">{ </span>txId<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> }</span><span class="tsd-signature-symbol">&gt;</span></h4>
+							<p>Transaction hash <code>txId</code></p>
 						</li>
 					</ul>
 				</section>
@@ -346,18 +351,27 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/DescartesNetwork/sen-js/blob/a0f5e86/src/farming.ts#L773">farming.ts:773</a></li>
+									<li>Defined in <a href="https://github.com/DescartesNetwork/sen-js/blob/a0f5e86/src/farming.ts#L772">farming.ts:772</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
 								<div class="lead">
-									<p>Freeze a farm</p>
+									<p>Freeze the farm
+									Prevent all functions such as <code>stake</code>, <code>unstake</code>, and <code>harvest</code></p>
 								</div>
+								<dl class="tsd-comment-tags">
+									<dt>remarks</dt>
+									<dd><p>Farm owner only</p>
+									</dd>
+								</dl>
 							</div>
 							<h4 class="tsd-parameters-title">Parameters</h4>
 							<ul class="tsd-parameters">
 								<li>
 									<h5>farmAddress: <span class="tsd-signature-type">string</span></h5>
+									<div class="tsd-comment tsd-typography">
+										<p>Farm address</p>
+									</div>
 								</li>
 								<li>
 									<h5>wallet: <a href="../interfaces/WalletInterface.html" class="tsd-signature-type" data-tsd-kind="Interface">WalletInterface</a></h5>
@@ -367,6 +381,7 @@
 								</li>
 							</ul>
 							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-symbol">{ </span>txId<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> }</span><span class="tsd-signature-symbol">&gt;</span></h4>
+							<p>Transaction hash <code>txId</code></p>
 						</li>
 					</ul>
 				</section>
@@ -659,7 +674,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/DescartesNetwork/sen-js/blob/a0f5e86/src/farming.ts#L647">farming.ts:647</a></li>
+									<li>Defined in <a href="https://github.com/DescartesNetwork/sen-js/blob/a0f5e86/src/farming.ts#L644">farming.ts:644</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -776,13 +791,21 @@
 							</aside>
 							<div class="tsd-comment tsd-typography">
 								<div class="lead">
-									<p>Thaw a farm</p>
+									<p>Thaw the farm</p>
 								</div>
+								<dl class="tsd-comment-tags">
+									<dt>remarks</dt>
+									<dd><p>Farm owner only</p>
+									</dd>
+								</dl>
 							</div>
 							<h4 class="tsd-parameters-title">Parameters</h4>
 							<ul class="tsd-parameters">
 								<li>
 									<h5>farmAddress: <span class="tsd-signature-type">string</span></h5>
+									<div class="tsd-comment tsd-typography">
+										<p>Farm address</p>
+									</div>
 								</li>
 								<li>
 									<h5>wallet: <a href="../interfaces/WalletInterface.html" class="tsd-signature-type" data-tsd-kind="Interface">WalletInterface</a></h5>
@@ -792,6 +815,7 @@
 								</li>
 							</ul>
 							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-symbol">{ </span>txId<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> }</span><span class="tsd-signature-symbol">&gt;</span></h4>
+							<p>Transaction hash <code>txId</code></p>
 						</li>
 					</ul>
 				</section>
@@ -805,21 +829,32 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/DescartesNetwork/sen-js/blob/a0f5e86/src/farming.ts#L852">farming.ts:852</a></li>
+									<li>Defined in <a href="https://github.com/DescartesNetwork/sen-js/blob/a0f5e86/src/farming.ts#L853">farming.ts:853</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
 								<div class="lead">
 									<p>Transfer farm&#39;s ownership</p>
 								</div>
+								<dl class="tsd-comment-tags">
+									<dt>remarks</dt>
+									<dd><p>Farm owner only</p>
+									</dd>
+								</dl>
 							</div>
 							<h4 class="tsd-parameters-title">Parameters</h4>
 							<ul class="tsd-parameters">
 								<li>
 									<h5>farmAddress: <span class="tsd-signature-type">string</span></h5>
+									<div class="tsd-comment tsd-typography">
+										<p>Farm address</p>
+									</div>
 								</li>
 								<li>
 									<h5>newOwnerAddress: <span class="tsd-signature-type">string</span></h5>
+									<div class="tsd-comment tsd-typography">
+										<p>New owner address</p>
+									</div>
 								</li>
 								<li>
 									<h5>wallet: <a href="../interfaces/WalletInterface.html" class="tsd-signature-type" data-tsd-kind="Interface">WalletInterface</a></h5>
@@ -829,6 +864,7 @@
 								</li>
 							</ul>
 							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-symbol">{ </span>txId<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> }</span><span class="tsd-signature-symbol">&gt;</span></h4>
+							<p>Transaction hash <code>txId</code></p>
 						</li>
 					</ul>
 				</section>
@@ -842,7 +878,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/DescartesNetwork/sen-js/blob/a0f5e86/src/farming.ts#L708">farming.ts:708</a></li>
+									<li>Defined in <a href="https://github.com/DescartesNetwork/sen-js/blob/a0f5e86/src/farming.ts#L705">farming.ts:705</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -851,7 +887,7 @@
 								</div>
 								<dl class="tsd-comment-tags">
 									<dt>remarks</dt>
-									<dd><p>Owner only</p>
+									<dd><p>Farm owner only</p>
 									</dd>
 								</dl>
 							</div>
