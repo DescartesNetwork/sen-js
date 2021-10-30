@@ -150,6 +150,11 @@
 							<li>Defined in <a href="https://github.com/DescartesNetwork/sen-js/blob/b3ff070/src/rawWallet.ts#L50">rawWallet.ts:50</a></li>
 						</ul>
 					</aside>
+					<div class="tsd-comment tsd-typography">
+						<div class="lead">
+							<p>Any string that you can recognize your wallet type. For example: PrivateKey, Phantom, Sollet, ...</p>
+						</div>
+					</div>
 				</section>
 			</section>
 			<section class="tsd-panel-group tsd-member-group ">
@@ -201,7 +206,14 @@
 									<li>Defined in <a href="https://github.com/DescartesNetwork/sen-js/blob/b3ff070/src/rawWallet.ts#L56">rawWallet.ts:56</a></li>
 								</ul>
 							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>Wallet providers are varied from the original wallet (Coin98, Slope, ...)./
+									Seems there is no single common standard, thus we only require <code>disconnect</code> method for the <code>provider</code>.</p>
+								</div>
+							</div>
 							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><a href="Provider.html" class="tsd-signature-type" data-tsd-kind="Interface">Provider</a><span class="tsd-signature-symbol">&gt;</span></h4>
+							<p>You can return anything from <code>getProvider</code> that suitable for owned purpose.</p>
 						</li>
 					</ul>
 				</section>
