@@ -1,10 +1,10 @@
 {
   "name": "@senswap/sen-js",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "description": "The library for Sen",
   "main": "dist/index.js",
   "scripts": {
-    "docs": "typedoc ./src/index.ts && gh-pages -d docs",
+    "docs": "typedoc --excludePrivate --excludeProtected ./src/index.ts && gh-pages -d docs",
     "build": "npm run clean && tsc",
     "clean": "rm -rf ./dist",
     "test": "npm run build && mocha"

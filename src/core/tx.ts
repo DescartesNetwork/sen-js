@@ -25,7 +25,7 @@ export class TxError extends Error {
 class Tx {
   nodeUrl: string
   connection: Connection
-  errorMapping: string[]
+  private errorMapping: string[]
 
   constructor(nodeUrl = DEFAULT_NODEURL, errorMapping: string[] = []) {
     this.nodeUrl = nodeUrl

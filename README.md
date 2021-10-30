@@ -13,7 +13,7 @@ Sentre is an open liquidity protocol built on Solana. It's aiming to build and o
 
 ## Installation
 
-```
+```shell
 npm i @senswap/sen-js
 ```
 
@@ -52,6 +52,12 @@ console.log(poolData)
 //   fee_ratio: 2500000n
 //   tax_ratio: 0n
 // }
+```
+
+## Testing
+
+```shell
+npm test
 ```
 
 ## Related works

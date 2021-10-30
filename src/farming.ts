@@ -71,8 +71,8 @@ class Farming extends Tx {
 
   /**
    * Watch account changes
-   * @param callback
-   * @param filters
+   * @param callback - The callback will be called when there is any change
+   * @param filters - GetProgramAccountsFilter - Ref: {@link https://solana-labs.github.io/solana-web3.js/modules.html#GetProgramAccountsFilter}
    * @returns Watch id
    */
   watch = (
@@ -120,7 +120,7 @@ class Farming extends Tx {
 
   /**
    * Unwatch a watcher by watch id
-   * @param watchId
+   * @param watchId - The watchId was returned by {@link https://descartesnetwork.github.io/sen-js/classes/Farming.html#watch | watch} function.
    * @returns
    */
   unwatch = async (watchId: number): Promise<void> => {
@@ -130,9 +130,9 @@ class Farming extends Tx {
 
   /**
    * Derive debt address
-   * @param ownerAddress
-   * @param farmAddress
-   * @returns
+   * @param ownerAddress - Owner address of the debt account
+   * @param farmAddress - Corresponding farm address to the debt account
+   * @returns Debt account address
    */
   deriveDebtAddress = async (
     ownerAddress: string,
@@ -157,8 +157,8 @@ class Farming extends Tx {
 
   /**
    * Parse farm buffer data
-   * @param data
-   * @returns
+   * @param data - Buffer data (raw data) that you get by {@link https://solana-labs.github.io/solana-web3.js/classes/Connection.html#getAccountInfo | connection.getAccountInfo}
+   * @returns Readable json data respect to {@link https://descartesnetwork.github.io/sen-js/modules.html#schema | FARM_SCHEMA}
    */
   parseFarmData = (data: Buffer): FarmData => {
     const layout = new soproxABI.struct(schema.FARM_SCHEMA)
@@ -169,8 +169,8 @@ class Farming extends Tx {
 
   /**
    * Get farm data
-   * @param farmAddress
-   * @returns
+   * @param farmAddress - Farm account address
+   * @returns Readable json data respect to {@link https://descartesnetwork.github.io/sen-js/modules.html#schema | FARM_SCHEMA}
    */
   getFarmData = async (farmAddress: string): Promise<FarmData> => {
     if (!account.isAddress(farmAddress)) throw new Error('Invalid farm address')
@@ -182,8 +182,8 @@ class Farming extends Tx {
 
   /**
    * Parse debt buffer data
-   * @param data
-   * @returns
+   * @param data - Buffer data (raw data) that you get by {@link https://solana-labs.github.io/solana-web3.js/classes/Connection.html#getAccountInfo | connection.getAccountInfo}
+   * @returns Readable json data respect to {@link https://descartesnetwork.github.io/sen-js/modules.html#schema | DEBT_SCHEMA}
    */
   parseDebtData = (data: Buffer): DebtData => {
     const layout = new soproxABI.struct(schema.DEBT_SCHEMA)
@@ -194,8 +194,8 @@ class Farming extends Tx {
 
   /**
    * Get debt data
-   * @param debtAddress
-   * @returns
+   * @param debtAddress - Debt account address
+   * @returns Readable json data respect to {@link https://descartesnetwork.github.io/sen-js/modules.html#schema | DEBT_SCHEMA}
    */
   getDebtData = async (debtAddress: string): Promise<DebtData> => {
     if (!account.isAddress(debtAddress)) throw new Error('Invalid debt address')
@@ -207,13 +207,13 @@ class Farming extends Tx {
 
   /**
    * Initialize a farm
-   * @param reward
-   * @param period seconds
-   * @param ownerAddress
-   * @param mintStakeAddress
-   * @param mintRewardAddress
-   * @param wallet
-   * @returns
+   * @param reward - The number of tokens per period
+   * @param period - The number of seconds for a reward period
+   * @param ownerAddress - Farm owner address
+   * @param mintStakeAddress - Mint address for staking
+   * @param mintRewardAddress - Mint address for rewarding
+   * @param wallet - {@link https://descartesnetwork.github.io/sen-js/interfaces/WalletInterface.html | Wallet instance}
+   * @returns Transaction hash `txId` and Farm address `farmAddress`
    */
   initializeFarm = async (
     reward: bigint,
@@ -306,10 +306,10 @@ class Farming extends Tx {
 
   /**
    * Initialize accounts including rewarded and debt
-   * @param farmAddress
-   * @param ownerAddress
-   * @param wallet
-   * @returns
+   * @param farmAddress - Farm account address
+   * @param ownerAddress - Onwer address for the accounts (your wallet address usually)
+   * @param wallet - {@link https://descartesnetwork.github.io/sen-js/interfaces/WalletInterface.html | Wallet instance}
+   * @returns Transaction hash `txId`, associated account address to `wallet` for rewarding `rewardedAddress`, and debt account address `debtAddress` 
    */
   initializeAccounts = async (
     farmAddress: string,
@@ -376,13 +376,13 @@ class Farming extends Tx {
 
   /**
    * Stake
-   * You stake tokens from the source address, and havest SEN to rewarded address
-   * @param amount
-   * @param srcAddress Source address that deposit tokens
-   * @param rewardedAddress Rewarded address that receive havested SEN
-   * @param farmAddress
-   * @param wallet
-   * @returns
+   * You stake tokens from the source address, and havest tokens to rewarded address
+   * @param amount - The number of staked amount
+   * @param srcAddress - Source address that stakes tokens
+   * @param rewardedAddress - Rewarded address that receive havested tokens
+   * @param farmAddress - Farm address
+   * @param wallet - {@link https://descartesnetwork.github.io/sen-js/interfaces/WalletInterface.html | Wallet instance}
+   * @returns Transaction hash `txId`, and debt account address `debtAddress`
    */
   stake = async (
     amount: bigint,
@@ -468,13 +468,13 @@ class Farming extends Tx {
 
   /**
    * Unstake
-   * You unstake tokens to the destination address, and havest SEN to rewarded address
-   * @param amount
-   * @param dstAddress
-   * @param rewardedAddress
-   * @param farmAddress
-   * @param wallet
-   * @returns
+   * You unstake tokens and send them to the destination address, and havest tokens to rewarded address
+   * @param amount - The number of unstaked amount
+   * @param dstAddress - Destination address that receives unstaked tokens
+   * @param rewardedAddress - Rewarded address that receive havested tokens
+   * @param farmAddress - Farm address
+   * @param wallet - {@link https://descartesnetwork.github.io/sen-js/interfaces/WalletInterface.html | Wallet instance}
+   * @returns Transaction hash `txId`, and debt account address `debtAddress`
    */
   unstake = async (
     amount: bigint,
@@ -560,10 +560,11 @@ class Farming extends Tx {
 
   /**
    * Havest
-   * @param farmAddress
-   * @param rewardedAddress
-   * @param wallet
-   * @returns
+   * You havest rewards and send tokens to the rewarded address
+   * @param farmAddress - Farm address
+   * @param rewardedAddress - Rewarded address that receive havested tokens
+   * @param wallet - {@link https://descartesnetwork.github.io/sen-js/interfaces/WalletInterface.html | Wallet instance}
+   * @returns Transaction hash `txId`, and debt account address `debtAddress`
    */
   harvest = async (
     farmAddress: string,
@@ -632,12 +633,13 @@ class Farming extends Tx {
   }
 
   /**
-   * Seed more reward
-   * @param amount
-   * @param farmAddress
-   * @param srcAddress
-   * @param wallet
-   * @returns
+   * Seed more reward tot the farm treasury
+   * @remarks Owner only
+   * @param amount - The number of rewarded tokens that will be seeded
+   * @param farmAddress - Farm address
+   * @param srcAddress - Source address that sends the rewarded tokens to the farm treasury
+   * @param wallet - {@link https://descartesnetwork.github.io/sen-js/interfaces/WalletInterface.html | Wallet instance}
+   * @returns Transaction hash `txId`
    */
   seed = async (
     amount: bigint,
@@ -693,11 +695,12 @@ class Farming extends Tx {
 
   /**
    * Unseed less reward
-   * @param amount
-   * @param farmAddress
-   * @param dstAddress
-   * @param wallet
-   * @returns
+   * @remarks Farm owner only
+   * @param amount - The number of rewarded tokens that will be unseeded
+   * @param farmAddress - Farm address
+   * @param dstAddress - Destination address that receives the rewarded tokens from the farm treasury
+   * @param wallet - {@link https://descartesnetwork.github.io/sen-js/interfaces/WalletInterface.html | Wallet instance}
+   * @returns Transaction hash `txId`
    */
   unseed = async (
     amount: bigint,
@@ -759,10 +762,12 @@ class Farming extends Tx {
   }
 
   /**
-   * Freeze a farm
-   * @param farmAddress
-   * @param wallet
-   * @returns
+   * Freeze the farm
+   * Prevent all functions such as `stake`, `unstake`, and `harvest`
+   * @remarks Farm owner only
+   * @param farmAddress - Farm address
+   * @param wallet - {@link https://descartesnetwork.github.io/sen-js/interfaces/WalletInterface.html | Wallet instance}
+   * @returns Transaction hash `txId`
    */
   freeze = async (
     farmAddress: string,
@@ -798,10 +803,11 @@ class Farming extends Tx {
   }
 
   /**
-   * Thaw a farm
-   * @param farmAddress
-   * @param wallet
-   * @returns
+   * Thaw the farm
+   * @remarks Farm owner only
+   * @param farmAddress - Farm address
+   * @param wallet - {@link https://descartesnetwork.github.io/sen-js/interfaces/WalletInterface.html | Wallet instance}
+   * @returns Transaction hash `txId`
    */
   thaw = async (
     farmAddress: string,
@@ -838,10 +844,11 @@ class Farming extends Tx {
 
   /**
    * Transfer farm's ownership
-   * @param farmAddress
-   * @param newOwnerAddress
-   * @param wallet
-   * @returns
+   * @remarks Farm owner only
+   * @param farmAddress - Farm address
+   * @param newOwnerAddress - New owner address
+   * @param wallet - {@link https://descartesnetwork.github.io/sen-js/interfaces/WalletInterface.html | Wallet instance}
+   * @returns Transaction hash `txId`
    */
   transferFarmOwnership = async (
     farmAddress: string,
@@ -882,10 +889,10 @@ class Farming extends Tx {
   }
 
   /**
-   * Close debt account
-   * @param farmAddress
-   * @param wallet
-   * @returns
+   * Close a debt account
+   * @param farmAddress - Farm address
+   * @param wallet - {@link https://descartesnetwork.github.io/sen-js/interfaces/WalletInterface.html | Wallet instance}
+   * @returns Transaction hash `txId`
    */
   closeDebt = async (
     farmAddress: string,
@@ -930,8 +937,8 @@ class Farming extends Tx {
   /**
    * Close a farm
    * @param farmAddress
-   * @param wallet
-   * @returns
+   * @param wallet - {@link https://descartesnetwork.github.io/sen-js/interfaces/WalletInterface.html | Wallet instance}
+   * @returns Transaction hash `txId`
    */
   closeFarm = async (
     farmAddress: string,
