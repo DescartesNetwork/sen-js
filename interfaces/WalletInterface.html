@@ -68,11 +68,16 @@
 			<section class="tsd-panel tsd-comment">
 				<div class="tsd-comment tsd-typography">
 					<div class="lead">
-						<p>Wallet Interface\</p>
+						<p>All the library in sen-js have been leveraged by wallet instance for getting wallet address, signing transaction for example.\</p>
 					</div>
-					<p>All the library in sen-js have been leveraged by wallet instance for get wallet address, sign transaction, etc.
-					By respect the interface, you can create a wallet instance that work with the libraries seamlessly.</p>
 					<dl class="tsd-comment-tags">
+						<dt>example</dt>
+						<dd><p>The last parameter in the following example is <code>wallet</code> that respects WalletInstance.
+							By the <code>wallet</code>, the <code>transfer</code> can sign and read necessary wallet info for the transaction</p>
+							<pre><code class="language-ts"><span style="color: #001080">splt</span><span style="color: #000000">.</span><span style="color: #795E26">transfer</span><span style="color: #000000">(</span><span style="color: #001080">amount</span><span style="color: #000000">, </span><span style="color: #001080">srcAddress</span><span style="color: #000000">, </span><span style="color: #001080">dstAddress</span><span style="color: #000000">, </span><span style="color: #001080">wallet</span><span style="color: #000000">)</span>
+</code></pre>
+							<p>By respect the interface, you can create a wallet instance that work with the libraries seamlessly.</p>
+						</dd>
 						<dt>remarks</dt>
 						<dd><p>We have already written multiple wallet that you can refer as <a href="https://github.com/DescartesNetwork/senhub/tree/master/src/os/view/header/wallet/lib" class="external">examples</a></p>
 						</dd>
@@ -150,7 +155,7 @@
 					<div class="tsd-signature tsd-kind-icon">wallet<wbr>Type<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/DescartesNetwork/sen-js/blob/b3ff070/src/rawWallet.ts#L43">rawWallet.ts:43</a></li>
+							<li>Defined in <a href="https://github.com/DescartesNetwork/sen-js/blob/b3ff070/src/rawWallet.ts#L50">rawWallet.ts:50</a></li>
 						</ul>
 					</aside>
 				</section>
@@ -167,7 +172,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/DescartesNetwork/sen-js/blob/b3ff070/src/rawWallet.ts#L54">rawWallet.ts:54</a></li>
+									<li>Defined in <a href="https://github.com/DescartesNetwork/sen-js/blob/b3ff070/src/rawWallet.ts#L61">rawWallet.ts:61</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">void</span><span class="tsd-signature-symbol">&gt;</span></h4>
@@ -184,7 +189,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/DescartesNetwork/sen-js/blob/b3ff070/src/rawWallet.ts#L45">rawWallet.ts:45</a></li>
+									<li>Defined in <a href="https://github.com/DescartesNetwork/sen-js/blob/b3ff070/src/rawWallet.ts#L52">rawWallet.ts:52</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">&gt;</span></h4>
@@ -201,7 +206,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/DescartesNetwork/sen-js/blob/b3ff070/src/rawWallet.ts#L44">rawWallet.ts:44</a></li>
+									<li>Defined in <a href="https://github.com/DescartesNetwork/sen-js/blob/b3ff070/src/rawWallet.ts#L51">rawWallet.ts:51</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><a href="Provider.html" class="tsd-signature-type" data-tsd-kind="Interface">Provider</a><span class="tsd-signature-symbol">&gt;</span></h4>
@@ -218,7 +223,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/DescartesNetwork/sen-js/blob/b3ff070/src/rawWallet.ts#L47">rawWallet.ts:47</a></li>
+									<li>Defined in <a href="https://github.com/DescartesNetwork/sen-js/blob/b3ff070/src/rawWallet.ts#L54">rawWallet.ts:54</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-parameters-title">Parameters</h4>
@@ -241,7 +246,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/DescartesNetwork/sen-js/blob/b3ff070/src/rawWallet.ts#L48">rawWallet.ts:48</a></li>
+									<li>Defined in <a href="https://github.com/DescartesNetwork/sen-js/blob/b3ff070/src/rawWallet.ts#L55">rawWallet.ts:55</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-parameters-title">Parameters</h4>
@@ -264,7 +269,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/DescartesNetwork/sen-js/blob/b3ff070/src/rawWallet.ts#L46">rawWallet.ts:46</a></li>
+									<li>Defined in <a href="https://github.com/DescartesNetwork/sen-js/blob/b3ff070/src/rawWallet.ts#L53">rawWallet.ts:53</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-parameters-title">Parameters</h4>
@@ -287,7 +292,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/DescartesNetwork/sen-js/blob/b3ff070/src/rawWallet.ts#L49">rawWallet.ts:49</a></li>
+									<li>Defined in <a href="https://github.com/DescartesNetwork/sen-js/blob/b3ff070/src/rawWallet.ts#L56">rawWallet.ts:56</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-parameters-title">Parameters</h4>
