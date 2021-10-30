@@ -4,6 +4,7 @@
   "description": "The library for Sen",
   "main": "dist/index.js",
   "scripts": {
+    "docs": "typedoc ./src/index.ts && gh-pages -d docs",
     "build": "npm run clean && tsc",
     "clean": "rm -rf ./dist",
     "test": "npm run build && mocha"
@@ -21,8 +22,9 @@
   "devDependencies": {
     "@types/aes-js": "^3.1.1",
     "@types/pbkdf2": "^3.1.0",
+    "gh-pages": "^3.2.3",
     "mocha": "^9.0.2",
-    "typedoc": "^0.21.6",
+    "typedoc": "^0.21.9",
     "typescript": "^4.4.3"
   },
   "dependencies": {
