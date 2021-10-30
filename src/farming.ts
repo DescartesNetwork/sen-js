@@ -936,6 +936,7 @@ class Farming extends Tx {
 
   /**
    * Close a farm
+   * Only possible when all tokens has been unstaked
    * @param farmAddress
    * @param wallet - {@link https://descartesnetwork.github.io/sen-js/interfaces/WalletInterface.html | Wallet instance}
    * @returns Transaction hash `txId`
