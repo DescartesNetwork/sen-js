@@ -240,7 +240,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/DescartesNetwork/sen-js/blob/a0f5e86/src/farming.ts#L890">farming.ts:890</a></li>
+									<li>Defined in <a href="https://github.com/DescartesNetwork/sen-js/blob/a0f5e86/src/farming.ts#L891">farming.ts:891</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -274,7 +274,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/DescartesNetwork/sen-js/blob/a0f5e86/src/farming.ts#L936">farming.ts:936</a></li>
+									<li>Defined in <a href="https://github.com/DescartesNetwork/sen-js/blob/a0f5e86/src/farming.ts#L937">farming.ts:937</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -346,7 +346,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/DescartesNetwork/sen-js/blob/a0f5e86/src/farming.ts#L767">farming.ts:767</a></li>
+									<li>Defined in <a href="https://github.com/DescartesNetwork/sen-js/blob/a0f5e86/src/farming.ts#L768">farming.ts:768</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -444,21 +444,28 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/DescartesNetwork/sen-js/blob/a0f5e86/src/farming.ts#L568">farming.ts:568</a></li>
+									<li>Defined in <a href="https://github.com/DescartesNetwork/sen-js/blob/a0f5e86/src/farming.ts#L569">farming.ts:569</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
 								<div class="lead">
-									<p>Havest</p>
+									<p>Havest
+									You havest rewards and send tokens to the rewarded address</p>
 								</div>
 							</div>
 							<h4 class="tsd-parameters-title">Parameters</h4>
 							<ul class="tsd-parameters">
 								<li>
 									<h5>farmAddress: <span class="tsd-signature-type">string</span></h5>
+									<div class="tsd-comment tsd-typography">
+										<p>Farm address</p>
+									</div>
 								</li>
 								<li>
 									<h5>rewardedAddress: <span class="tsd-signature-type">string</span></h5>
+									<div class="tsd-comment tsd-typography">
+										<p>Rewarded address that receive havested tokens</p>
+									</div>
 								</li>
 								<li>
 									<h5>wallet: <a href="../interfaces/WalletInterface.html" class="tsd-signature-type" data-tsd-kind="Interface">WalletInterface</a></h5>
@@ -468,6 +475,7 @@
 								</li>
 							</ul>
 							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-symbol">{ </span>debtAddress<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">; </span>txId<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> }</span><span class="tsd-signature-symbol">&gt;</span></h4>
+							<p>Transaction hash <code>txId</code>, and debt account address <code>debtAddress</code></p>
 						</li>
 					</ul>
 				</section>
@@ -511,7 +519,7 @@
 								</li>
 							</ul>
 							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-symbol">{ </span>debtAddress<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">; </span>rewardedAddress<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">; </span>txId<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> }</span><span class="tsd-signature-symbol">&gt;</span></h4>
-							<p>Transaction hash <code>txId</code>, account address for rewarding <code>rewardedAddress</code>, and debt account address <code>debtAddress</code></p>
+							<p>Transaction hash <code>txId</code>, associated account address to <code>wallet</code> for rewarding <code>rewardedAddress</code>, and debt account address <code>debtAddress</code></p>
 						</li>
 					</ul>
 				</section>
@@ -651,24 +659,33 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/DescartesNetwork/sen-js/blob/a0f5e86/src/farming.ts#L642">farming.ts:642</a></li>
+									<li>Defined in <a href="https://github.com/DescartesNetwork/sen-js/blob/a0f5e86/src/farming.ts#L643">farming.ts:643</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
 								<div class="lead">
-									<p>Seed more reward</p>
+									<p>{@label Owner only} Seed more reward tot the farm treasury</p>
 								</div>
 							</div>
 							<h4 class="tsd-parameters-title">Parameters</h4>
 							<ul class="tsd-parameters">
 								<li>
 									<h5>amount: <span class="tsd-signature-type">bigint</span></h5>
+									<div class="tsd-comment tsd-typography">
+										<p>The number of rewarded tokens that will be seeded</p>
+									</div>
 								</li>
 								<li>
 									<h5>farmAddress: <span class="tsd-signature-type">string</span></h5>
+									<div class="tsd-comment tsd-typography">
+										<p>Farm address</p>
+									</div>
 								</li>
 								<li>
 									<h5>srcAddress: <span class="tsd-signature-type">string</span></h5>
+									<div class="tsd-comment tsd-typography">
+										<p>Source address that sends the rewarded tokens to the farm treasury</p>
+									</div>
 								</li>
 								<li>
 									<h5>wallet: <a href="../interfaces/WalletInterface.html" class="tsd-signature-type" data-tsd-kind="Interface">WalletInterface</a></h5>
@@ -678,6 +695,7 @@
 								</li>
 							</ul>
 							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-symbol">{ </span>txId<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> }</span><span class="tsd-signature-symbol">&gt;</span></h4>
+							<p>Transaction hash <code>txId</code></p>
 						</li>
 					</ul>
 				</section>
@@ -697,28 +715,34 @@
 							<div class="tsd-comment tsd-typography">
 								<div class="lead">
 									<p>Stake
-									You stake tokens from the source address, and havest SEN to rewarded address</p>
+									You stake tokens from the source address, and havest tokens to rewarded address</p>
 								</div>
 							</div>
 							<h4 class="tsd-parameters-title">Parameters</h4>
 							<ul class="tsd-parameters">
 								<li>
 									<h5>amount: <span class="tsd-signature-type">bigint</span></h5>
+									<div class="tsd-comment tsd-typography">
+										<p>The number of staked amount</p>
+									</div>
 								</li>
 								<li>
 									<h5>srcAddress: <span class="tsd-signature-type">string</span></h5>
 									<div class="tsd-comment tsd-typography">
-										<p>Source address that deposit tokens</p>
+										<p>Source address that stakes tokens</p>
 									</div>
 								</li>
 								<li>
 									<h5>rewardedAddress: <span class="tsd-signature-type">string</span></h5>
 									<div class="tsd-comment tsd-typography">
-										<p>Rewarded address that receive havested SEN</p>
+										<p>Rewarded address that receive havested tokens</p>
 									</div>
 								</li>
 								<li>
 									<h5>farmAddress: <span class="tsd-signature-type">string</span></h5>
+									<div class="tsd-comment tsd-typography">
+										<p>Farm address</p>
+									</div>
 								</li>
 								<li>
 									<h5>wallet: <a href="../interfaces/WalletInterface.html" class="tsd-signature-type" data-tsd-kind="Interface">WalletInterface</a></h5>
@@ -728,6 +752,7 @@
 								</li>
 							</ul>
 							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-symbol">{ </span>debtAddress<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">; </span>txId<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> }</span><span class="tsd-signature-symbol">&gt;</span></h4>
+							<p>Transaction hash <code>txId</code>, and debt account address <code>debtAddress</code></p>
 						</li>
 					</ul>
 				</section>
@@ -741,7 +766,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/DescartesNetwork/sen-js/blob/a0f5e86/src/farming.ts#L806">farming.ts:806</a></li>
+									<li>Defined in <a href="https://github.com/DescartesNetwork/sen-js/blob/a0f5e86/src/farming.ts#L807">farming.ts:807</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -775,7 +800,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/DescartesNetwork/sen-js/blob/a0f5e86/src/farming.ts#L846">farming.ts:846</a></li>
+									<li>Defined in <a href="https://github.com/DescartesNetwork/sen-js/blob/a0f5e86/src/farming.ts#L847">farming.ts:847</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -812,24 +837,33 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/DescartesNetwork/sen-js/blob/a0f5e86/src/farming.ts#L702">farming.ts:702</a></li>
+									<li>Defined in <a href="https://github.com/DescartesNetwork/sen-js/blob/a0f5e86/src/farming.ts#L703">farming.ts:703</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
 								<div class="lead">
-									<p>Unseed less reward</p>
+									<p>{@label Owner only} Unseed less reward</p>
 								</div>
 							</div>
 							<h4 class="tsd-parameters-title">Parameters</h4>
 							<ul class="tsd-parameters">
 								<li>
 									<h5>amount: <span class="tsd-signature-type">bigint</span></h5>
+									<div class="tsd-comment tsd-typography">
+										<p>The number of rewarded tokens that will be unseeded</p>
+									</div>
 								</li>
 								<li>
 									<h5>farmAddress: <span class="tsd-signature-type">string</span></h5>
+									<div class="tsd-comment tsd-typography">
+										<p>Farm address</p>
+									</div>
 								</li>
 								<li>
 									<h5>dstAddress: <span class="tsd-signature-type">string</span></h5>
+									<div class="tsd-comment tsd-typography">
+										<p>Destination address that receives the rewarded tokens from the farm treasury</p>
+									</div>
 								</li>
 								<li>
 									<h5>wallet: <a href="../interfaces/WalletInterface.html" class="tsd-signature-type" data-tsd-kind="Interface">WalletInterface</a></h5>
@@ -839,6 +873,7 @@
 								</li>
 							</ul>
 							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-symbol">{ </span>txId<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> }</span><span class="tsd-signature-symbol">&gt;</span></h4>
+							<p>Transaction hash <code>txId</code></p>
 						</li>
 					</ul>
 				</section>
@@ -858,22 +893,34 @@
 							<div class="tsd-comment tsd-typography">
 								<div class="lead">
 									<p>Unstake
-									You unstake tokens to the destination address, and havest SEN to rewarded address</p>
+									You unstake tokens and send them to the destination address, and havest tokens to rewarded address</p>
 								</div>
 							</div>
 							<h4 class="tsd-parameters-title">Parameters</h4>
 							<ul class="tsd-parameters">
 								<li>
 									<h5>amount: <span class="tsd-signature-type">bigint</span></h5>
+									<div class="tsd-comment tsd-typography">
+										<p>The number of unstaked amount</p>
+									</div>
 								</li>
 								<li>
 									<h5>dstAddress: <span class="tsd-signature-type">string</span></h5>
+									<div class="tsd-comment tsd-typography">
+										<p>Destination address that receives unstaked tokens</p>
+									</div>
 								</li>
 								<li>
 									<h5>rewardedAddress: <span class="tsd-signature-type">string</span></h5>
+									<div class="tsd-comment tsd-typography">
+										<p>Rewarded address that receive havested tokens</p>
+									</div>
 								</li>
 								<li>
 									<h5>farmAddress: <span class="tsd-signature-type">string</span></h5>
+									<div class="tsd-comment tsd-typography">
+										<p>Farm address</p>
+									</div>
 								</li>
 								<li>
 									<h5>wallet: <a href="../interfaces/WalletInterface.html" class="tsd-signature-type" data-tsd-kind="Interface">WalletInterface</a></h5>
@@ -883,6 +930,7 @@
 								</li>
 							</ul>
 							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-symbol">{ </span>debtAddress<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">; </span>txId<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> }</span><span class="tsd-signature-symbol">&gt;</span></h4>
+							<p>Transaction hash <code>txId</code>, and debt account address <code>debtAddress</code></p>
 						</li>
 					</ul>
 				</section>
