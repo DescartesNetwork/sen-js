@@ -23,3 +23,6 @@ export { default as Swap } from './swap'
 
 export * from './farming'
 export { default as Farming } from './farming'
+
+export * from './ido'
+export { default as IDO } from './ido'

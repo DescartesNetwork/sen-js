@@ -66,6 +66,24 @@ export type FarmData = {
   compensation: bigint
 }
 
+export type IDOData = {
+  owner: string
+  startdate: bigint
+  middledate: bigint
+  enddate: bigint
+  total_raise: bigint
+  sold_mint_treasury: string
+  raised_mint_treasury: string
+  is_initialized: boolean
+}
+
+export type TicketData = {
+  owner: string
+  ido: string
+  amount: bigint
+  is_initialized: boolean
+}
+
 const schema = {
   /**
    * Swap
@@ -175,6 +193,26 @@ const schema = {
     { key: 'n', type: 'u8' },
     { key: 'is_initialized', type: 'bool' },
     { key: 'signers', type: '[pub;11]' },
+  ],
+
+  /**
+   * IDO
+   */
+  IDO_SCHEMA: [
+    { key: 'owner', type: 'pub' },
+    { key: 'startdate', type: 'i64' },
+    { key: 'middledate', type: 'i64' },
+    { key: 'enddate', type: 'i64' },
+    { key: 'total_raise', type: 'u64' },
+    { key: 'sold_mint_treasury', type: 'pub' },
+    { key: 'raised_mint_treasury', type: 'pub' },
+    { key: 'is_initialized', type: 'bool' },
+  ],
+  TICKET_SCHEMA: [
+    { key: 'owner', type: 'pub' },
+    { key: 'ido', type: 'pub' },
+    { key: 'amount', type: 'u64' },
+    { key: 'is_initialized', type: 'bool' },
   ],
 }
 

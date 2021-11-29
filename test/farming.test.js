@@ -54,7 +54,7 @@ describe('Farming library', function () {
         throw new Error('No error')
       } catch (er) {
         if (er.message === 'No error')
-          throw new Error('An invalid address is skipped')
+          throw new Error('An invalid address was skipped')
       }
     })
   })
@@ -279,7 +279,7 @@ describe('Farming library', function () {
       await farming.transferFarmOwnership(FARM_ADDRESS, walletAddress, newOwner)
       const b = await farming.getFarmData(FARM_ADDRESS)
       if (b.owner != walletAddress)
-        throw new Error('Cannot transfer pool ownership')
+        throw new Error('Cannot transfer farm ownership')
     })
 
     it('Close farm', async function () {
