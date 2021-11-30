@@ -702,7 +702,7 @@ class IDO extends Tx {
     const instruction = new TransactionInstruction({
       keys: [
         { pubkey: payerPublicKey, isSigner: true, isWritable: true },
-        { pubkey: idoPublicKey, isSigner: false, isWritable: false },
+        { pubkey: idoPublicKey, isSigner: false, isWritable: true },
         { pubkey: srcPublicKey, isSigner: false, isWritable: true },
         {
           pubkey: soldMintTreasuryPublicKey,
@@ -783,7 +783,7 @@ class IDO extends Tx {
     const instruction = new TransactionInstruction({
       keys: [
         { pubkey: payerPublicKey, isSigner: true, isWritable: true },
-        { pubkey: idoPublicKey, isSigner: false, isWritable: false },
+        { pubkey: idoPublicKey, isSigner: false, isWritable: true },
         { pubkey: dstPublicKey, isSigner: false, isWritable: true },
         {
           pubkey: soldMintTreasuryPublicKey,

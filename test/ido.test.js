@@ -185,7 +185,7 @@ describe('IDO library', function () {
       const {
         sold_mint_treasury: soldMintTreasuryAddress,
         enddate,
-        total_raise: totalRaise,
+        total_raised: totalRaised,
       } = await ido.getIDOData(IDO_ADDRESS)
       const { amount: prevAmount } = await splt.getAccountData(
         soldMintTreasuryAddress,
@@ -204,7 +204,7 @@ describe('IDO library', function () {
       const { amount: nextTicketAmount } = await ido.getTicketData(
         TICKET_ADDRESS,
       )
-      const expectedAmount = (prevTicketAmount * prevAmount) / totalRaise
+      const expectedAmount = (prevTicketAmount * prevAmount) / totalRaised
       if (nextTicketAmount !== 0n || prevAmount - nextAmount !== expectedAmount)
         throw new Error('Failed to redeem')
     })

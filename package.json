@@ -1,6 +1,6 @@
 {
   "name": "@senswap/sen-js",
-  "version": "1.2.1",
+  "version": "1.2.2",
   "description": "The library for Sen",
   "main": "dist/index.js",
   "scripts": {
