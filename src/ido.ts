@@ -22,7 +22,7 @@ import { WalletInterface } from './rawWallet'
 const soproxABI = require('soprox-abi')
 
 export type IDOAccountChangeInfo = {
-  type: 'ticket'
+  type: 'ido' | 'ticket'
   address: string
   data: Buffer
 }
@@ -81,7 +81,7 @@ class IDO extends Tx {
       error: string | null,
       data:
         | (Omit<IDOAccountChangeInfo, 'data'> & {
-            data: TicketData
+            data: IDOData | TicketData
           })
         | null,
     ) => void,
@@ -92,9 +92,14 @@ class IDO extends Tx {
       accountInfo: { data: buf },
     }: KeyedAccountInfo) => {
       const address = accountId.toBase58()
+      const idoSpace = new soproxABI.struct(schema.IDO_SCHEMA).space
       const ticketSpace = new soproxABI.struct(schema.TICKET_SCHEMA).space
       let type = null
       let data = {}
+      if (buf.length === idoSpace) {
+        type = 'ido'
+        data = this.parseIDOData(buf)
+      }
       if (buf.length === ticketSpace) {
         type = 'ticket'
         data = this.parseTicketData(buf)
@@ -103,7 +108,7 @@ class IDO extends Tx {
       return callback(null, {
         type: type as IDOAccountChangeInfo['type'],
         address,
-        data: data as TicketData,
+        data: data as IDOData | TicketData,
       })
     }
     return this.connection.onProgramAccountChange(
