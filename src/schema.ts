@@ -71,6 +71,7 @@ export type IDOData = {
   startdate: bigint
   middledate: bigint
   enddate: bigint
+  redeemdate: bigint
   total_sold: bigint
   total_raised: bigint
   sold_mint_treasury: string
@@ -204,6 +205,7 @@ const schema = {
     { key: 'startdate', type: 'i64' },
     { key: 'middledate', type: 'i64' },
     { key: 'enddate', type: 'i64' },
+    { key: 'redeemdate', type: 'i64' },
     { key: 'total_sold', type: 'u64' },
     { key: 'total_raised', type: 'u64' },
     { key: 'sold_mint_treasury', type: 'pub' },

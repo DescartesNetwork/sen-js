@@ -14,6 +14,7 @@ const minute = 30n // 30 seconds
 const startdate = global.BigInt(Math.floor(Number(new Date()) / 1000)) + minute
 const middledate = startdate + minute
 const enddate = middledate + minute
+const redeemdate = enddate + minute
 
 describe('IDO library', function () {
   it('IDO', async function () {
@@ -23,6 +24,7 @@ describe('IDO library', function () {
       startdate,
       middledate,
       enddate,
+      redeemdate,
       SOLD_MINT,
       RAISED_MINT,
       wallet,
@@ -184,7 +186,7 @@ describe('IDO library', function () {
       const splt = new SPLT()
       const {
         sold_mint_treasury: soldMintTreasuryAddress,
-        enddate,
+        redeemdate,
         total_raised: totalRaised,
       } = await ido.getIDOData(IDO_ADDRESS)
       const { amount: prevAmount } = await splt.getAccountData(
@@ -194,7 +196,7 @@ describe('IDO library', function () {
         TICKET_ADDRESS,
       )
       const waiting =
-        Math.max(Number(enddate) * 1000 - Number(new Date()), 0) + 1000
+        Math.max(Number(redeemdate) * 1000 - Number(new Date()), 0) + 1000
       await (async () =>
         new Promise((resolve, _) => setTimeout(resolve, waiting)))()
       await ido.redeem(IDO_ADDRESS, wallet)

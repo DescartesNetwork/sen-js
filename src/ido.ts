@@ -211,9 +211,10 @@ class IDO extends Tx {
   /**
    * Initialize an IDO
    * @param amount - The number of being-sold tokens in the IDO
-   * @param startDate - Start date of IDO
-   * @param middleDate - The end of phase #1 and start of phase #2
-   * @param endDate -End of the IDO
+   * @param startdate - Start date of IDO
+   * @param middledate - The end of phase #1 and start of phase #2
+   * @param enddate -End of the IDO
+   * @param redeemdate - The unlock date that users can redeem the being-sold tokens
    * @param soldMintAddress - Mint address for selling
    * @param raisedMintAddress - Mint address for raising
    * @param wallet - {@link https://descartesnetwork.github.io/sen-js/interfaces/WalletInterface.html | Wallet instance}
@@ -224,6 +225,7 @@ class IDO extends Tx {
     startdate: bigint,
     middledate: bigint,
     enddate: bigint,
+    redeemdate: bigint,
     soldMintAddress: string,
     raisedMintAddress: string,
     wallet: WalletInterface,
@@ -280,8 +282,9 @@ class IDO extends Tx {
         { key: 'startdate', type: 'i64' },
         { key: 'middledate', type: 'i64' },
         { key: 'enddate', type: 'i64' },
+        { key: 'redeemdate', type: 'i64' },
       ],
-      { code: 0, amount, startdate, middledate, enddate },
+      { code: 0, amount, startdate, middledate, enddate, redeemdate },
     )
     const instruction = new TransactionInstruction({
       keys: [
