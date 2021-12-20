@@ -309,7 +309,7 @@ class Farming extends Tx {
    * @param farmAddress - Farm account address
    * @param ownerAddress - Onwer address for the accounts (your wallet address usually)
    * @param wallet - {@link https://descartesnetwork.github.io/sen-js/interfaces/WalletInterface.html | Wallet instance}
-   * @returns Transaction hash `txId`, associated account address to `wallet` for rewarding `rewardedAddress`, and debt account address `debtAddress` 
+   * @returns Transaction hash `txId`, associated account address to `wallet` for rewarding `rewardedAddress`, and debt account address `debtAddress`
    */
   initializeAccounts = async (
     farmAddress: string,
@@ -996,6 +996,92 @@ class Farming extends Tx {
     // Send tx
     const txId = await this.sendTransaction(transaction)
     return { txId }
+  }
+
+  /**
+   * Rid
+   * Give up on reward, get rid ò the farm
+   * @param dstAddress - Destination address that receives unstaked tokens
+   * @param rewardedAddress - Rewarded address that receive havested tokens (for strict procedure)
+   * @param farmAddress - Farm address
+   * @param wallet - {@link https://descartesnetwork.github.io/sen-js/interfaces/WalletInterface.html | Wallet instance}
+   * @returns Transaction hash `txId`, and debt account address `debtAddress`
+   */
+  rid = async (
+    dstAddress: string,
+    rewardedAddress: string,
+    farmAddress: string,
+    wallet: WalletInterface,
+  ): Promise<{ txId: string; debtAddress: string }> => {
+    // Validation
+    if (!account.isAddress(dstAddress))
+      throw new Error('Invalid destination address')
+    if (!account.isAddress(rewardedAddress))
+      throw new Error('Invalid rewarded address')
+    if (!account.isAddress(farmAddress)) throw new Error('Invalid farm address')
+    // Get payer
+    const payerAddress = await wallet.getAddress()
+    const payerPublicKey = account.fromAddress(payerAddress)
+    // Fetch necessary info
+    const {
+      treasury_stake: treasuryStakeAddress,
+      mint_stake: mintStakeAddress,
+      treasury_reward: treasuryRewardAddress,
+      mint_reward: mintRewardAddress,
+    } = await this.getFarmData(farmAddress)
+    const debtAddress = await this.deriveDebtAddress(payerAddress, farmAddress)
+    // Build public keys
+    const farmPublicKey = account.fromAddress(farmAddress)
+    const debtPublicKey = account.fromAddress(debtAddress)
+    const dstPublicKey = account.fromAddress(dstAddress)
+    const treasuryStakePublicKey = account.fromAddress(treasuryStakeAddress)
+    const mintStakePublicKey = account.fromAddress(mintStakeAddress)
+    const rewardedPublicKey = account.fromAddress(rewardedAddress)
+    const treasuryRewardPublicKey = account.fromAddress(treasuryRewardAddress)
+    const mintRewardPublicKey = account.fromAddress(mintRewardAddress)
+    // Get treasurer
+    const seed = [farmPublicKey.toBuffer()]
+    const treasurerPublicKey = await PublicKey.createProgramAddress(
+      seed,
+      this.farmingProgramId,
+    )
+    // Build tx
+    let transaction = new Transaction()
+    transaction = await this.addRecentCommitment(transaction)
+    const layout = new soproxABI.struct([{ key: 'code', type: 'u8' }], {
+      code: 12,
+    })
+    const instruction = new TransactionInstruction({
+      keys: [
+        { pubkey: payerPublicKey, isSigner: true, isWritable: true },
+        { pubkey: farmPublicKey, isSigner: false, isWritable: true },
+        { pubkey: debtPublicKey, isSigner: false, isWritable: true },
+
+        { pubkey: dstPublicKey, isSigner: false, isWritable: true },
+        { pubkey: treasuryStakePublicKey, isSigner: false, isWritable: true },
+        { pubkey: mintStakePublicKey, isSigner: false, isWritable: false },
+
+        { pubkey: rewardedPublicKey, isSigner: false, isWritable: true },
+        { pubkey: treasuryRewardPublicKey, isSigner: false, isWritable: true },
+        { pubkey: mintRewardPublicKey, isSigner: false, isWritable: false },
+
+        { pubkey: treasurerPublicKey, isSigner: false, isWritable: false },
+        { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
+        { pubkey: this.spltProgramId, isSigner: false, isWritable: false },
+        { pubkey: SYSVAR_RENT_PUBKEY, isSigner: false, isWritable: false },
+        { pubkey: this.splataProgramId, isSigner: false, isWritable: false },
+      ],
+      programId: this.farmingProgramId,
+      data: layout.toBuffer(),
+    })
+    transaction.add(instruction)
+    transaction.feePayer = payerPublicKey
+    // Sign tx
+    const payerSig = await wallet.rawSignTransaction(transaction)
+    this.addSignature(transaction, payerSig)
+    // Send tx
+    const txId = await this.sendTransaction(transaction)
+    return { txId, debtAddress }
   }
 }
 

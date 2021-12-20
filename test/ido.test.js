@@ -144,10 +144,32 @@ describe('IDO library', function () {
       if (nextAmount - prevAmount !== amount) throw new Error('Failed to stake')
     })
 
+    it('Should post-stake', async function () {
+      const ido = new IDO()
+      const splt = new SPLT()
+      const lamports = new Lamports()
+      const payer = new RawWallet(account.createAccount().secretKey)
+      const payerAddress = await payer.getAddress()
+      await lamports.airdrop(100000000n, payerAddress)
+      const srcAddress = await splt.deriveAssociatedAddress(
+        await wallet.getAddress(),
+        RAISED_MINT,
+      )
+      const { accountAddress: dstAddress } = await splt.initializeAccount(
+        RAISED_MINT,
+        payerAddress,
+        payer,
+      )
+      const amount = 10000000000n
+      await splt.transfer(amount, srcAddress, dstAddress, wallet)
+      await ido.initializeTicket(IDO_ADDRESS, payer)
+      await ido.stake(amount, IDO_ADDRESS, payer)
+    })
+
     it('Should unstake', async function () {
       const ido = new IDO()
       const splt = new SPLT()
-      const amount = 5000000000n
+      const amount = 10000000000n
       const { raised_mint_treasury: raisedMintTreasuryAddress, middledate } =
         await ido.getIDOData(IDO_ADDRESS)
       const { amount: prevAmount } = await splt.getAccountData(
@@ -159,6 +181,7 @@ describe('IDO library', function () {
       )
       await (async () =>
         new Promise((resolve, _) => setTimeout(resolve, waiting)))()
+
       await ido.unstake(amount, IDO_ADDRESS, wallet)
       const { amount: nextAmount } = await splt.getAccountData(
         raisedMintTreasuryAddress,

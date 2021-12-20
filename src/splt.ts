@@ -431,7 +431,7 @@ class SPLT extends Tx {
   /**
    * Send tokens
    * @param amount The decimalized amount
-   * @param srcAddress The sended address
+   * @param srcAddress The sender address
    * @param dstAddress The receiver address
    * @param wallet
    * @returns Transaction id
