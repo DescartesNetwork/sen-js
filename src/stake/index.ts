@@ -8,61 +8,48 @@ import {
   KeyedAccountInfo,
 } from '@solana/web3.js'
 
-import Tx from './core/tx'
-import SPLT from './splt'
-import account from './account'
-import schema, { DebtData, FarmData } from './schema'
+import Tx from '../core/tx'
+import SPLT from '../splt'
+import account from '../account'
+import schema, { StakeDebtData, StakeFarmData } from '../schema'
 import {
   DEFAULT_SPLT_PROGRAM_ADDRESS,
   DEFAULT_SPLATA_PROGRAM_ADDRESS,
-  DEFAULT_FARMING_PROGRAM_ADDRESS,
-} from './default'
-import { WalletInterface } from './rawWallet'
+  DEFAULT_STAKE_PROGRAM_ADDRESS,
+} from '../default'
+import { WalletInterface } from '../rawWallet'
+import { InstructionCode, ErrorMapping } from './constant'
+import { uint32ToBuffer, genFarmAccount } from './util'
 
 const soproxABI = require('soprox-abi')
 
-export type FarmingAccountChangeInfo = {
+export type StakeAccountChangeInfo = {
   type: 'farm' | 'debt'
   address: string
   data: Buffer
 }
 
-const ErrorMapping = [
-  'Invalid instruction',
-  'Invalid owner',
-  'Incorrect program id',
-  'Already constructed',
-  'Operation overflowed',
-  'Farm unmatched',
-  'Farm frozen',
-  'Zero value',
-  'Insufficient funds',
-  'Must fully harvested first',
-  'Must fully unstaked first',
-  'Inconsistent treasury balance',
-]
-
-class Farming extends Tx {
-  farmingProgramId: PublicKey
+class Stake extends Tx {
+  stakeProgramId: PublicKey
   spltProgramId: PublicKey
   splataProgramId: PublicKey
   private _splt: SPLT
 
   constructor(
-    farmingProgramAddress = DEFAULT_FARMING_PROGRAM_ADDRESS,
+    stakeProgramAddress = DEFAULT_STAKE_PROGRAM_ADDRESS,
     spltProgramAddress = DEFAULT_SPLT_PROGRAM_ADDRESS,
     splataProgramAddress = DEFAULT_SPLATA_PROGRAM_ADDRESS,
     nodeUrl: string,
   ) {
     super(nodeUrl, ErrorMapping)
 
-    if (!account.isAddress(farmingProgramAddress))
-      throw new Error('Invalid farming program address')
+    if (!account.isAddress(stakeProgramAddress))
+      throw new Error('Invalid stake program address')
     if (!account.isAddress(spltProgramAddress))
       throw new Error('Invalid SPL token program address')
     if (!account.isAddress(splataProgramAddress))
       throw new Error('Invalid SPL associated token program address')
-    this.farmingProgramId = account.fromAddress(farmingProgramAddress)
+    this.stakeProgramId = account.fromAddress(stakeProgramAddress)
     this.spltProgramId = account.fromAddress(spltProgramAddress)
     this.splataProgramId = account.fromAddress(splataProgramAddress)
 
@@ -79,8 +66,8 @@ class Farming extends Tx {
     callback: (
       error: string | null,
       data:
-        | (Omit<FarmingAccountChangeInfo, 'data'> & {
-            data: FarmData | DebtData
+        | (Omit<StakeAccountChangeInfo, 'data'> & {
+            data: StakeFarmData | StakeDebtData
           })
         | null,
     ) => void,
@@ -105,13 +92,13 @@ class Farming extends Tx {
       }
       if (!type) return callback('Unmatched type', null)
       return callback(null, {
-        type: type as FarmingAccountChangeInfo['type'],
+        type: type as StakeAccountChangeInfo['type'],
         address,
-        data: data as FarmData | DebtData,
+        data: data as StakeFarmData | StakeDebtData,
       })
     }
     return this.connection.onProgramAccountChange(
-      this.farmingProgramId,
+      this.stakeProgramId,
       cb,
       'confirmed',
       filters,
@@ -129,39 +116,12 @@ class Farming extends Tx {
   }
 
   /**
-   * Derive debt address
-   * @param ownerAddress - Owner address of the debt account
-   * @param farmAddress - Corresponding farm address to the debt account
-   * @returns Debt account address
-   */
-  deriveDebtAddress = async (
-    ownerAddress: string,
-    farmAddress: string,
-  ): Promise<string> => {
-    if (!account.isAddress(ownerAddress))
-      throw new Error('Invalid owner address')
-    if (!account.isAddress(farmAddress)) throw new Error('Invalid farm address')
-    const ownerPublicKey = account.fromAddress(ownerAddress)
-    const farmPublicKey = account.fromAddress(farmAddress)
-    const seeds = [
-      ownerPublicKey.toBuffer(),
-      farmPublicKey.toBuffer(),
-      this.farmingProgramId.toBuffer(),
-    ]
-    const [debtPublicKey, _] = await PublicKey.findProgramAddress(
-      seeds,
-      this.farmingProgramId,
-    )
-    return debtPublicKey.toBase58()
-  }
-
-  /**
    * Parse farm buffer data
    * @param data - Buffer data (raw data) that you get by {@link https://solana-labs.github.io/solana-web3.js/classes/Connection.html#getAccountInfo | connection.getAccountInfo}
    * @returns Readable json data respect to {@link https://descartesnetwork.github.io/sen-js/modules.html#schema | FARM_SCHEMA}
    */
-  parseFarmData = (data: Buffer): FarmData => {
-    const layout = new soproxABI.struct(schema.FARM_SCHEMA)
+  parseFarmData = (data: Buffer): StakeFarmData => {
+    const layout = new soproxABI.struct(schema.STAKE_FARM_SCHEMA)
     if (data.length !== layout.space) throw new Error('Unmatched buffer length')
     layout.fromBuffer(data)
     return layout.value
@@ -172,7 +132,7 @@ class Farming extends Tx {
    * @param farmAddress - Farm account address
    * @returns Readable json data respect to {@link https://descartesnetwork.github.io/sen-js/modules.html#schema | FARM_SCHEMA}
    */
-  getFarmData = async (farmAddress: string): Promise<FarmData> => {
+  getFarmData = async (farmAddress: string): Promise<StakeFarmData> => {
     if (!account.isAddress(farmAddress)) throw new Error('Invalid farm address')
     const farmPublicKey = account.fromAddress(farmAddress)
     const { data } = (await this.connection.getAccountInfo(farmPublicKey)) || {}
@@ -185,8 +145,8 @@ class Farming extends Tx {
    * @param data - Buffer data (raw data) that you get by {@link https://solana-labs.github.io/solana-web3.js/classes/Connection.html#getAccountInfo | connection.getAccountInfo}
    * @returns Readable json data respect to {@link https://descartesnetwork.github.io/sen-js/modules.html#schema | DEBT_SCHEMA}
    */
-  parseDebtData = (data: Buffer): DebtData => {
-    const layout = new soproxABI.struct(schema.DEBT_SCHEMA)
+  parseDebtData = (data: Buffer): StakeDebtData => {
+    const layout = new soproxABI.struct(schema.STAKE_DEBT_SCHEMA)
     if (data.length !== layout.space) throw new Error('Unmatched buffer length')
     layout.fromBuffer(data)
     return layout.value
@@ -197,12 +157,66 @@ class Farming extends Tx {
    * @param debtAddress - Debt account address
    * @returns Readable json data respect to {@link https://descartesnetwork.github.io/sen-js/modules.html#schema | DEBT_SCHEMA}
    */
-  getDebtData = async (debtAddress: string): Promise<DebtData> => {
+  getDebtData = async (debtAddress: string): Promise<StakeDebtData> => {
     if (!account.isAddress(debtAddress)) throw new Error('Invalid debt address')
     const debtPublicKey = account.fromAddress(debtAddress)
     const { data } = (await this.connection.getAccountInfo(debtPublicKey)) || {}
     if (!data) throw new Error(`Cannot read data of ${debtAddress}`)
     return this.parseDebtData(data)
+  }
+
+  /**
+   * Derive debt address
+   * @param index - Account index (MAX: 4294967296)
+   * @param ownerAddress - Owner address of the debt account
+   * @param farmAddress - Corresponding farm address to the debt account
+   * @returns Debt account address
+   */
+  deriveDebtAddress = async (
+    index: number,
+    ownerAddress: string,
+    farmAddress: string,
+  ): Promise<string> => {
+    if (!account.isAddress(ownerAddress))
+      throw new Error('Invalid owner address')
+    if (!account.isAddress(farmAddress)) throw new Error('Invalid farm address')
+    const ownerPublicKey = account.fromAddress(ownerAddress)
+    const farmPublicKey = account.fromAddress(farmAddress)
+    const seeds = [
+      uint32ToBuffer(index),
+      ownerPublicKey.toBuffer(),
+      farmPublicKey.toBuffer(),
+      this.stakeProgramId.toBuffer(),
+    ]
+    const [debtPublicKey, _] = await PublicKey.findProgramAddress(
+      seeds,
+      this.stakeProgramId,
+    )
+    return debtPublicKey.toBase58()
+  }
+
+  /**
+   * Derive the stake treasurer and the reward treasurer address
+   * @param farmAddress - The farm address owns the treasurers
+   * @returns
+   */
+  private deriveFarmTreasurerAddresses = async (
+    farmAddress: string,
+  ): Promise<[string, string]> => {
+    if (!account.isAddress(farmAddress)) throw new Error('Invalid farm address')
+    const farmPublicKey = account.fromAddress(farmAddress)
+    const stakeTreasurerPublicKey = await PublicKey.createProgramAddress(
+      [uint32ToBuffer(0), farmPublicKey.toBuffer()],
+      this.stakeProgramId,
+    )
+    const rewardTreasurerPublicKey = await PublicKey.createProgramAddress(
+      [uint32ToBuffer(1), farmPublicKey.toBuffer()],
+      this.stakeProgramId,
+    )
+    return [
+      stakeTreasurerPublicKey.toBase58(),
+      rewardTreasurerPublicKey.toBase58(),
+    ]
   }
 
   /**
@@ -213,7 +227,7 @@ class Farming extends Tx {
    * @param mintStakeAddress - Mint address for staking
    * @param mintRewardAddress - Mint address for rewarding
    * @param wallet - {@link https://descartesnetwork.github.io/sen-js/interfaces/WalletInterface.html | Wallet instance}
-   * @returns Transaction hash `txId` and Farm address `farmAddress`
+   * @returns Transaction hash `txId` and the farm address `farmAddress`
    */
   initializeFarm = async (
     reward: bigint,
@@ -234,7 +248,7 @@ class Farming extends Tx {
     if (!account.isAddress(mintRewardAddress))
       throw new Error('Invalid mint reward address')
     // Fetch necessary info
-    const farm = await account.createStrictAccount(this.farmingProgramId)
+    const farm = await genFarmAccount(this.stakeProgramId)
     const farmAddress = farm.publicKey.toBase58()
     // Build public keys
     const ownerPublicKey = account.fromAddress(ownerAddress)
@@ -243,23 +257,20 @@ class Farming extends Tx {
     // Get payer
     const payerAddress = await wallet.getAddress()
     const payerPublicKey = account.fromAddress(payerAddress)
-    // Get treasurer
-    const seed = [farm.publicKey.toBuffer()]
-    const treasurerPublicKey = await PublicKey.createProgramAddress(
-      seed,
-      this.farmingProgramId,
-    )
-    const treasurerAddress = treasurerPublicKey.toBase58()
-    // Get treasuries
+    // Get treasurers & treasuries
+    const [treasurerStakeAddress, treasurerRewardAddress] =
+      await this.deriveFarmTreasurerAddresses(farmAddress)
+    const treasurerStakePublicKey = account.fromAddress(treasurerStakeAddress)
+    const treasurerRewardPublicKey = account.fromAddress(treasurerRewardAddress)
     const treasuryStakePublicKey = account.fromAddress(
       await this._splt.deriveAssociatedAddress(
-        treasurerAddress,
+        treasurerStakeAddress,
         mintStakeAddress,
       ),
     )
     const treasuryRewardPublicKey = account.fromAddress(
       await this._splt.deriveAssociatedAddress(
-        treasurerAddress,
+        treasurerRewardAddress,
         mintRewardAddress,
       ),
     )
@@ -272,7 +283,7 @@ class Farming extends Tx {
         { key: 'reward', type: 'u64' },
         { key: 'period', type: 'u64' },
       ],
-      { code: 0, reward, period },
+      { code: InstructionCode.InitializeFarm, reward, period },
     )
     const instruction = new TransactionInstruction({
       keys: [
@@ -281,15 +292,20 @@ class Farming extends Tx {
         { pubkey: farm.publicKey, isSigner: true, isWritable: true },
         { pubkey: mintStakePublicKey, isSigner: false, isWritable: false },
         { pubkey: treasuryStakePublicKey, isSigner: false, isWritable: true },
+        { pubkey: treasurerStakePublicKey, isSigner: false, isWritable: false },
         { pubkey: mintRewardPublicKey, isSigner: false, isWritable: false },
         { pubkey: treasuryRewardPublicKey, isSigner: false, isWritable: true },
-        { pubkey: treasurerPublicKey, isSigner: false, isWritable: false },
+        {
+          pubkey: treasurerRewardPublicKey,
+          isSigner: false,
+          isWritable: false,
+        },
         { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
         { pubkey: this.spltProgramId, isSigner: false, isWritable: false },
         { pubkey: SYSVAR_RENT_PUBKEY, isSigner: false, isWritable: false },
         { pubkey: this.splataProgramId, isSigner: false, isWritable: false },
       ],
-      programId: this.farmingProgramId,
+      programId: this.stakeProgramId,
       data: layout.toBuffer(),
     })
     transaction.add(instruction)
@@ -305,97 +321,25 @@ class Farming extends Tx {
   }
 
   /**
-   * Initialize accounts including rewarded and debt
-   * @param farmAddress - Farm account address
-   * @param ownerAddress - Onwer address for the accounts (your wallet address usually)
-   * @param wallet - {@link https://descartesnetwork.github.io/sen-js/interfaces/WalletInterface.html | Wallet instance}
-   * @returns Transaction hash `txId`, associated account address to `wallet` for rewarding `rewardedAddress`, and debt account address `debtAddress`
-   */
-  initializeAccounts = async (
-    farmAddress: string,
-    ownerAddress: string,
-    wallet: WalletInterface,
-  ): Promise<{
-    txId: string
-    rewardedAddress: string
-    debtAddress: string
-  }> => {
-    // Validation
-    if (!account.isAddress(farmAddress)) throw new Error('Invalid farm address')
-    if (!account.isAddress(ownerAddress))
-      throw new Error('Invalid owner address')
-    // Fetch necessary info
-    const { mint_reward: mintRewardAddress } = await this.getFarmData(
-      farmAddress,
-    )
-    const rewardedAddress = await this._splt.deriveAssociatedAddress(
-      ownerAddress,
-      mintRewardAddress,
-    )
-    const debtAddress = await this.deriveDebtAddress(ownerAddress, farmAddress)
-    // Build public keys
-    const ownerPublicKey = account.fromAddress(ownerAddress)
-    const farmPublicKey = account.fromAddress(farmAddress)
-    const mintRewardPublicKey = account.fromAddress(mintRewardAddress)
-    const rewardedPublicKey = account.fromAddress(rewardedAddress)
-    const debtPublicKey = account.fromAddress(debtAddress)
-    // Get payer
-    const payerAddress = await wallet.getAddress()
-    const payerPublicKey = account.fromAddress(payerAddress)
-    // Build tx
-    let transaction = new Transaction()
-    transaction = await this.addRecentCommitment(transaction)
-    const layout = new soproxABI.struct([{ key: 'code', type: 'u8' }], {
-      code: 1,
-    })
-    const instruction = new TransactionInstruction({
-      keys: [
-        { pubkey: payerPublicKey, isSigner: true, isWritable: true },
-        { pubkey: ownerPublicKey, isSigner: false, isWritable: false },
-        { pubkey: farmPublicKey, isSigner: false, isWritable: false },
-        { pubkey: mintRewardPublicKey, isSigner: false, isWritable: false },
-        { pubkey: rewardedPublicKey, isSigner: false, isWritable: true },
-        { pubkey: debtPublicKey, isSigner: false, isWritable: true },
-        { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
-        { pubkey: this.spltProgramId, isSigner: false, isWritable: false },
-        { pubkey: SYSVAR_RENT_PUBKEY, isSigner: false, isWritable: false },
-        { pubkey: this.splataProgramId, isSigner: false, isWritable: false },
-      ],
-      programId: this.farmingProgramId,
-      data: layout.toBuffer(),
-    })
-    transaction.add(instruction)
-    transaction.feePayer = payerPublicKey
-    // Sign tx
-    const payerSig = await wallet.rawSignTransaction(transaction)
-    this.addSignature(transaction, payerSig)
-    // Send tx
-    const txId = await this.sendTransaction(transaction)
-    return { txId, rewardedAddress, debtAddress }
-  }
-
-  /**
    * Stake
-   * You stake tokens from the source address, and havest tokens to rewarded address
+   * Create accounts and stake tokens from the source address
+   * @param index - The account's index
    * @param amount - The number of staked amount
    * @param srcAddress - Source address that stakes tokens
-   * @param rewardedAddress - Rewarded address that receive havested tokens
    * @param farmAddress - Farm address
    * @param wallet - {@link https://descartesnetwork.github.io/sen-js/interfaces/WalletInterface.html | Wallet instance}
    * @returns Transaction hash `txId`, and debt account address `debtAddress`
    */
   stake = async (
+    index: number,
     amount: bigint,
     srcAddress: string,
-    rewardedAddress: string,
     farmAddress: string,
     wallet: WalletInterface,
   ): Promise<{ txId: string; debtAddress: string }> => {
     // Validation
     if (!account.isAddress(srcAddress))
       throw new Error('Invalid source address')
-    if (!account.isAddress(rewardedAddress))
-      throw new Error('Invalid rewarded address')
     if (!account.isAddress(farmAddress)) throw new Error('Invalid farm address')
     // Get payer
     const payerAddress = await wallet.getAddress()
@@ -404,34 +348,33 @@ class Farming extends Tx {
     const {
       treasury_stake: treasuryStakeAddress,
       mint_stake: mintStakeAddress,
-      treasury_reward: treasuryRewardAddress,
-      mint_reward: mintRewardAddress,
     } = await this.getFarmData(farmAddress)
-    const debtAddress = await this.deriveDebtAddress(payerAddress, farmAddress)
+    const debtAddress = await this.deriveDebtAddress(
+      index,
+      payerAddress,
+      farmAddress,
+    )
     // Build public keys
     const farmPublicKey = account.fromAddress(farmAddress)
     const srcPublicKey = account.fromAddress(srcAddress)
     const treasuryStakePublicKey = account.fromAddress(treasuryStakeAddress)
     const mintStakePublicKey = account.fromAddress(mintStakeAddress)
-    const rewardedPublicKey = account.fromAddress(rewardedAddress)
-    const treasuryRewardPublicKey = account.fromAddress(treasuryRewardAddress)
-    const mintRewardPublicKey = account.fromAddress(mintRewardAddress)
     const debtPublicKey = account.fromAddress(debtAddress)
-    // Get treasurer
-    const seed = [farmPublicKey.toBuffer()]
-    const treasurerPublicKey = await PublicKey.createProgramAddress(
-      seed,
-      this.farmingProgramId,
+    // Get treasurers
+    const [treasurerStakeAddress] = await this.deriveFarmTreasurerAddresses(
+      farmAddress,
     )
+    const treasurerStakePublicKey = account.fromAddress(treasurerStakeAddress)
     // Build tx
     let transaction = new Transaction()
     transaction = await this.addRecentCommitment(transaction)
     const layout = new soproxABI.struct(
       [
         { key: 'code', type: 'u8' },
+        { key: 'index', type: 'u32' },
         { key: 'amount', type: 'u64' },
       ],
-      { code: 2, amount },
+      { code: InstructionCode.Stake, index, amount },
     )
     const instruction = new TransactionInstruction({
       keys: [
@@ -442,110 +385,14 @@ class Farming extends Tx {
         { pubkey: srcPublicKey, isSigner: false, isWritable: true },
         { pubkey: treasuryStakePublicKey, isSigner: false, isWritable: true },
         { pubkey: mintStakePublicKey, isSigner: false, isWritable: false },
+        { pubkey: treasurerStakePublicKey, isSigner: false, isWritable: false },
 
-        { pubkey: rewardedPublicKey, isSigner: false, isWritable: true },
-        { pubkey: treasuryRewardPublicKey, isSigner: false, isWritable: true },
-        { pubkey: mintRewardPublicKey, isSigner: false, isWritable: false },
-
-        { pubkey: treasurerPublicKey, isSigner: false, isWritable: false },
         { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
         { pubkey: this.spltProgramId, isSigner: false, isWritable: false },
         { pubkey: SYSVAR_RENT_PUBKEY, isSigner: false, isWritable: false },
         { pubkey: this.splataProgramId, isSigner: false, isWritable: false },
       ],
-      programId: this.farmingProgramId,
-      data: layout.toBuffer(),
-    })
-    transaction.add(instruction)
-    transaction.feePayer = payerPublicKey
-    // Sign tx
-    const payerSig = await wallet.rawSignTransaction(transaction)
-    this.addSignature(transaction, payerSig)
-    // Send tx
-    const txId = await this.sendTransaction(transaction)
-    return { txId, debtAddress }
-  }
-
-  /**
-   * Unstake
-   * You unstake tokens and send them to the destination address, and havest tokens to rewarded address
-   * @param amount - The number of unstaked amount
-   * @param dstAddress - Destination address that receives unstaked tokens
-   * @param rewardedAddress - Rewarded address that receive havested tokens
-   * @param farmAddress - Farm address
-   * @param wallet - {@link https://descartesnetwork.github.io/sen-js/interfaces/WalletInterface.html | Wallet instance}
-   * @returns Transaction hash `txId`, and debt account address `debtAddress`
-   */
-  unstake = async (
-    amount: bigint,
-    dstAddress: string,
-    rewardedAddress: string,
-    farmAddress: string,
-    wallet: WalletInterface,
-  ): Promise<{ txId: string; debtAddress: string }> => {
-    // Validation
-    if (!account.isAddress(dstAddress))
-      throw new Error('Invalid destination address')
-    if (!account.isAddress(rewardedAddress))
-      throw new Error('Invalid rewarded address')
-    if (!account.isAddress(farmAddress)) throw new Error('Invalid farm address')
-    // Get payer
-    const payerAddress = await wallet.getAddress()
-    const payerPublicKey = account.fromAddress(payerAddress)
-    // Fetch necessary info
-    const {
-      treasury_stake: treasuryStakeAddress,
-      mint_stake: mintStakeAddress,
-      treasury_reward: treasuryRewardAddress,
-      mint_reward: mintRewardAddress,
-    } = await this.getFarmData(farmAddress)
-    const debtAddress = await this.deriveDebtAddress(payerAddress, farmAddress)
-    // Build public keys
-    const farmPublicKey = account.fromAddress(farmAddress)
-    const debtPublicKey = account.fromAddress(debtAddress)
-    const dstPublicKey = account.fromAddress(dstAddress)
-    const treasuryStakePublicKey = account.fromAddress(treasuryStakeAddress)
-    const mintStakePublicKey = account.fromAddress(mintStakeAddress)
-    const rewardedPublicKey = account.fromAddress(rewardedAddress)
-    const treasuryRewardPublicKey = account.fromAddress(treasuryRewardAddress)
-    const mintRewardPublicKey = account.fromAddress(mintRewardAddress)
-    // Get treasurer
-    const seed = [farmPublicKey.toBuffer()]
-    const treasurerPublicKey = await PublicKey.createProgramAddress(
-      seed,
-      this.farmingProgramId,
-    )
-    // Build tx
-    let transaction = new Transaction()
-    transaction = await this.addRecentCommitment(transaction)
-    const layout = new soproxABI.struct(
-      [
-        { key: 'code', type: 'u8' },
-        { key: 'amount', type: 'u64' },
-      ],
-      { code: 3, amount },
-    )
-    const instruction = new TransactionInstruction({
-      keys: [
-        { pubkey: payerPublicKey, isSigner: true, isWritable: true },
-        { pubkey: farmPublicKey, isSigner: false, isWritable: true },
-        { pubkey: debtPublicKey, isSigner: false, isWritable: true },
-
-        { pubkey: dstPublicKey, isSigner: false, isWritable: true },
-        { pubkey: treasuryStakePublicKey, isSigner: false, isWritable: true },
-        { pubkey: mintStakePublicKey, isSigner: false, isWritable: false },
-
-        { pubkey: rewardedPublicKey, isSigner: false, isWritable: true },
-        { pubkey: treasuryRewardPublicKey, isSigner: false, isWritable: true },
-        { pubkey: mintRewardPublicKey, isSigner: false, isWritable: false },
-
-        { pubkey: treasurerPublicKey, isSigner: false, isWritable: false },
-        { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
-        { pubkey: this.spltProgramId, isSigner: false, isWritable: false },
-        { pubkey: SYSVAR_RENT_PUBKEY, isSigner: false, isWritable: false },
-        { pubkey: this.splataProgramId, isSigner: false, isWritable: false },
-      ],
-      programId: this.farmingProgramId,
+      programId: this.stakeProgramId,
       data: layout.toBuffer(),
     })
     transaction.add(instruction)
@@ -561,12 +408,14 @@ class Farming extends Tx {
   /**
    * Havest
    * You havest rewards and send tokens to the rewarded address
+   * @param index - The account's index
    * @param farmAddress - Farm address
    * @param rewardedAddress - Rewarded address that receive havested tokens
    * @param wallet - {@link https://descartesnetwork.github.io/sen-js/interfaces/WalletInterface.html | Wallet instance}
    * @returns Transaction hash `txId`, and debt account address `debtAddress`
    */
   harvest = async (
+    index: number,
     farmAddress: string,
     rewardedAddress: string,
     wallet: WalletInterface,
@@ -584,7 +433,11 @@ class Farming extends Tx {
       treasury_reward: treasuryRewardAddress,
       mint_reward: mintRewardAddress,
     } = await this.getFarmData(farmAddress)
-    const debtAddress = await this.deriveDebtAddress(payerAddress, farmAddress)
+    const debtAddress = await this.deriveDebtAddress(
+      index,
+      payerAddress,
+      farmAddress,
+    )
     // Build public keys
     const farmPublicKey = account.fromAddress(farmAddress)
     const treasuryStakePublicKey = account.fromAddress(treasuryStakeAddress)
@@ -593,33 +446,35 @@ class Farming extends Tx {
     const mintRewardPublicKey = account.fromAddress(mintRewardAddress)
     const debtPublicKey = account.fromAddress(debtAddress)
     // Get treasurer
-    const seed = [farmPublicKey.toBuffer()]
-    const treasurerPublicKey = await PublicKey.createProgramAddress(
-      seed,
-      this.farmingProgramId,
+    const [_, treasurerRewardAddress] = await this.deriveFarmTreasurerAddresses(
+      farmAddress,
     )
+    const treasurerRewardPublicKey = account.fromAddress(treasurerRewardAddress)
     // Build tx
     let transaction = new Transaction()
     transaction = await this.addRecentCommitment(transaction)
     const layout = new soproxABI.struct([{ key: 'code', type: 'u8' }], {
-      code: 4,
+      code: InstructionCode.Harvest,
     })
     const instruction = new TransactionInstruction({
       keys: [
         { pubkey: payerPublicKey, isSigner: true, isWritable: true },
         { pubkey: farmPublicKey, isSigner: false, isWritable: true },
         { pubkey: debtPublicKey, isSigner: false, isWritable: true },
-        { pubkey: treasuryStakePublicKey, isSigner: false, isWritable: false },
         { pubkey: rewardedPublicKey, isSigner: false, isWritable: true },
         { pubkey: treasuryRewardPublicKey, isSigner: false, isWritable: true },
         { pubkey: mintRewardPublicKey, isSigner: false, isWritable: false },
-        { pubkey: treasurerPublicKey, isSigner: false, isWritable: false },
+        {
+          pubkey: treasurerRewardPublicKey,
+          isSigner: false,
+          isWritable: false,
+        },
         { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
         { pubkey: this.spltProgramId, isSigner: false, isWritable: false },
         { pubkey: SYSVAR_RENT_PUBKEY, isSigner: false, isWritable: false },
         { pubkey: this.splataProgramId, isSigner: false, isWritable: false },
       ],
-      programId: this.farmingProgramId,
+      programId: this.stakeProgramId,
       data: layout.toBuffer(),
     })
     transaction.add(instruction)
@@ -633,7 +488,87 @@ class Farming extends Tx {
   }
 
   /**
-   * Seed more reward tot the farm treasury
+   * Unstake
+   * You unstake all tokens and send them to the destination address
+   * @param index - The account's index
+   * @param dstAddress - Destination address that receives unstaked tokens
+   * @param farmAddress - Farm address
+   * @param wallet - {@link https://descartesnetwork.github.io/sen-js/interfaces/WalletInterface.html | Wallet instance}
+   * @returns Transaction hash `txId`, and debt account address `debtAddress`
+   */
+  unstake = async (
+    index: number,
+    dstAddress: string,
+    farmAddress: string,
+    wallet: WalletInterface,
+  ): Promise<{ txId: string; debtAddress: string }> => {
+    // Validation
+    if (!account.isAddress(dstAddress))
+      throw new Error('Invalid destination address')
+    if (!account.isAddress(farmAddress)) throw new Error('Invalid farm address')
+    // Get payer
+    const payerAddress = await wallet.getAddress()
+    const payerPublicKey = account.fromAddress(payerAddress)
+    // Fetch necessary info
+    const {
+      treasury_stake: treasuryStakeAddress,
+      mint_stake: mintStakeAddress,
+    } = await this.getFarmData(farmAddress)
+    const debtAddress = await this.deriveDebtAddress(
+      index,
+      payerAddress,
+      farmAddress,
+    )
+    // Build public keys
+    const farmPublicKey = account.fromAddress(farmAddress)
+    const debtPublicKey = account.fromAddress(debtAddress)
+    const dstPublicKey = account.fromAddress(dstAddress)
+    const treasuryStakePublicKey = account.fromAddress(treasuryStakeAddress)
+    const mintStakePublicKey = account.fromAddress(mintStakeAddress)
+    // Get treasurer
+    const [treasurerStakeAddress] = await this.deriveFarmTreasurerAddresses(
+      farmAddress,
+    )
+    const treasurerStakePublicKey = account.fromAddress(treasurerStakeAddress)
+    // Build tx
+    let transaction = new Transaction()
+    transaction = await this.addRecentCommitment(transaction)
+    const layout = new soproxABI.struct([{ key: 'code', type: 'u8' }], {
+      code: InstructionCode.Unstake,
+    })
+    const instruction = new TransactionInstruction({
+      keys: [
+        { pubkey: payerPublicKey, isSigner: true, isWritable: true },
+        { pubkey: farmPublicKey, isSigner: false, isWritable: true },
+        { pubkey: debtPublicKey, isSigner: false, isWritable: true },
+
+        { pubkey: payerPublicKey, isSigner: false, isWritable: true },
+        { pubkey: dstPublicKey, isSigner: false, isWritable: true },
+
+        { pubkey: treasuryStakePublicKey, isSigner: false, isWritable: true },
+        { pubkey: mintStakePublicKey, isSigner: false, isWritable: false },
+        { pubkey: treasurerStakePublicKey, isSigner: false, isWritable: false },
+
+        { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
+        { pubkey: this.spltProgramId, isSigner: false, isWritable: false },
+        { pubkey: SYSVAR_RENT_PUBKEY, isSigner: false, isWritable: false },
+        { pubkey: this.splataProgramId, isSigner: false, isWritable: false },
+      ],
+      programId: this.stakeProgramId,
+      data: layout.toBuffer(),
+    })
+    transaction.add(instruction)
+    transaction.feePayer = payerPublicKey
+    // Sign tx
+    const payerSig = await wallet.rawSignTransaction(transaction)
+    this.addSignature(transaction, payerSig)
+    // Send tx
+    const txId = await this.sendTransaction(transaction)
+    return { txId, debtAddress }
+  }
+
+  /**
+   * Seed more reward to the farm treasury
    * @remarks Owner only
    * @param amount - The number of rewarded tokens that will be seeded
    * @param farmAddress - Farm address
@@ -670,7 +605,7 @@ class Farming extends Tx {
         { key: 'code', type: 'u8' },
         { key: 'amount', type: 'u64' },
       ],
-      { code: 7, amount },
+      { code: InstructionCode.Seed, amount },
     )
     const instruction = new TransactionInstruction({
       keys: [
@@ -680,7 +615,7 @@ class Farming extends Tx {
         { pubkey: treasuryRewardPublicKey, isSigner: false, isWritable: true },
         { pubkey: this.spltProgramId, isSigner: false, isWritable: false },
       ],
-      programId: this.farmingProgramId,
+      programId: this.stakeProgramId,
       data: layout.toBuffer(),
     })
     transaction.add(instruction)
@@ -724,11 +659,10 @@ class Farming extends Tx {
     const payerAddress = await wallet.getAddress()
     const payerPublicKey = account.fromAddress(payerAddress)
     // Get treasurer
-    const seed = [farmPublicKey.toBuffer()]
-    const treasurerPublicKey = await PublicKey.createProgramAddress(
-      seed,
-      this.farmingProgramId,
+    const [_, treasurerRewardAddress] = await this.deriveFarmTreasurerAddresses(
+      farmAddress,
     )
+    const treasurerRewardPublicKey = account.fromAddress(treasurerRewardAddress)
     // Build tx
     let transaction = new Transaction()
     transaction = await this.addRecentCommitment(transaction)
@@ -737,7 +671,7 @@ class Farming extends Tx {
         { key: 'code', type: 'u8' },
         { key: 'amount', type: 'u64' },
       ],
-      { code: 8, amount },
+      { code: InstructionCode.Unseed, amount },
     )
     const instruction = new TransactionInstruction({
       keys: [
@@ -745,10 +679,14 @@ class Farming extends Tx {
         { pubkey: farmPublicKey, isSigner: false, isWritable: true },
         { pubkey: dstPublicKey, isSigner: false, isWritable: true },
         { pubkey: treasuryRewardPublicKey, isSigner: false, isWritable: true },
-        { pubkey: treasurerPublicKey, isSigner: false, isWritable: false },
+        {
+          pubkey: treasurerRewardPublicKey,
+          isSigner: false,
+          isWritable: false,
+        },
         { pubkey: this.spltProgramId, isSigner: false, isWritable: false },
       ],
-      programId: this.farmingProgramId,
+      programId: this.stakeProgramId,
       data: layout.toBuffer(),
     })
     transaction.add(instruction)
@@ -782,14 +720,14 @@ class Farming extends Tx {
     let transaction = new Transaction()
     transaction = await this.addRecentCommitment(transaction)
     const layout = new soproxABI.struct([{ key: 'code', type: 'u8' }], {
-      code: 5,
+      code: InstructionCode.Freeze,
     })
     const instruction = new TransactionInstruction({
       keys: [
         { pubkey: payerPublicKey, isSigner: true, isWritable: false },
         { pubkey: farmPublicKey, isSigner: false, isWritable: true },
       ],
-      programId: this.farmingProgramId,
+      programId: this.stakeProgramId,
       data: layout.toBuffer(),
     })
     transaction.add(instruction)
@@ -822,14 +760,14 @@ class Farming extends Tx {
     let transaction = new Transaction()
     transaction = await this.addRecentCommitment(transaction)
     const layout = new soproxABI.struct([{ key: 'code', type: 'u8' }], {
-      code: 6,
+      code: InstructionCode.Thaw,
     })
     const instruction = new TransactionInstruction({
       keys: [
         { pubkey: payerPublicKey, isSigner: true, isWritable: false },
         { pubkey: farmPublicKey, isSigner: false, isWritable: true },
       ],
-      programId: this.farmingProgramId,
+      programId: this.stakeProgramId,
       data: layout.toBuffer(),
     })
     transaction.add(instruction)
@@ -867,7 +805,7 @@ class Farming extends Tx {
     let transaction = new Transaction()
     transaction = await this.addRecentCommitment(transaction)
     const layout = new soproxABI.struct([{ key: 'code', type: 'u8' }], {
-      code: 9,
+      code: InstructionCode.TransferFarmOwnership,
     })
     const instruction = new TransactionInstruction({
       keys: [
@@ -875,7 +813,7 @@ class Farming extends Tx {
         { pubkey: farmPublicKey, isSigner: false, isWritable: true },
         { pubkey: newOwnerPublicKey, isSigner: false, isWritable: false },
       ],
-      programId: this.farmingProgramId,
+      programId: this.stakeProgramId,
       data: layout.toBuffer(),
     })
     transaction.add(instruction)
@@ -886,203 +824,7 @@ class Farming extends Tx {
     // Send tx
     const txId = await this.sendTransaction(transaction)
     return { txId }
-  }
-
-  /**
-   * Close a debt account
-   * @param farmAddress - Farm address
-   * @param wallet - {@link https://descartesnetwork.github.io/sen-js/interfaces/WalletInterface.html | Wallet instance}
-   * @returns Transaction hash `txId`
-   */
-  closeDebt = async (
-    farmAddress: string,
-    wallet: WalletInterface,
-  ): Promise<{ txId: string }> => {
-    // Validation
-    if (!account.isAddress(farmAddress)) throw new Error('Invalid farm address')
-    // Get payer
-    const payerAddress = await wallet.getAddress()
-    const payerPublicKey = account.fromAddress(payerAddress)
-    // Fetch necessary info
-    const debtAddress = await this.deriveDebtAddress(payerAddress, farmAddress)
-    // Build public keys
-    const farmPublicKey = account.fromAddress(farmAddress)
-    const debtPublicKey = account.fromAddress(debtAddress)
-    // Build tx
-    let transaction = new Transaction()
-    transaction = await this.addRecentCommitment(transaction)
-    const layout = new soproxABI.struct([{ key: 'code', type: 'u8' }], {
-      code: 10,
-    })
-    const instruction = new TransactionInstruction({
-      keys: [
-        { pubkey: payerPublicKey, isSigner: true, isWritable: true },
-        { pubkey: farmPublicKey, isSigner: false, isWritable: false },
-        { pubkey: debtPublicKey, isSigner: false, isWritable: true },
-        { pubkey: payerPublicKey, isSigner: false, isWritable: true },
-      ],
-      programId: this.farmingProgramId,
-      data: layout.toBuffer(),
-    })
-    transaction.add(instruction)
-    transaction.feePayer = payerPublicKey
-    // Sign tx
-    const payerSig = await wallet.rawSignTransaction(transaction)
-    this.addSignature(transaction, payerSig)
-    // Send tx
-    const txId = await this.sendTransaction(transaction)
-    return { txId }
-  }
-
-  /**
-   * Close a farm
-   * Only possible when all tokens has been unstaked
-   * @param farmAddress
-   * @param wallet - {@link https://descartesnetwork.github.io/sen-js/interfaces/WalletInterface.html | Wallet instance}
-   * @returns Transaction hash `txId`
-   */
-  closeFarm = async (
-    farmAddress: string,
-    wallet: WalletInterface,
-  ): Promise<{ txId: string }> => {
-    // Validation
-    if (!account.isAddress(farmAddress)) throw new Error('Invalid farm address')
-    // Get payer
-    const payerAddress = await wallet.getAddress()
-    const payerPublicKey = account.fromAddress(payerAddress)
-    // Fetch necessary info
-    const {
-      treasury_reward: treasuryRewardAddress,
-      mint_reward: mintRewardAddress,
-    } = await this.getFarmData(farmAddress)
-    const dstRewradAddress = await this._splt.deriveAssociatedAddress(
-      payerAddress,
-      mintRewardAddress,
-    )
-    // Build public keys
-    const farmPublicKey = account.fromAddress(farmAddress)
-    const treasuryRewardPublicKey = account.fromAddress(treasuryRewardAddress)
-    const dstRewardPublicKey = account.fromAddress(dstRewradAddress)
-    // Get treasurer
-    const seed = [farmPublicKey.toBuffer()]
-    const treasurerPublicKey = await PublicKey.createProgramAddress(
-      seed,
-      this.farmingProgramId,
-    )
-    // Build tx
-    let transaction = new Transaction()
-    transaction = await this.addRecentCommitment(transaction)
-    const layout = new soproxABI.struct([{ key: 'code', type: 'u8' }], {
-      code: 11,
-    })
-    const instruction = new TransactionInstruction({
-      keys: [
-        { pubkey: payerPublicKey, isSigner: true, isWritable: true },
-        { pubkey: farmPublicKey, isSigner: false, isWritable: true },
-        { pubkey: treasuryRewardPublicKey, isSigner: false, isWritable: true },
-        { pubkey: dstRewardPublicKey, isSigner: false, isWritable: true },
-        { pubkey: payerPublicKey, isSigner: false, isWritable: true },
-        { pubkey: treasurerPublicKey, isSigner: false, isWritable: false },
-        { pubkey: this.spltProgramId, isSigner: false, isWritable: false },
-      ],
-      programId: this.farmingProgramId,
-      data: layout.toBuffer(),
-    })
-    transaction.add(instruction)
-    transaction.feePayer = payerPublicKey
-    // Sign tx
-    const payerSig = await wallet.rawSignTransaction(transaction)
-    this.addSignature(transaction, payerSig)
-    // Send tx
-    const txId = await this.sendTransaction(transaction)
-    return { txId }
-  }
-
-  /**
-   * Rid
-   * Give up on reward, get rid of the farm
-   * @param dstAddress - Destination address that receives unstaked tokens
-   * @param rewardedAddress - Rewarded address that receive havested tokens (for strict procedure)
-   * @param farmAddress - Farm address
-   * @param wallet - {@link https://descartesnetwork.github.io/sen-js/interfaces/WalletInterface.html | Wallet instance}
-   * @returns Transaction hash `txId`, and debt account address `debtAddress`
-   */
-  rid = async (
-    dstAddress: string,
-    rewardedAddress: string,
-    farmAddress: string,
-    wallet: WalletInterface,
-  ): Promise<{ txId: string; debtAddress: string }> => {
-    // Validation
-    if (!account.isAddress(dstAddress))
-      throw new Error('Invalid destination address')
-    if (!account.isAddress(rewardedAddress))
-      throw new Error('Invalid rewarded address')
-    if (!account.isAddress(farmAddress)) throw new Error('Invalid farm address')
-    // Get payer
-    const payerAddress = await wallet.getAddress()
-    const payerPublicKey = account.fromAddress(payerAddress)
-    // Fetch necessary info
-    const {
-      treasury_stake: treasuryStakeAddress,
-      mint_stake: mintStakeAddress,
-      treasury_reward: treasuryRewardAddress,
-      mint_reward: mintRewardAddress,
-    } = await this.getFarmData(farmAddress)
-    const debtAddress = await this.deriveDebtAddress(payerAddress, farmAddress)
-    // Build public keys
-    const farmPublicKey = account.fromAddress(farmAddress)
-    const debtPublicKey = account.fromAddress(debtAddress)
-    const dstPublicKey = account.fromAddress(dstAddress)
-    const treasuryStakePublicKey = account.fromAddress(treasuryStakeAddress)
-    const mintStakePublicKey = account.fromAddress(mintStakeAddress)
-    const rewardedPublicKey = account.fromAddress(rewardedAddress)
-    const treasuryRewardPublicKey = account.fromAddress(treasuryRewardAddress)
-    const mintRewardPublicKey = account.fromAddress(mintRewardAddress)
-    // Get treasurer
-    const seed = [farmPublicKey.toBuffer()]
-    const treasurerPublicKey = await PublicKey.createProgramAddress(
-      seed,
-      this.farmingProgramId,
-    )
-    // Build tx
-    let transaction = new Transaction()
-    transaction = await this.addRecentCommitment(transaction)
-    const layout = new soproxABI.struct([{ key: 'code', type: 'u8' }], {
-      code: 12,
-    })
-    const instruction = new TransactionInstruction({
-      keys: [
-        { pubkey: payerPublicKey, isSigner: true, isWritable: true },
-        { pubkey: farmPublicKey, isSigner: false, isWritable: true },
-        { pubkey: debtPublicKey, isSigner: false, isWritable: true },
-
-        { pubkey: dstPublicKey, isSigner: false, isWritable: true },
-        { pubkey: treasuryStakePublicKey, isSigner: false, isWritable: true },
-        { pubkey: mintStakePublicKey, isSigner: false, isWritable: false },
-
-        { pubkey: rewardedPublicKey, isSigner: false, isWritable: true },
-        { pubkey: treasuryRewardPublicKey, isSigner: false, isWritable: true },
-        { pubkey: mintRewardPublicKey, isSigner: false, isWritable: false },
-
-        { pubkey: treasurerPublicKey, isSigner: false, isWritable: false },
-        { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
-        { pubkey: this.spltProgramId, isSigner: false, isWritable: false },
-        { pubkey: SYSVAR_RENT_PUBKEY, isSigner: false, isWritable: false },
-        { pubkey: this.splataProgramId, isSigner: false, isWritable: false },
-      ],
-      programId: this.farmingProgramId,
-      data: layout.toBuffer(),
-    })
-    transaction.add(instruction)
-    transaction.feePayer = payerPublicKey
-    // Sign tx
-    const payerSig = await wallet.rawSignTransaction(transaction)
-    this.addSignature(transaction, payerSig)
-    // Send tx
-    const txId = await this.sendTransaction(transaction)
-    return { txId, debtAddress }
   }
 }
 
-export default Farming
+export default Stake

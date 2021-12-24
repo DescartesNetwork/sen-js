@@ -26,3 +26,6 @@ export { default as Farming } from './farming'
 
 export * from './ido'
 export { default as IDO } from './ido'
+
+export * from './stake'
+export { default as Stake } from './stake'

@@ -86,6 +86,27 @@ export type TicketData = {
   is_initialized: boolean
 }
 
+export type StakeDebtData = {
+  farm: string
+  owner: string
+  shares: bigint
+  reward_per_share: bigint
+  created_at: bigint
+  updated_at: bigint
+  is_initialized: boolean
+}
+
+export type StakeFarmData = {
+  owner: string
+  state: number
+  mint_stake: string
+  treasury_stake: string
+  mint_reward: string
+  treasury_reward: string
+  reward_per_share: bigint
+  period: bigint
+}
+
 const schema = {
   /**
    * Swap
@@ -217,6 +238,40 @@ const schema = {
     { key: 'ido', type: 'pub' },
     { key: 'amount', type: 'u64' },
     { key: 'is_initialized', type: 'bool' },
+  ],
+
+  /**
+   * Stake
+   */
+  STAKE_DEBT_SCHEMA: [
+    { key: 'farm', type: 'pub' },
+    { key: 'owner', type: 'pub' },
+    { key: 'shares', type: 'u64' },
+    { key: 'reward_per_share', type: 'u64' },
+    { key: 'created_at', type: 'i64' },
+    { key: 'updated_at', type: 'i64' },
+    { key: 'is_initialized', type: 'bool' },
+  ],
+  STAKE_FARM_STATE: {
+    get Uninitialized() {
+      return 0
+    },
+    get Initialized() {
+      return 1
+    },
+    get Frozen() {
+      return 2
+    },
+  },
+  STAKE_FARM_SCHEMA: [
+    { key: 'owner', type: 'pub' },
+    { key: 'state', type: 'u8' },
+    { key: 'mint_stake', type: 'pub' },
+    { key: 'treasury_stake', type: 'pub' },
+    { key: 'mint_reward', type: 'pub' },
+    { key: 'treasury_reward', type: 'pub' },
+    { key: 'reward_per_share', type: 'u64' },
+    { key: 'period', type: 'u64' },
   ],
 }
 
