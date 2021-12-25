@@ -223,6 +223,7 @@ class Stake extends Tx {
    * Initialize a farm
    * @param reward - The number of tokens per period
    * @param period - The number of seconds for a reward period
+   * @param scope - The maximum number of periods
    * @param ownerAddress - Farm owner address
    * @param mintStakeAddress - Mint address for staking
    * @param mintRewardAddress - Mint address for rewarding
@@ -232,6 +233,7 @@ class Stake extends Tx {
   initializeFarm = async (
     reward: bigint,
     period: bigint,
+    scope: bigint,
     ownerAddress: string,
     mintStakeAddress: string,
     mintRewardAddress: string,
@@ -282,8 +284,9 @@ class Stake extends Tx {
         { key: 'code', type: 'u8' },
         { key: 'reward', type: 'u64' },
         { key: 'period', type: 'u64' },
+        { key: 'scope', type: 'u64' },
       ],
-      { code: InstructionCode.InitializeFarm, reward, period },
+      { code: InstructionCode.InitializeFarm, reward, period, scope },
     )
     const instruction = new TransactionInstruction({
       keys: [

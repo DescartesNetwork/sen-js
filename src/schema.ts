@@ -105,6 +105,7 @@ export type StakeFarmData = {
   treasury_reward: string
   reward_per_share: bigint
   period: bigint
+  scope: bigint
 }
 
 const schema = {
@@ -272,6 +273,7 @@ const schema = {
     { key: 'treasury_reward', type: 'pub' },
     { key: 'reward_per_share', type: 'u64' },
     { key: 'period', type: 'u64' },
+    { key: 'scope', type: 'u64' },
   ],
 }
 

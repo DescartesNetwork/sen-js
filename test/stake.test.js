@@ -12,12 +12,13 @@ let DEBT_INDEX = 0
 let DEBT_ADDRESS = ''
 
 describe('Stake library', function () {
-  it('Stake', async function () {
+  it('Should initialize a new farm', async function () {
     const stake = new Stake()
     const payerAddress = await wallet.getAddress()
     const { farmAddress } = await stake.initializeFarm(
       1000000000n,
       5n,
+      30n, // scope 30 means 5 * 30 seconds
       payerAddress,
       MINT_ADDRESS_1,
       MINT_ADDRESS_0,
