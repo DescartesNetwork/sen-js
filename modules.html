@@ -69,6 +69,7 @@
 								<li class="tsd-kind-class"><a href="classes/Lamports.html" class="tsd-kind-icon">Lamports</a></li>
 								<li class="tsd-kind-class"><a href="classes/RawWallet.html" class="tsd-kind-icon">Raw<wbr>Wallet</a></li>
 								<li class="tsd-kind-class"><a href="classes/SPLT.html" class="tsd-kind-icon">SPLT</a></li>
+								<li class="tsd-kind-class"><a href="classes/Stake.html" class="tsd-kind-icon">Stake</a></li>
 								<li class="tsd-kind-class"><a href="classes/Swap.html" class="tsd-kind-icon">Swap</a></li>
 							</ul>
 						</section>
@@ -96,6 +97,9 @@
 								<li class="tsd-kind-type-alias"><a href="modules.html#SPLTAccountChangeInfo" class="tsd-kind-icon">SPLTAccount<wbr>Change<wbr>Info</a></li>
 								<li class="tsd-kind-type-alias"><a href="modules.html#Signature" class="tsd-kind-icon">Signature</a></li>
 								<li class="tsd-kind-type-alias"><a href="modules.html#SignedMessage" class="tsd-kind-icon">Signed<wbr>Message</a></li>
+								<li class="tsd-kind-type-alias"><a href="modules.html#StakeAccountChangeInfo" class="tsd-kind-icon">Stake<wbr>Account<wbr>Change<wbr>Info</a></li>
+								<li class="tsd-kind-type-alias"><a href="modules.html#StakeDebtData" class="tsd-kind-icon">Stake<wbr>Debt<wbr>Data</a></li>
+								<li class="tsd-kind-type-alias"><a href="modules.html#StakeFarmData" class="tsd-kind-icon">Stake<wbr>Farm<wbr>Data</a></li>
 								<li class="tsd-kind-type-alias"><a href="modules.html#SwapAccountChangeInfo" class="tsd-kind-icon">Swap<wbr>Account<wbr>Change<wbr>Info</a></li>
 								<li class="tsd-kind-type-alias"><a href="modules.html#TicketData" class="tsd-kind-icon">Ticket<wbr>Data</a></li>
 							</ul>
@@ -109,6 +113,7 @@
 								<li class="tsd-kind-variable"><a href="modules.html#DEFAULT_NODEURL" class="tsd-kind-icon">DEFAULT_<wbr>NODEURL</a></li>
 								<li class="tsd-kind-variable"><a href="modules.html#DEFAULT_SPLATA_PROGRAM_ADDRESS" class="tsd-kind-icon">DEFAULT_<wbr>SPLATA_<wbr>PROGRAM_<wbr>ADDRESS</a></li>
 								<li class="tsd-kind-variable"><a href="modules.html#DEFAULT_SPLT_PROGRAM_ADDRESS" class="tsd-kind-icon">DEFAULT_<wbr>SPLT_<wbr>PROGRAM_<wbr>ADDRESS</a></li>
+								<li class="tsd-kind-variable"><a href="modules.html#DEFAULT_STAKE_PROGRAM_ADDRESS" class="tsd-kind-icon">DEFAULT_<wbr>STAKE_<wbr>PROGRAM_<wbr>ADDRESS</a></li>
 								<li class="tsd-kind-variable"><a href="modules.html#DEFAULT_SWAP_PROGRAM_ADDRESS" class="tsd-kind-icon">DEFAULT_<wbr>SWAP_<wbr>PROGRAM_<wbr>ADDRESS</a></li>
 								<li class="tsd-kind-variable"><a href="modules.html#DEFAULT_WSOL" class="tsd-kind-icon">DEFAULT_<wbr>WSOL</a></li>
 								<li class="tsd-kind-variable"><a href="modules.html#account" class="tsd-kind-icon">account</a></li>
@@ -128,7 +133,7 @@
 					<div class="tsd-signature tsd-kind-icon">Account<wbr>Data<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">{ </span>amount<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">bigint</span><span class="tsd-signature-symbol">; </span>close_authority<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">; </span>close_authority_option<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">; </span>delegate<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">; </span>delegate_option<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">; </span>delegated_amount<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">bigint</span><span class="tsd-signature-symbol">; </span>is_native<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">bigint</span><span class="tsd-signature-symbol">; </span>is_native_option<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">; </span>mint<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">; </span>owner<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">; </span>state<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol"> }</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/DescartesNetwork/sen-js/blob/1c40bff/src/schema.ts#L11">schema.ts:11</a></li>
+							<li>Defined in <a href="https://github.com/DescartesNetwork/sen-js/blob/33c4d98/src/schema.ts#L11">schema.ts:11</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-type-declaration">
@@ -176,7 +181,7 @@
 					<div class="tsd-signature tsd-kind-icon">Debt<wbr>Data<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">{ </span>debt<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">bigint</span><span class="tsd-signature-symbol">; </span>farm<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">; </span>is_initialized<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol">; </span>owner<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">; </span>shares<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">bigint</span><span class="tsd-signature-symbol"> }</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/DescartesNetwork/sen-js/blob/1c40bff/src/schema.ts#L47">schema.ts:47</a></li>
+							<li>Defined in <a href="https://github.com/DescartesNetwork/sen-js/blob/33c4d98/src/schema.ts#L47">schema.ts:47</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-type-declaration">
@@ -206,7 +211,7 @@
 					<div class="tsd-signature tsd-kind-icon">Farm<wbr>Data<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">{ </span>compensation<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">bigint</span><span class="tsd-signature-symbol">; </span>genesis_timestamp<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">bigint</span><span class="tsd-signature-symbol">; </span>mint_reward<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">; </span>mint_stake<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">; </span>owner<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">; </span>period<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">bigint</span><span class="tsd-signature-symbol">; </span>reward<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">bigint</span><span class="tsd-signature-symbol">; </span>state<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">; </span>total_shares<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">bigint</span><span class="tsd-signature-symbol">; </span>treasury_reward<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">; </span>treasury_stake<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> }</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/DescartesNetwork/sen-js/blob/1c40bff/src/schema.ts#L55">schema.ts:55</a></li>
+							<li>Defined in <a href="https://github.com/DescartesNetwork/sen-js/blob/33c4d98/src/schema.ts#L55">schema.ts:55</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-type-declaration">
@@ -254,7 +259,7 @@
 					<div class="tsd-signature tsd-kind-icon">Farming<wbr>Account<wbr>Change<wbr>Info<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">{ </span>address<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">; </span>data<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Buffer</span><span class="tsd-signature-symbol">; </span>type<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">&quot;farm&quot;</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">&quot;debt&quot;</span><span class="tsd-signature-symbol"> }</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/DescartesNetwork/sen-js/blob/1c40bff/src/farming.ts#L24">farming.ts:24</a></li>
+							<li>Defined in <a href="https://github.com/DescartesNetwork/sen-js/blob/33c4d98/src/farming.ts#L24">farming.ts:24</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-type-declaration">
@@ -278,7 +283,7 @@
 					<div class="tsd-signature tsd-kind-icon">IDOAccount<wbr>Change<wbr>Info<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">{ </span>address<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">; </span>data<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Buffer</span><span class="tsd-signature-symbol">; </span>type<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">&quot;ido&quot;</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">&quot;ticket&quot;</span><span class="tsd-signature-symbol"> }</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/DescartesNetwork/sen-js/blob/1c40bff/src/ido.ts#L24">ido.ts:24</a></li>
+							<li>Defined in <a href="https://github.com/DescartesNetwork/sen-js/blob/33c4d98/src/ido.ts#L24">ido.ts:24</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-type-declaration">
@@ -302,7 +307,7 @@
 					<div class="tsd-signature tsd-kind-icon">IDOData<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">{ </span>enddate<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">bigint</span><span class="tsd-signature-symbol">; </span>is_initialized<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol">; </span>middledate<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">bigint</span><span class="tsd-signature-symbol">; </span>owner<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">; </span>raised_mint_treasury<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">; </span>redeemdate<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">bigint</span><span class="tsd-signature-symbol">; </span>sold_mint_treasury<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">; </span>startdate<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">bigint</span><span class="tsd-signature-symbol">; </span>total_raised<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">bigint</span><span class="tsd-signature-symbol">; </span>total_sold<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">bigint</span><span class="tsd-signature-symbol"> }</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/DescartesNetwork/sen-js/blob/1c40bff/src/schema.ts#L69">schema.ts:69</a></li>
+							<li>Defined in <a href="https://github.com/DescartesNetwork/sen-js/blob/33c4d98/src/schema.ts#L69">schema.ts:69</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-type-declaration">
@@ -347,7 +352,7 @@
 					<div class="tsd-signature tsd-kind-icon">Mint<wbr>Data<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">{ </span>decimals<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">; </span>freeze_authority<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">; </span>freeze_authority_option<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">; </span>is_initialized<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol">; </span>mint_authority<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">; </span>mint_authority_option<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">; </span>supply<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">bigint</span><span class="tsd-signature-symbol"> }</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/DescartesNetwork/sen-js/blob/1c40bff/src/schema.ts#L1">schema.ts:1</a></li>
+							<li>Defined in <a href="https://github.com/DescartesNetwork/sen-js/blob/33c4d98/src/schema.ts#L1">schema.ts:1</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-type-declaration">
@@ -383,7 +388,7 @@
 					<div class="tsd-signature tsd-kind-icon">Multisig<wbr>Data<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">{ </span>is_initialized<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol">; </span>m<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">; </span>n<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">; </span>signers<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol"> }</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/DescartesNetwork/sen-js/blob/1c40bff/src/schema.ts#L25">schema.ts:25</a></li>
+							<li>Defined in <a href="https://github.com/DescartesNetwork/sen-js/blob/33c4d98/src/schema.ts#L25">schema.ts:25</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-type-declaration">
@@ -410,7 +415,7 @@
 					<div class="tsd-signature tsd-kind-icon">Pool<wbr>Data<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">{ </span>fee_ratio<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">bigint</span><span class="tsd-signature-symbol">; </span>mint_a<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">; </span>mint_b<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">; </span>mint_lpt<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">; </span>owner<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">; </span>reserve_a<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">bigint</span><span class="tsd-signature-symbol">; </span>reserve_b<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">bigint</span><span class="tsd-signature-symbol">; </span>state<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">; </span>tax_ratio<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">bigint</span><span class="tsd-signature-symbol">; </span>taxman<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">; </span>treasury_a<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">; </span>treasury_b<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> }</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/DescartesNetwork/sen-js/blob/1c40bff/src/schema.ts#L32">schema.ts:32</a></li>
+							<li>Defined in <a href="https://github.com/DescartesNetwork/sen-js/blob/33c4d98/src/schema.ts#L32">schema.ts:32</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-type-declaration">
@@ -461,7 +466,7 @@
 					<div class="tsd-signature tsd-kind-icon">Routing<wbr>Address<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">{ </span>dstAddress<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">; </span>poolAddress<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">; </span>srcAddress<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> }</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/DescartesNetwork/sen-js/blob/1c40bff/src/swap/index.ts#L34">swap/index.ts:34</a></li>
+							<li>Defined in <a href="https://github.com/DescartesNetwork/sen-js/blob/33c4d98/src/swap/index.ts#L34">swap/index.ts:34</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-type-declaration">
@@ -485,7 +490,7 @@
 					<div class="tsd-signature tsd-kind-icon">SPLTAccount<wbr>Change<wbr>Info<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">{ </span>address<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">; </span>data<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Buffer</span><span class="tsd-signature-symbol">; </span>type<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">&quot;account&quot;</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">&quot;mint&quot;</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">&quot;multisig&quot;</span><span class="tsd-signature-symbol"> }</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/DescartesNetwork/sen-js/blob/1c40bff/src/splt.ts#L41">splt.ts:41</a></li>
+							<li>Defined in <a href="https://github.com/DescartesNetwork/sen-js/blob/33c4d98/src/splt.ts#L41">splt.ts:41</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-type-declaration">
@@ -509,7 +514,7 @@
 					<div class="tsd-signature tsd-kind-icon">Signature<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">{ </span>publicKey<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">PublicKey</span><span class="tsd-signature-symbol">; </span>signature<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Buffer</span><span class="tsd-signature-symbol"> }</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/DescartesNetwork/sen-js/blob/1c40bff/src/rawWallet.ts#L12">rawWallet.ts:12</a></li>
+							<li>Defined in <a href="https://github.com/DescartesNetwork/sen-js/blob/33c4d98/src/rawWallet.ts#L12">rawWallet.ts:12</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-type-declaration">
@@ -530,7 +535,7 @@
 					<div class="tsd-signature tsd-kind-icon">Signed<wbr>Message<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">{ </span>address<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">; </span>message<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">; </span>signature<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> }</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/DescartesNetwork/sen-js/blob/1c40bff/src/rawWallet.ts#L17">rawWallet.ts:17</a></li>
+							<li>Defined in <a href="https://github.com/DescartesNetwork/sen-js/blob/33c4d98/src/rawWallet.ts#L17">rawWallet.ts:17</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-type-declaration">
@@ -549,12 +554,114 @@
 					</div>
 				</section>
 				<section class="tsd-panel tsd-member tsd-kind-type-alias">
+					<a name="StakeAccountChangeInfo" class="tsd-anchor"></a>
+					<h3>Stake<wbr>Account<wbr>Change<wbr>Info</h3>
+					<div class="tsd-signature tsd-kind-icon">Stake<wbr>Account<wbr>Change<wbr>Info<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">{ </span>address<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">; </span>data<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Buffer</span><span class="tsd-signature-symbol">; </span>type<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">&quot;farm&quot;</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">&quot;debt&quot;</span><span class="tsd-signature-symbol"> }</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/DescartesNetwork/sen-js/blob/33c4d98/src/stake/index.ts#L26">stake/index.ts:26</a></li>
+						</ul>
+					</aside>
+					<div class="tsd-type-declaration">
+						<h4>Type declaration</h4>
+						<ul class="tsd-parameters">
+							<li class="tsd-parameter">
+								<h5>address<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span></h5>
+							</li>
+							<li class="tsd-parameter">
+								<h5>data<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Buffer</span></h5>
+							</li>
+							<li class="tsd-parameter">
+								<h5>type<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">&quot;farm&quot;</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">&quot;debt&quot;</span></h5>
+							</li>
+						</ul>
+					</div>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-type-alias">
+					<a name="StakeDebtData" class="tsd-anchor"></a>
+					<h3>Stake<wbr>Debt<wbr>Data</h3>
+					<div class="tsd-signature tsd-kind-icon">Stake<wbr>Debt<wbr>Data<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">{ </span>created_at<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">bigint</span><span class="tsd-signature-symbol">; </span>farm<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">; </span>is_initialized<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol">; </span>owner<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">; </span>reward_per_share<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">bigint</span><span class="tsd-signature-symbol">; </span>shares<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">bigint</span><span class="tsd-signature-symbol">; </span>updated_at<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">bigint</span><span class="tsd-signature-symbol"> }</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/DescartesNetwork/sen-js/blob/33c4d98/src/schema.ts#L89">schema.ts:89</a></li>
+						</ul>
+					</aside>
+					<div class="tsd-type-declaration">
+						<h4>Type declaration</h4>
+						<ul class="tsd-parameters">
+							<li class="tsd-parameter">
+								<h5>created_<wbr>at<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">bigint</span></h5>
+							</li>
+							<li class="tsd-parameter">
+								<h5>farm<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span></h5>
+							</li>
+							<li class="tsd-parameter">
+								<h5>is_<wbr>initialized<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">boolean</span></h5>
+							</li>
+							<li class="tsd-parameter">
+								<h5>owner<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span></h5>
+							</li>
+							<li class="tsd-parameter">
+								<h5>reward_<wbr>per_<wbr>share<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">bigint</span></h5>
+							</li>
+							<li class="tsd-parameter">
+								<h5>shares<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">bigint</span></h5>
+							</li>
+							<li class="tsd-parameter">
+								<h5>updated_<wbr>at<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">bigint</span></h5>
+							</li>
+						</ul>
+					</div>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-type-alias">
+					<a name="StakeFarmData" class="tsd-anchor"></a>
+					<h3>Stake<wbr>Farm<wbr>Data</h3>
+					<div class="tsd-signature tsd-kind-icon">Stake<wbr>Farm<wbr>Data<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">{ </span>mint_reward<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">; </span>mint_stake<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">; </span>owner<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">; </span>period<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">bigint</span><span class="tsd-signature-symbol">; </span>reward_per_share<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">bigint</span><span class="tsd-signature-symbol">; </span>scope<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">bigint</span><span class="tsd-signature-symbol">; </span>state<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">; </span>treasury_reward<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">; </span>treasury_stake<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> }</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/DescartesNetwork/sen-js/blob/33c4d98/src/schema.ts#L99">schema.ts:99</a></li>
+						</ul>
+					</aside>
+					<div class="tsd-type-declaration">
+						<h4>Type declaration</h4>
+						<ul class="tsd-parameters">
+							<li class="tsd-parameter">
+								<h5>mint_<wbr>reward<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span></h5>
+							</li>
+							<li class="tsd-parameter">
+								<h5>mint_<wbr>stake<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span></h5>
+							</li>
+							<li class="tsd-parameter">
+								<h5>owner<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span></h5>
+							</li>
+							<li class="tsd-parameter">
+								<h5>period<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">bigint</span></h5>
+							</li>
+							<li class="tsd-parameter">
+								<h5>reward_<wbr>per_<wbr>share<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">bigint</span></h5>
+							</li>
+							<li class="tsd-parameter">
+								<h5>scope<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">bigint</span></h5>
+							</li>
+							<li class="tsd-parameter">
+								<h5>state<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span></h5>
+							</li>
+							<li class="tsd-parameter">
+								<h5>treasury_<wbr>reward<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span></h5>
+							</li>
+							<li class="tsd-parameter">
+								<h5>treasury_<wbr>stake<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span></h5>
+							</li>
+						</ul>
+					</div>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-type-alias">
 					<a name="SwapAccountChangeInfo" class="tsd-anchor"></a>
 					<h3>Swap<wbr>Account<wbr>Change<wbr>Info</h3>
 					<div class="tsd-signature tsd-kind-icon">Swap<wbr>Account<wbr>Change<wbr>Info<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">{ </span>address<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">; </span>data<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Buffer</span><span class="tsd-signature-symbol">; </span>type<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">&quot;pool&quot;</span><span class="tsd-signature-symbol"> }</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/DescartesNetwork/sen-js/blob/1c40bff/src/swap/index.ts#L29">swap/index.ts:29</a></li>
+							<li>Defined in <a href="https://github.com/DescartesNetwork/sen-js/blob/33c4d98/src/swap/index.ts#L29">swap/index.ts:29</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-type-declaration">
@@ -578,7 +685,7 @@
 					<div class="tsd-signature tsd-kind-icon">Ticket<wbr>Data<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">{ </span>amount<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">bigint</span><span class="tsd-signature-symbol">; </span>ido<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">; </span>is_initialized<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol">; </span>owner<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> }</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/DescartesNetwork/sen-js/blob/1c40bff/src/schema.ts#L82">schema.ts:82</a></li>
+							<li>Defined in <a href="https://github.com/DescartesNetwork/sen-js/blob/33c4d98/src/schema.ts#L82">schema.ts:82</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-type-declaration">
@@ -608,7 +715,7 @@
 					<div class="tsd-signature tsd-kind-icon">DEFAULT_<wbr>EMPTY_<wbr>ADDRESS<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> = &#x27;11111111111111111111111111111111&#x27;</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/DescartesNetwork/sen-js/blob/1c40bff/src/default.ts#L17">default.ts:17</a></li>
+							<li>Defined in <a href="https://github.com/DescartesNetwork/sen-js/blob/33c4d98/src/default.ts#L20">default.ts:20</a></li>
 						</ul>
 					</aside>
 				</section>
@@ -618,7 +725,7 @@
 					<div class="tsd-signature tsd-kind-icon">DEFAULT_<wbr>FARMING_<wbr>PROGRAM_<wbr>ADDRESS<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> = &#x27;CpEsjrLhBkcuApn5uEE2tZCwxyCQKmT6S4YgT9zuLW2J&#x27;</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/DescartesNetwork/sen-js/blob/1c40bff/src/default.ts#L11">default.ts:11</a></li>
+							<li>Defined in <a href="https://github.com/DescartesNetwork/sen-js/blob/33c4d98/src/default.ts#L11">default.ts:11</a></li>
 						</ul>
 					</aside>
 				</section>
@@ -628,7 +735,7 @@
 					<div class="tsd-signature tsd-kind-icon">DEFAULT_<wbr>IDO_<wbr>PROGRAM_<wbr>ADDRESS<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> = &#x27;EMBveEDLbHnRqQ6QpkAkNSP4guEvimkB7b8zQQgVgXxU&#x27;</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/DescartesNetwork/sen-js/blob/1c40bff/src/default.ts#L14">default.ts:14</a></li>
+							<li>Defined in <a href="https://github.com/DescartesNetwork/sen-js/blob/33c4d98/src/default.ts#L14">default.ts:14</a></li>
 						</ul>
 					</aside>
 				</section>
@@ -638,7 +745,7 @@
 					<div class="tsd-signature tsd-kind-icon">DEFAULT_<wbr>NODEURL<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> = &#x27;https://api.devnet.solana.com&#x27;</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/DescartesNetwork/sen-js/blob/1c40bff/src/default.ts#L1">default.ts:1</a></li>
+							<li>Defined in <a href="https://github.com/DescartesNetwork/sen-js/blob/33c4d98/src/default.ts#L1">default.ts:1</a></li>
 						</ul>
 					</aside>
 				</section>
@@ -648,7 +755,7 @@
 					<div class="tsd-signature tsd-kind-icon">DEFAULT_<wbr>SPLATA_<wbr>PROGRAM_<wbr>ADDRESS<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> = &#x27;ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL&#x27;</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/DescartesNetwork/sen-js/blob/1c40bff/src/default.ts#L5">default.ts:5</a></li>
+							<li>Defined in <a href="https://github.com/DescartesNetwork/sen-js/blob/33c4d98/src/default.ts#L5">default.ts:5</a></li>
 						</ul>
 					</aside>
 				</section>
@@ -658,7 +765,17 @@
 					<div class="tsd-signature tsd-kind-icon">DEFAULT_<wbr>SPLT_<wbr>PROGRAM_<wbr>ADDRESS<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> = &#x27;TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA&#x27;</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/DescartesNetwork/sen-js/blob/1c40bff/src/default.ts#L3">default.ts:3</a></li>
+							<li>Defined in <a href="https://github.com/DescartesNetwork/sen-js/blob/33c4d98/src/default.ts#L3">default.ts:3</a></li>
+						</ul>
+					</aside>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-variable">
+					<a name="DEFAULT_STAKE_PROGRAM_ADDRESS" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagConst">Const</span> DEFAULT_<wbr>STAKE_<wbr>PROGRAM_<wbr>ADDRESS</h3>
+					<div class="tsd-signature tsd-kind-icon">DEFAULT_<wbr>STAKE_<wbr>PROGRAM_<wbr>ADDRESS<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> = &#x27;2RAgVcafj2UPcGS47NRqZ2GQwhHyFFtCpfn9Y6bHkDcQ&#x27;</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/DescartesNetwork/sen-js/blob/33c4d98/src/default.ts#L17">default.ts:17</a></li>
 						</ul>
 					</aside>
 				</section>
@@ -668,7 +785,7 @@
 					<div class="tsd-signature tsd-kind-icon">DEFAULT_<wbr>SWAP_<wbr>PROGRAM_<wbr>ADDRESS<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> = &#x27;4erFSLP7oBFSVC1t35jdxmbfxEhYCKfoM6XdG2BLR3UF&#x27;</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/DescartesNetwork/sen-js/blob/1c40bff/src/default.ts#L8">default.ts:8</a></li>
+							<li>Defined in <a href="https://github.com/DescartesNetwork/sen-js/blob/33c4d98/src/default.ts#L8">default.ts:8</a></li>
 						</ul>
 					</aside>
 				</section>
@@ -678,7 +795,7 @@
 					<div class="tsd-signature tsd-kind-icon">DEFAULT_<wbr>WSOL<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> = &#x27;So11111111111111111111111111111111111111112&#x27;</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/DescartesNetwork/sen-js/blob/1c40bff/src/default.ts#L18">default.ts:18</a></li>
+							<li>Defined in <a href="https://github.com/DescartesNetwork/sen-js/blob/33c4d98/src/default.ts#L21">default.ts:21</a></li>
 						</ul>
 					</aside>
 				</section>
@@ -688,7 +805,7 @@
 					<div class="tsd-signature tsd-kind-icon">account<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">{ </span>createAccount<span class="tsd-signature-symbol">: </span><span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol"> =&gt; </span><span class="tsd-signature-type">Keypair</span><span class="tsd-signature-symbol">; </span>createStrictAccount<span class="tsd-signature-symbol">: </span><span class="tsd-signature-symbol">(</span>programId<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">PublicKey</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol"> =&gt; </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">Keypair</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">; </span>deriveAssociatedAddress<span class="tsd-signature-symbol">: </span><span class="tsd-signature-symbol">(</span>walletAddress<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span>, mintAddress<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span>, spltPromgramAddress<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">string</span>, splataProgramAddress<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol"> =&gt; </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">; </span>fromAddress<span class="tsd-signature-symbol">: </span><span class="tsd-signature-symbol">(</span>address<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol"> =&gt; </span><span class="tsd-signature-type">PublicKey</span><span class="tsd-signature-symbol">; </span>fromKeystore<span class="tsd-signature-symbol">: </span><span class="tsd-signature-symbol">(</span>keystore<span class="tsd-signature-symbol">: </span><a href="interfaces/Keystore.html" class="tsd-signature-type" data-tsd-kind="Interface">Keystore</a>, password<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol"> =&gt; </span><span class="tsd-signature-type">null</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">Keypair</span><span class="tsd-signature-symbol">; </span>fromSecretKey<span class="tsd-signature-symbol">: </span><span class="tsd-signature-symbol">(</span>secretKey<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol"> =&gt; </span><span class="tsd-signature-type">null</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">Keypair</span><span class="tsd-signature-symbol">; </span>isAddress<span class="tsd-signature-symbol">: </span><span class="tsd-signature-symbol">(</span>address<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">undefined</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol"> =&gt; </span><span class="tsd-signature-type">address</span><span class="tsd-signature-symbol"> is </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">; </span>isAssociatedAddress<span class="tsd-signature-symbol">: </span><span class="tsd-signature-symbol">(</span>address<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol"> =&gt; </span><span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol">; </span>signMessage<span class="tsd-signature-symbol">: </span><span class="tsd-signature-symbol">(</span>message<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span>, secretKey<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol"> =&gt; </span><span class="tsd-signature-symbol">{ </span>address<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">; </span>message<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">; </span>signature<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> }</span><span class="tsd-signature-symbol">; </span>verifySignature<span class="tsd-signature-symbol">: </span><span class="tsd-signature-symbol">(</span>address<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span>, signature<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span>, message<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">null</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol"> =&gt; </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol"> }</span><span class="tsd-signature-symbol"> = ...</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/DescartesNetwork/sen-js/blob/1c40bff/src/account.ts#L9">account.ts:9</a></li>
+							<li>Defined in <a href="https://github.com/DescartesNetwork/sen-js/blob/33c4d98/src/account.ts#L9">account.ts:9</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-type-declaration">
@@ -1007,7 +1124,7 @@
 					<div class="tsd-signature tsd-kind-icon">keystore<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">{ </span>decrypt<span class="tsd-signature-symbol">: </span><span class="tsd-signature-symbol">(</span>ks<span class="tsd-signature-symbol">: </span><a href="interfaces/Keystore.html" class="tsd-signature-type" data-tsd-kind="Interface">Keystore</a>, pwd<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol"> =&gt; </span><span class="tsd-signature-type">null</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">; </span>encrypt<span class="tsd-signature-symbol">: </span><span class="tsd-signature-symbol">(</span>secretKey<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span>, pwd<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol"> =&gt; </span><span class="tsd-signature-type">null</span><span class="tsd-signature-symbol"> | </span><a href="interfaces/Keystore.html" class="tsd-signature-type" data-tsd-kind="Interface">Keystore</a><span class="tsd-signature-symbol">; </span>gen<span class="tsd-signature-symbol">: </span><span class="tsd-signature-symbol">(</span>pwd<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol"> =&gt; </span><span class="tsd-signature-type">null</span><span class="tsd-signature-symbol"> | </span><a href="interfaces/Keystore.html" class="tsd-signature-type" data-tsd-kind="Interface">Keystore</a><span class="tsd-signature-symbol"> }</span><span class="tsd-signature-symbol"> = ...</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/DescartesNetwork/sen-js/blob/1c40bff/src/keystore.ts#L38">keystore.ts:38</a></li>
+							<li>Defined in <a href="https://github.com/DescartesNetwork/sen-js/blob/33c4d98/src/keystore.ts#L38">keystore.ts:38</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-type-declaration">
@@ -1088,10 +1205,10 @@
 				<section class="tsd-panel tsd-member tsd-kind-variable">
 					<a name="schema" class="tsd-anchor"></a>
 					<h3><span class="tsd-flag ts-flagConst">Const</span> schema</h3>
-					<div class="tsd-signature tsd-kind-icon">schema<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">{ </span>ACCOUNT_SCHEMA<span class="tsd-signature-symbol">: </span><span class="tsd-signature-symbol">{ </span>key<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">; </span>type<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> }</span><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol">; </span>ACCOUNT_STATE<span class="tsd-signature-symbol">: </span><span class="tsd-signature-symbol">{ </span><span class="tsd-signature-symbol">get </span>Frozen<span class="tsd-signature-symbol">(): </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">; </span><span class="tsd-signature-symbol">get </span>Initialized<span class="tsd-signature-symbol">(): </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">; </span><span class="tsd-signature-symbol">get </span>Uninitialized<span class="tsd-signature-symbol">(): </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol"> }</span><span class="tsd-signature-symbol">; </span>DEBT_SCHEMA<span class="tsd-signature-symbol">: </span><span class="tsd-signature-symbol">{ </span>key<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">; </span>type<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> }</span><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol">; </span>FARM_SCHEMA<span class="tsd-signature-symbol">: </span><span class="tsd-signature-symbol">{ </span>key<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">; </span>type<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> }</span><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol">; </span>FARM_STATE<span class="tsd-signature-symbol">: </span><span class="tsd-signature-symbol">{ </span><span class="tsd-signature-symbol">get </span>Frozen<span class="tsd-signature-symbol">(): </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">; </span><span class="tsd-signature-symbol">get </span>Initialized<span class="tsd-signature-symbol">(): </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">; </span><span class="tsd-signature-symbol">get </span>Uninitialized<span class="tsd-signature-symbol">(): </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol"> }</span><span class="tsd-signature-symbol">; </span>IDO_SCHEMA<span class="tsd-signature-symbol">: </span><span class="tsd-signature-symbol">{ </span>key<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">; </span>type<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> }</span><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol">; </span>MINT_SCHEMA<span class="tsd-signature-symbol">: </span><span class="tsd-signature-symbol">{ </span>key<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">; </span>type<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> }</span><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol">; </span>MULTISIG_SCHEMA<span class="tsd-signature-symbol">: </span><span class="tsd-signature-symbol">{ </span>key<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">; </span>type<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> }</span><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol">; </span>POOL_SCHEMA<span class="tsd-signature-symbol">: </span><span class="tsd-signature-symbol">{ </span>key<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">; </span>type<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> }</span><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol">; </span>POOL_STATE<span class="tsd-signature-symbol">: </span><span class="tsd-signature-symbol">{ </span><span class="tsd-signature-symbol">get </span>Frozen<span class="tsd-signature-symbol">(): </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">; </span><span class="tsd-signature-symbol">get </span>Initialized<span class="tsd-signature-symbol">(): </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">; </span><span class="tsd-signature-symbol">get </span>Uninitialized<span class="tsd-signature-symbol">(): </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol"> }</span><span class="tsd-signature-symbol">; </span>TICKET_SCHEMA<span class="tsd-signature-symbol">: </span><span class="tsd-signature-symbol">{ </span>key<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">; </span>type<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> }</span><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol"> }</span><span class="tsd-signature-symbol"> = ...</span></div>
+					<div class="tsd-signature tsd-kind-icon">schema<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">{ </span>ACCOUNT_SCHEMA<span class="tsd-signature-symbol">: </span><span class="tsd-signature-symbol">{ </span>key<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">; </span>type<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> }</span><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol">; </span>ACCOUNT_STATE<span class="tsd-signature-symbol">: </span><span class="tsd-signature-symbol">{ </span><span class="tsd-signature-symbol">get </span>Frozen<span class="tsd-signature-symbol">(): </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">; </span><span class="tsd-signature-symbol">get </span>Initialized<span class="tsd-signature-symbol">(): </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">; </span><span class="tsd-signature-symbol">get </span>Uninitialized<span class="tsd-signature-symbol">(): </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol"> }</span><span class="tsd-signature-symbol">; </span>DEBT_SCHEMA<span class="tsd-signature-symbol">: </span><span class="tsd-signature-symbol">{ </span>key<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">; </span>type<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> }</span><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol">; </span>FARM_SCHEMA<span class="tsd-signature-symbol">: </span><span class="tsd-signature-symbol">{ </span>key<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">; </span>type<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> }</span><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol">; </span>FARM_STATE<span class="tsd-signature-symbol">: </span><span class="tsd-signature-symbol">{ </span><span class="tsd-signature-symbol">get </span>Frozen<span class="tsd-signature-symbol">(): </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">; </span><span class="tsd-signature-symbol">get </span>Initialized<span class="tsd-signature-symbol">(): </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">; </span><span class="tsd-signature-symbol">get </span>Uninitialized<span class="tsd-signature-symbol">(): </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol"> }</span><span class="tsd-signature-symbol">; </span>IDO_SCHEMA<span class="tsd-signature-symbol">: </span><span class="tsd-signature-symbol">{ </span>key<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">; </span>type<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> }</span><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol">; </span>MINT_SCHEMA<span class="tsd-signature-symbol">: </span><span class="tsd-signature-symbol">{ </span>key<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">; </span>type<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> }</span><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol">; </span>MULTISIG_SCHEMA<span class="tsd-signature-symbol">: </span><span class="tsd-signature-symbol">{ </span>key<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">; </span>type<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> }</span><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol">; </span>POOL_SCHEMA<span class="tsd-signature-symbol">: </span><span class="tsd-signature-symbol">{ </span>key<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">; </span>type<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> }</span><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol">; </span>POOL_STATE<span class="tsd-signature-symbol">: </span><span class="tsd-signature-symbol">{ </span><span class="tsd-signature-symbol">get </span>Frozen<span class="tsd-signature-symbol">(): </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">; </span><span class="tsd-signature-symbol">get </span>Initialized<span class="tsd-signature-symbol">(): </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">; </span><span class="tsd-signature-symbol">get </span>Uninitialized<span class="tsd-signature-symbol">(): </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol"> }</span><span class="tsd-signature-symbol">; </span>STAKE_DEBT_SCHEMA<span class="tsd-signature-symbol">: </span><span class="tsd-signature-symbol">{ </span>key<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">; </span>type<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> }</span><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol">; </span>STAKE_FARM_SCHEMA<span class="tsd-signature-symbol">: </span><span class="tsd-signature-symbol">{ </span>key<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">; </span>type<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> }</span><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol">; </span>STAKE_FARM_STATE<span class="tsd-signature-symbol">: </span><span class="tsd-signature-symbol">{ </span><span class="tsd-signature-symbol">get </span>Frozen<span class="tsd-signature-symbol">(): </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">; </span><span class="tsd-signature-symbol">get </span>Initialized<span class="tsd-signature-symbol">(): </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">; </span><span class="tsd-signature-symbol">get </span>Uninitialized<span class="tsd-signature-symbol">(): </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol"> }</span><span class="tsd-signature-symbol">; </span>TICKET_SCHEMA<span class="tsd-signature-symbol">: </span><span class="tsd-signature-symbol">{ </span>key<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">; </span>type<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> }</span><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol"> }</span><span class="tsd-signature-symbol"> = ...</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/DescartesNetwork/sen-js/blob/1c40bff/src/schema.ts#L89">schema.ts:89</a></li>
+							<li>Defined in <a href="https://github.com/DescartesNetwork/sen-js/blob/33c4d98/src/schema.ts#L111">schema.ts:111</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-type-declaration">
@@ -1161,6 +1278,26 @@
 								</ul>
 							</li>
 							<li class="tsd-parameter">
+								<h5>STAKE_<wbr>DEBT_<wbr>SCHEMA<span class="tsd-signature-symbol">: </span><span class="tsd-signature-symbol">{ </span>key<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">; </span>type<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> }</span><span class="tsd-signature-symbol">[]</span></h5>
+							</li>
+							<li class="tsd-parameter">
+								<h5>STAKE_<wbr>FARM_<wbr>SCHEMA<span class="tsd-signature-symbol">: </span><span class="tsd-signature-symbol">{ </span>key<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">; </span>type<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> }</span><span class="tsd-signature-symbol">[]</span></h5>
+							</li>
+							<li class="tsd-parameter">
+								<h5>STAKE_<wbr>FARM_<wbr>STATE<span class="tsd-signature-symbol">: </span><span class="tsd-signature-symbol">{ </span><span class="tsd-signature-symbol">get </span>Frozen<span class="tsd-signature-symbol">(): </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">; </span><span class="tsd-signature-symbol">get </span>Initialized<span class="tsd-signature-symbol">(): </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">; </span><span class="tsd-signature-symbol">get </span>Uninitialized<span class="tsd-signature-symbol">(): </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol"> }</span></h5>
+								<ul class="tsd-parameters">
+									<li class="tsd-parameter">
+										<h5><span class="tsd-signature-symbol">get </span>Frozen<span class="tsd-signature-symbol">(): </span><span class="tsd-signature-type">number</span></h5>
+									</li>
+									<li class="tsd-parameter">
+										<h5><span class="tsd-signature-symbol">get </span>Initialized<span class="tsd-signature-symbol">(): </span><span class="tsd-signature-type">number</span></h5>
+									</li>
+									<li class="tsd-parameter">
+										<h5><span class="tsd-signature-symbol">get </span>Uninitialized<span class="tsd-signature-symbol">(): </span><span class="tsd-signature-type">number</span></h5>
+									</li>
+								</ul>
+							</li>
+							<li class="tsd-parameter">
 								<h5>TICKET_<wbr>SCHEMA<span class="tsd-signature-symbol">: </span><span class="tsd-signature-symbol">{ </span>key<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">; </span>type<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> }</span><span class="tsd-signature-symbol">[]</span></h5>
 							</li>
 						</ul>
@@ -1172,7 +1309,7 @@
 					<div class="tsd-signature tsd-kind-icon">utils<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">{ </span>BASIC_TX_FEE<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">; </span>LAMPORTS_PER_SOL<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">; </span>TOTAL_EMOJI<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">; </span>decimalize<span class="tsd-signature-symbol">: </span><span class="tsd-signature-symbol">(</span>a<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">number</span>, decimals<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol"> =&gt; </span><span class="tsd-signature-type">bigint</span><span class="tsd-signature-symbol">; </span>div<span class="tsd-signature-symbol">: </span><span class="tsd-signature-symbol">(</span>a<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">bigint</span>, b<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">bigint</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol"> =&gt; </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">; </span>parseCGK<span class="tsd-signature-symbol">: </span><span class="tsd-signature-symbol">(</span>ticket<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol"> =&gt; </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-symbol">{ </span>address<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">; </span>icon<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">; </span>name<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">; </span>price<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">; </span>priceChange<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">; </span>rank<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">; </span>symbol<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">; </span>totalVolume<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol"> }</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">; </span>randEmoji<span class="tsd-signature-symbol">: </span><span class="tsd-signature-symbol">(</span>seed<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol"> =&gt; </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">; </span>undecimalize<span class="tsd-signature-symbol">: </span><span class="tsd-signature-symbol">(</span>a<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">bigint</span>, decimals<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol"> =&gt; </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">; </span>wrappedGetMultipleAccountsInfo<span class="tsd-signature-symbol">: </span><span class="tsd-signature-symbol">(</span>connection<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Connection</span>, publicKeys<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">PublicKey</span><span class="tsd-signature-symbol">[]</span>, commitment<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">Commitment</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol"> =&gt; </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-symbol">(</span><span class="tsd-signature-type">null</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">AccountInfo</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">Buffer</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol"> }</span><span class="tsd-signature-symbol"> = ...</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/DescartesNetwork/sen-js/blob/1c40bff/src/utils.ts#L15">utils.ts:15</a></li>
+							<li>Defined in <a href="https://github.com/DescartesNetwork/sen-js/blob/33c4d98/src/utils.ts#L15">utils.ts:15</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-type-declaration">
@@ -1397,6 +1534,9 @@
 						<a href="classes/SPLT.html" class="tsd-kind-icon">SPLT</a>
 					</li>
 					<li class=" tsd-kind-class">
+						<a href="classes/Stake.html" class="tsd-kind-icon">Stake</a>
+					</li>
+					<li class=" tsd-kind-class">
 						<a href="classes/Swap.html" class="tsd-kind-icon">Swap</a>
 					</li>
 					<li class=" tsd-kind-interface">
@@ -1448,6 +1588,15 @@
 						<a href="modules.html#SignedMessage" class="tsd-kind-icon">Signed<wbr>Message</a>
 					</li>
 					<li class=" tsd-kind-type-alias">
+						<a href="modules.html#StakeAccountChangeInfo" class="tsd-kind-icon">Stake<wbr>Account<wbr>Change<wbr>Info</a>
+					</li>
+					<li class=" tsd-kind-type-alias">
+						<a href="modules.html#StakeDebtData" class="tsd-kind-icon">Stake<wbr>Debt<wbr>Data</a>
+					</li>
+					<li class=" tsd-kind-type-alias">
+						<a href="modules.html#StakeFarmData" class="tsd-kind-icon">Stake<wbr>Farm<wbr>Data</a>
+					</li>
+					<li class=" tsd-kind-type-alias">
 						<a href="modules.html#SwapAccountChangeInfo" class="tsd-kind-icon">Swap<wbr>Account<wbr>Change<wbr>Info</a>
 					</li>
 					<li class=" tsd-kind-type-alias">
@@ -1470,6 +1619,9 @@
 					</li>
 					<li class=" tsd-kind-variable">
 						<a href="modules.html#DEFAULT_SPLT_PROGRAM_ADDRESS" class="tsd-kind-icon">DEFAULT_<wbr>SPLT_<wbr>PROGRAM_<wbr>ADDRESS</a>
+					</li>
+					<li class=" tsd-kind-variable">
+						<a href="modules.html#DEFAULT_STAKE_PROGRAM_ADDRESS" class="tsd-kind-icon">DEFAULT_<wbr>STAKE_<wbr>PROGRAM_<wbr>ADDRESS</a>
 					</li>
 					<li class=" tsd-kind-variable">
 						<a href="modules.html#DEFAULT_SWAP_PROGRAM_ADDRESS" class="tsd-kind-icon">DEFAULT_<wbr>SWAP_<wbr>PROGRAM_<wbr>ADDRESS</a>
