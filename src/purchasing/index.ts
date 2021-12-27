@@ -1,7 +1,7 @@
-import { PublicKey, TransactionInstruction } from '@solana/web3.js'
+import { PublicKey, SystemProgram, SYSVAR_RENT_PUBKEY, Transaction, TransactionInstruction } from '@solana/web3.js'
 import Tx from '../core/tx'
 import SPLT from '../splt'
-import { InstructionCode, ErrorMapping } from '../purchasing/constant'
+import { InstructionCode, ErrorMapping } from './constant'
 import account from '../account'
 import {
   DEFAULT_PURCHASING_PROGRAM_ADDRESS, DEFAULT_SPLATA_PROGRAM_ADDRESS,
@@ -9,6 +9,9 @@ import {
   DEFAULT_STAKE_PROGRAM_ADDRESS,
 } from '../default'
 import { WalletInterface } from '../rawWallet'
+import schema, { PurchaseOrderData } from '../schema'
+import * as Buffer from 'buffer'
+import lamports from '../lamports'
 
 const soproxABI = require('soprox-abi')
 
@@ -40,6 +43,21 @@ class Purchasing extends Tx {
     this._splt = new SPLT(spltProgramAddress, splataProgramAddress, nodeUrl)
   }
 
+  parsePurchaseOrderData = (data: Buffer): PurchaseOrderData => {
+    const layout = new soproxABI.struct(schema.STAKE_PURCHASE_ORDER_SCHEMA)
+    if (data.length !== layout.space) throw new Error('Unmatched buffer length')
+    layout.fromBuffer(data)
+    return layout.value
+  }
+
+  getPurchaseOrderData = async (purchaseOrderAddress: string): Promise<PurchaseOrderData> => {
+    if (!account.isAddress(purchaseOrderAddress)) throw new Error('Invalid farm address')
+    const purchaseOrderPublicKey = account.fromAddress(purchaseOrderAddress)
+    const { data } = (await this.connection.getAccountInfo(purchaseOrderPublicKey)) || {}
+    if (!data) throw new Error(`Cannot read data of ${purchaseOrderAddress}`)
+    return this.parsePurchaseOrderData(data)
+  }
+
   placePurchaseOrder = async (
     index: number,
     bidAmount: bigint,
@@ -61,9 +79,17 @@ class Purchasing extends Tx {
 
     const ownerPublicKey = account.fromAddress(ownerAddress)
 
+    const approverPublicKey = account.fromAddress(approverAddress)
+
+    const srcBidPublicKey = account.fromAddress(srcBidAddress)
+
     const { mint: mintBidAddress } = await this._splt.getAccountData(srcBidAddress)
+    const mintBidPublicKey = account.fromAddress(mintBidAddress)
+
+    const dstAskPublicKey = account.fromAddress(dstAskAddress)
 
     const { mint: mintAskAddress } = await this._splt.getAccountData(dstAskAddress)
+    const mintAskPublicKey = account.fromAddress(mintAskAddress)
 
     const layout = new soproxABI.struct(
       [
@@ -76,48 +102,155 @@ class Purchasing extends Tx {
       {
         code: InstructionCode.PlacePurchaseOrder.valueOf(),
         index: index,
-        bid_amount: bid_amount,
-        ask_amount: ask_amount,
-        locked_time: locked_time,
+        bid_amount: bidAmount,
+        ask_amount: askAmount,
+        locked_time: lockedTime,
       },
     )
 
+    let transaction = new Transaction()
+    transaction = await this.addRecentCommitment(transaction)
+
     const instruction = new TransactionInstruction({
       keys: [
-        { pubkey: payerPublicKey, isSigner: true, isWritable: true },
+        { pubkey: ownerPublicKey, isSigner: true, isWritable: true },
+        { pubkey: orderPublicKey, isSigner: false, isWritable: true },
+        { pubkey: approverPublicKey, isSigner: false, isWritable: true },
+
+        { pubkey: mintBidPublicKey, isSigner: false, isWritable: true },
+        { pubkey: srcBidPublicKey, isSigner: false, isWritable: true },
+
+        { pubkey: mintAskPublicKey, isSigner: false, isWritable: true },
+        { pubkey: dstAskPublicKey, isSigner: false, isWritable: true },
+
+        { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
+        { pubkey: SYSVAR_RENT_PUBKEY, isSigner: false, isWritable: false },
       ],
       programId: this.purchasingProgramId,
-      data: l,
+      data: layout.toBuffer(),
     })
+    transaction.add(instruction)
+    transaction.feePayer = ownerPublicKey
+
     return Promise.resolve({ txId: '', orderAddress: '' })
   }
 
   rejectPurchaseOrder = async (
-    orderAddress: string,
+    purchaseOrderAddress: string,
     wallet: WalletInterface,
-  ): Promise<{ txId: string, orderAddress: string }> => {
-    return Promise.resolve({ txId: '', orderAddress: '' })
+  ): Promise<{ txId: string }> => {
+    if (!account.isAddress(purchaseOrderAddress)) throw new Error('Invalid purchase order address')
+    const purchaseOrderPublicKey = account.fromAddress(purchaseOrderAddress)
+
+    const approverAddress = await wallet.getAddress()
+    const approverPublicKey = account.fromAddress(approverAddress)
+
+    let transaction = new Transaction()
+    transaction = await this.addRecentCommitment(transaction)
+
+    const layout = new soproxABI.struct(
+      [{ key: 'code', type: 'u8' }],
+      { code: InstructionCode.RejectPurchaseOrder },
+    )
+    const instruction = new TransactionInstruction({
+      keys: [
+        { pubkey: approverPublicKey, isSigner: true, isWritable: true },
+        { pubkey: purchaseOrderPublicKey, isSigner: false, isWritable: false },
+      ],
+      programId: this.purchasingProgramId,
+      data: layout.toBuffer(),
+    })
+    transaction.add(instruction)
+    transaction.feePayer = approverPublicKey
+
+    // Sign tx
+    const payerSig = await wallet.rawSignTransaction(transaction)
+    this.addSignature(transaction, payerSig)
+    // Send tx
+    const txId = await this.sendTransaction(transaction)
+    return { txId }
   }
 
   approvePurchaseOrder = async (
-    orderAddress: string,
+    purchaseOrderAddress: string,
     wallet: WalletInterface,
-  ): Promise<{ txId: string, orderAddress: string }> => {
+  ): Promise<{ txId: string }> => {
+    const orderData = await this.getPurchaseOrderData(purchaseOrderAddress)
     return Promise.resolve({ txId: '', orderAddress: '' })
   }
 
   cancelPurchaseOrder = async (
-    orderAddress: string,
+    purchaseOrderAddress: string,
     wallet: WalletInterface,
-  ): Promise<{ txId: string, orderAddress: string }> => {
-    return Promise.resolve({ txId: '', orderAddress: '' })
+  ): Promise<{ txId: string }> => {
+    if (!account.isAddress(purchaseOrderAddress))
+      throw new Error('Invalid purchase order address')
+    const purchaseOrderPublicKey = account.fromAddress(purchaseOrderAddress)
+
+    const ownerAddress = await wallet.getAddress()
+    const ownerPublicKey = account.fromAddress(ownerAddress)
+
+    let transaction = new Transaction()
+    transaction = await this.addRecentCommitment(transaction)
+
+    const layout = new soproxABI.struct(
+      [{ key: 'code', type: 'u8' }],
+      { code: InstructionCode.CancelPurchaseOrder },
+    )
+    const instruction = new TransactionInstruction({
+      keys: [
+        { pubkey: ownerPublicKey, isSigner: true, isWritable: true },
+        { pubkey: purchaseOrderPublicKey, isSigner: false, isWritable: false },
+      ],
+      programId: this.purchasingProgramId,
+      data: layout.toBuffer(),
+    })
+    transaction.add(instruction)
+    transaction.feePayer = ownerPublicKey
+
+    // Sign tx
+    const payerSig = await wallet.rawSignTransaction(transaction)
+    this.addSignature(transaction, payerSig)
+    // Send tx
+    const txId = await this.sendTransaction(transaction)
+    return { txId }
   }
 
   redeemPurchaseOrder = async (
-    orderAddress: string,
+    purchaseOrderAddress: string,
     wallet: WalletInterface,
-  ): Promise<{ txId: string, orderAddress: string }> => {
-    return Promise.resolve({ txId: '', orderAddress: '' })
+  ): Promise<{ txId: string }> => {
+    if (!account.isAddress(purchaseOrderAddress))
+      throw new Error('Invalid purchase order address')
+    const purchaseOrderPublicKey = account.fromAddress(purchaseOrderAddress)
+
+    const ownerAddress = await wallet.getAddress()
+    const ownerPublicKey = account.fromAddress(ownerAddress)
+
+    let transaction = new Transaction()
+    transaction = await this.addRecentCommitment(transaction)
+
+    const layout = new soproxABI.struct(
+      [{ key: 'code', type: 'u8' }],
+      { code: InstructionCode.RedeemPurchaseOrder },
+    )
+    const instruction = new TransactionInstruction({
+      keys: [
+        { pubkey: ownerPublicKey, isSigner: true, isWritable: true },
+        { pubkey: purchaseOrderPublicKey, isSigner: false, isWritable: false },
+      ],
+      programId: this.purchasingProgramId,
+      data: layout.toBuffer(),
+    })
+    transaction.add(instruction)
+    transaction.feePayer = ownerPublicKey
+
+    // Sign tx
+    const payerSig = await wallet.rawSignTransaction(transaction)
+    this.addSignature(transaction, payerSig)
+    // Send tx
+    const txId = await this.sendTransaction(transaction)
+    return { txId }
   }
 }
 
