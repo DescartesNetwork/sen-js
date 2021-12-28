@@ -114,8 +114,10 @@ export type PurchaseOrderData = {
   state: number
   mint_bid: string
   src_bid: string
+  treasury_bid: string
   mint_ask: string
   dst_ask: string
+  treasury_ask: string
   bid_amount: bigint
   ask_amount: bigint
   locked_time: bigint
@@ -294,8 +296,10 @@ const schema = {
     { key: 'state', type: 'u8' },
     { key: 'mint_bid', type: 'pub' },
     { key: 'src_bid', type: 'pub' },
+    { key: 'treasury_bid', type: 'pub' },
     { key: 'mint_ask', type: 'pub' },
     { key: 'dst_ask', type: 'pub' },
+    { key: 'treasury_ask', type: 'pub' },
     { key: 'bid_amount', type: 'u64' },
     { key: 'ask_amount', type: 'u64' },
     { key: 'locked_time', type: 'i64' },

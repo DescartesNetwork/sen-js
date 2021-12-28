@@ -382,24 +382,22 @@ class Purchasing extends Tx {
 
   redeemPurchaseOrder = async (
     purchaseOrderAddress: string,
-    dstAskAddress: string,
-    treasuryAskAddress: string,
     wallet: WalletInterface,
   ): Promise<{ txId: string }> => {
     if (!account.isAddress(purchaseOrderAddress))
       throw new Error('Invalid purchase order address')
 
-    if (!account.isAddress(dstAskAddress))
-      throw new Error('Invalid destination ask address')
-
     const purchaseOrderPublicKey = account.fromAddress(purchaseOrderAddress)
 
+    const {
+      dst_ask: dstAskAddress,
+      treasury_ask: treasuryAskAddress,
+    } = await this.getPurchaseOrderData(purchaseOrderAddress)
     const dstAskPublicKey = account.fromAddress(dstAskAddress)
+    const treasuryAskPublicKey = account.fromAddress(treasuryAskAddress)
 
     const { mint: mintAskAddress } = await this._splt.getAccountData(dstAskAddress)
     const mintAskPublicKey = account.fromAddress(mintAskAddress)
-
-    const treasuryAskPublicKey = account.fromAddress(treasuryAskAddress)
 
     const ownerAddress = await wallet.getAddress()
     const ownerPublicKey = account.fromAddress(ownerAddress)
@@ -419,6 +417,9 @@ class Purchasing extends Tx {
         { pubkey: mintAskPublicKey, isSigner: false, isWritable: false },
         { pubkey: dstAskPublicKey, isSigner: false, isWritable: false },
         { pubkey: treasuryAskPublicKey, isSigner: false, isWritable: false },
+
+        // FIXME: treasurer
+        // { pubkey: treasuryAskPublicKey, isSigner: false, isWritable: false },
 
         { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
         { pubkey: this.spltProgramId, isSigner: false, isWritable: false },
