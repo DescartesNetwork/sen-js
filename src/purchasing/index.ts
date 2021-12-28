@@ -11,9 +11,9 @@ import SPLT from '../splt'
 import { InstructionCode, ErrorMapping } from './constant'
 import account from '../account'
 import {
-  DEFAULT_PURCHASING_PROGRAM_ADDRESS, DEFAULT_SPLATA_PROGRAM_ADDRESS,
+  DEFAULT_PURCHASING_PROGRAM_ADDRESS,
+  DEFAULT_SPLATA_PROGRAM_ADDRESS,
   DEFAULT_SPLT_PROGRAM_ADDRESS,
-  DEFAULT_STAKE_PROGRAM_ADDRESS,
 } from '../default'
 import { WalletInterface } from '../rawWallet'
 import schema, { OrderData, RetailerData, StakeDebtData, StakeFarmData } from '../schema'
