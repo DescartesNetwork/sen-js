@@ -18,8 +18,7 @@ import {
 import { WalletInterface } from '../rawWallet'
 import schema, { PurchaseOrderData, StakeDebtData, StakeFarmData } from '../schema'
 import * as Buffer from 'buffer'
-import { uint32ToBuffer } from '../stake/util'
-import { StakeAccountChangeInfo } from '../stake'
+import { uint32ToBuffer } from './util'
 
 const soproxABI = require('soprox-abi')
 
@@ -230,6 +229,7 @@ class Purchasing extends Tx {
     purchaseOrderAddress: string,
     wallet: WalletInterface,
   ): Promise<{ txId: string }> => {
+
     if (!account.isAddress(purchaseOrderAddress))
       throw new Error('Invalid purchase order address')
 
@@ -268,39 +268,41 @@ class Purchasing extends Tx {
   /**
    *
    * @param purchaseOrderAddress
-   * @param ownerAddress
-   * @param srcBidAddress
    * @param treasuryBidAddress
+   * @param treasuryAskAddress
    * @param wallet
    */
   approvePurchaseOrder = async (
     purchaseOrderAddress: string,
-    ownerAddress: string,
-    srcBidAddress: string,
     treasuryBidAddress: string,
+    treasuryAskAddress: string,
     wallet: WalletInterface,
   ): Promise<{ txId: string }> => {
+
     if (!account.isAddress(purchaseOrderAddress))
       throw new Error('Invalid purchase order address')
-
     const purchaseOrderPublicKey = account.fromAddress(purchaseOrderAddress)
 
     const approverAddress = await wallet.getAddress()
     const approverPublicKey = account.fromAddress(approverAddress)
 
+    const {
+      owner: ownerAddress,
+      src_bid: srcBidAddress,
+    } = await this.getPurchaseOrderData(purchaseOrderAddress)
     const ownerPublicKey = account.fromAddress(ownerAddress)
 
     const srcBidPublicKey = account.fromAddress(srcBidAddress)
-
     const { mint: mintBidAddress } = await this._splt.getAccountData(srcBidAddress)
     const mintBidPublicKey = account.fromAddress(mintBidAddress)
 
     const treasuryBidPublicKey = account.fromAddress(treasuryBidAddress)
-
     const { mint: mintTreasuryBidAddress } = await this._splt.getAccountData(treasuryBidAddress)
 
     if (mintBidAddress != mintTreasuryBidAddress)
       throw new Error('Bid mint is not matching')
+
+    const treasuryAskPublicKey = account.fromAddress(treasuryAskAddress)
 
     // transaction builder
     let transaction = new Transaction()
@@ -316,9 +318,13 @@ class Purchasing extends Tx {
         { pubkey: approverPublicKey, isSigner: true, isWritable: true },
         { pubkey: purchaseOrderPublicKey, isSigner: false, isWritable: false },
         { pubkey: ownerPublicKey, isSigner: false, isWritable: false },
+
         { pubkey: mintBidPublicKey, isSigner: false, isWritable: false },
         { pubkey: srcBidPublicKey, isSigner: false, isWritable: false },
+
         { pubkey: treasuryBidPublicKey, isSigner: false, isWritable: false },
+        { pubkey: treasuryAskPublicKey, isSigner: false, isWritable: false },
+
         { pubkey: this.spltProgramId, isSigner: false, isWritable: false },
       ],
       programId: this.purchasingProgramId,
@@ -380,6 +386,11 @@ class Purchasing extends Tx {
     return { txId }
   }
 
+  /**
+   *
+   * @param purchaseOrderAddress
+   * @param wallet
+   */
   redeemPurchaseOrder = async (
     purchaseOrderAddress: string,
     wallet: WalletInterface,
