@@ -108,19 +108,24 @@ export type StakeFarmData = {
   scope: bigint
 }
 
-export type PurchaseOrderData = {
+export type OrderData = {
   owner: string
-  approver: string
   state: number
-  mint_bid: string
-  src_bid: string
-  treasury_bid: string
-  mint_ask: string
-  dst_ask: string
-  treasury_ask: string
+  retailer: string
   bid_amount: bigint
   ask_amount: bigint
   locked_time: bigint
+  created_at: bigint
+  updated_at: bigint
+}
+
+export type RetailerData = {
+  owner: string
+  state: number
+  mint_bid: string
+  treasury_bid: string
+  mint_ask: string
+  treasury_ask: string
 }
 
 const schema = {
@@ -290,19 +295,23 @@ const schema = {
     { key: 'period', type: 'u64' },
     { key: 'scope', type: 'u64' },
   ],
-  STAKE_PURCHASE_ORDER_SCHEMA: [
+  ORDER_SCHEMA: [
     { key: 'owner', type: 'pub' },
-    { key: 'approver', type: 'pub' },
     { key: 'state', type: 'u8' },
-    { key: 'mint_bid', type: 'pub' },
-    { key: 'src_bid', type: 'pub' },
-    { key: 'treasury_bid', type: 'pub' },
-    { key: 'mint_ask', type: 'pub' },
-    { key: 'dst_ask', type: 'pub' },
-    { key: 'treasury_ask', type: 'pub' },
+    { key: 'retailer', type: 'pub' },
     { key: 'bid_amount', type: 'u64' },
     { key: 'ask_amount', type: 'u64' },
     { key: 'locked_time', type: 'i64' },
+    { key: 'created_at', type: 'i64' },
+    { key: 'updated_at', type: 'i64' },
+  ],
+  RETAILER_SCHEMA: [
+    { key: 'owner', type: 'pub' },
+    { key: 'state', type: 'u8' },
+    { key: 'mint_bid', type: 'pub' },
+    { key: 'treasury_bid', type: 'pub' },
+    { key: 'mint_ask', type: 'pub' },
+    { key: 'treasury_ask', type: 'pub' },
   ],
 }
 

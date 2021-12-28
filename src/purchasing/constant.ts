@@ -1,9 +1,12 @@
 export enum InstructionCode {
-  PlacePurchaseOrder,
-  CancelPurchaseOrder,
-  RedeemPurchaseOrder,
-  ApprovePurchaseOrder,
-  RejectPurchaseOrder
+  InitializeRetailer,
+  FreezeRetailer,
+  ThawRetailer,
+  PlaceOrder,
+  CancelOrder,
+  RedeemOrder,
+  ApproveOrder,
+  RejectOrder
 }
 
 export const ErrorMapping = [
