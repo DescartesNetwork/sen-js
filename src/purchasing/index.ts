@@ -1,4 +1,11 @@
-import { PublicKey, SystemProgram, SYSVAR_RENT_PUBKEY, Transaction, TransactionInstruction } from '@solana/web3.js'
+import {
+  GetProgramAccountsFilter, KeyedAccountInfo,
+  PublicKey,
+  SystemProgram,
+  SYSVAR_RENT_PUBKEY,
+  Transaction,
+  TransactionInstruction,
+} from '@solana/web3.js'
 import Tx from '../core/tx'
 import SPLT from '../splt'
 import { InstructionCode, ErrorMapping } from './constant'
@@ -9,9 +16,10 @@ import {
   DEFAULT_STAKE_PROGRAM_ADDRESS,
 } from '../default'
 import { WalletInterface } from '../rawWallet'
-import schema, { PurchaseOrderData } from '../schema'
+import schema, { PurchaseOrderData, StakeDebtData, StakeFarmData } from '../schema'
 import * as Buffer from 'buffer'
-import lamports from '../lamports'
+import { uint32ToBuffer } from '../stake/util'
+import { StakeAccountChangeInfo } from '../stake'
 
 const soproxABI = require('soprox-abi')
 
@@ -58,6 +66,62 @@ class Purchasing extends Tx {
     return this.parsePurchaseOrderData(data)
   }
 
+  /**
+   *
+   * @param index
+   * @param ownerAddress is a person who want to place a new purchase order
+   * @param approverAddress is a person who can approve/reject purchase orders (maybe administrator of the system)
+   * @param mintBidAddress is token that owner want to sell
+   * @param mintAskAddress is token that owner want to receive
+   */
+  derivePurchaseOrderAddress = async (
+    index: number,
+    ownerAddress: string,
+    approverAddress: string,
+    mintBidAddress: string,
+    mintAskAddress: string,
+  ): Promise<string> => {
+    if (!account.isAddress(ownerAddress))
+      throw new Error('Invalid owner address')
+    if (!account.isAddress(approverAddress))
+      throw new Error('Invalid approver address')
+    if (!account.isAddress(mintBidAddress))
+      throw new Error('Invalid mint bid address')
+    if (!account.isAddress(mintAskAddress))
+      throw new Error('Invalid mint ask address')
+
+    const ownerPublicKey = account.fromAddress(ownerAddress)
+    const approverPublicKey = account.fromAddress(approverAddress)
+    const mintBidPublicKey = account.fromAddress(mintBidAddress)
+    const mintAskPublicKey = account.fromAddress(mintAskAddress)
+
+    const seeds = [
+      uint32ToBuffer(index),
+      ownerPublicKey.toBuffer(),
+      approverPublicKey.toBuffer(),
+      mintBidPublicKey.toBuffer(),
+      mintAskPublicKey.toBuffer(),
+      this.purchasingProgramId.toBuffer(),
+    ]
+
+    const [purchaseOrderPublicKey, _] = await PublicKey.findProgramAddress(
+      seeds,
+      this.purchasingProgramId,
+    )
+    return purchaseOrderPublicKey.toBase58()
+  }
+
+  /**
+   *
+   * @param index
+   * @param bidAmount
+   * @param askAmount
+   * @param lockedTime
+   * @param srcBidAddress
+   * @param dstAskAddress
+   * @param approverAddress
+   * @param wallet
+   */
   placePurchaseOrder = async (
     index: number,
     bidAmount: bigint,
@@ -67,29 +131,47 @@ class Purchasing extends Tx {
     dstAskAddress: string,
     approverAddress: string,
     wallet: WalletInterface,
-  ): Promise<{ txId: string, orderAddress: string }> => {
+  ): Promise<{ txId: string, purchaseOrderAddress: string }> => {
 
-    if (!account.isAddress(srcBidAddress)) throw new Error('Invalid source bid address')
+    if (!account.isAddress(srcBidAddress))
+      throw new Error('Invalid source bid address')
 
-    if (!account.isAddress(dstAskAddress)) throw new Error('Invalid destination ask address')
+    if (!account.isAddress(dstAskAddress))
+      throw new Error('Invalid destination ask address')
 
-    if (!account.isAddress(approverAddress)) throw new Error('Invalid approver address')
+    if (!account.isAddress(approverAddress))
+      throw new Error('Invalid approver address')
+
+    if (bidAmount <= 0)
+      throw new Error('Invalid bid amount')
+
+    if (askAmount <= 0)
+      throw new Error('Invalid ask amount')
+
+    if (lockedTime <= 0)
+      throw new Error('Invalid locked time')
 
     const ownerAddress = await wallet.getAddress()
-
     const ownerPublicKey = account.fromAddress(ownerAddress)
 
     const approverPublicKey = account.fromAddress(approverAddress)
 
     const srcBidPublicKey = account.fromAddress(srcBidAddress)
-
     const { mint: mintBidAddress } = await this._splt.getAccountData(srcBidAddress)
     const mintBidPublicKey = account.fromAddress(mintBidAddress)
 
     const dstAskPublicKey = account.fromAddress(dstAskAddress)
-
     const { mint: mintAskAddress } = await this._splt.getAccountData(dstAskAddress)
     const mintAskPublicKey = account.fromAddress(mintAskAddress)
+
+    const purchaseOrderAddress = await this.derivePurchaseOrderAddress(
+      index,
+      ownerAddress,
+      approverAddress,
+      mintBidAddress,
+      mintAskAddress,
+    )
+    const purchaseOrderPublicKey = account.fromAddress(purchaseOrderAddress)
 
     const layout = new soproxABI.struct(
       [
@@ -114,7 +196,7 @@ class Purchasing extends Tx {
     const instruction = new TransactionInstruction({
       keys: [
         { pubkey: ownerPublicKey, isSigner: true, isWritable: true },
-        { pubkey: orderPublicKey, isSigner: false, isWritable: true },
+        { pubkey: purchaseOrderPublicKey, isSigner: false, isWritable: true },
         { pubkey: approverPublicKey, isSigner: false, isWritable: true },
 
         { pubkey: mintBidPublicKey, isSigner: false, isWritable: true },
@@ -132,14 +214,25 @@ class Purchasing extends Tx {
     transaction.add(instruction)
     transaction.feePayer = ownerPublicKey
 
-    return Promise.resolve({ txId: '', orderAddress: '' })
+    const payerSig = await wallet.rawSignTransaction(transaction)
+    this.addSignature(transaction, payerSig)
+
+    const txId = await this.sendTransaction(transaction)
+    return { txId, purchaseOrderAddress }
   }
 
+  /**
+   *
+   * @param purchaseOrderAddress
+   * @param wallet
+   */
   rejectPurchaseOrder = async (
     purchaseOrderAddress: string,
     wallet: WalletInterface,
   ): Promise<{ txId: string }> => {
-    if (!account.isAddress(purchaseOrderAddress)) throw new Error('Invalid purchase order address')
+    if (!account.isAddress(purchaseOrderAddress))
+      throw new Error('Invalid purchase order address')
+
     const purchaseOrderPublicKey = account.fromAddress(purchaseOrderAddress)
 
     const approverAddress = await wallet.getAddress()
@@ -166,25 +259,95 @@ class Purchasing extends Tx {
     // Sign tx
     const payerSig = await wallet.rawSignTransaction(transaction)
     this.addSignature(transaction, payerSig)
+
     // Send tx
     const txId = await this.sendTransaction(transaction)
     return { txId }
   }
 
+  /**
+   *
+   * @param purchaseOrderAddress
+   * @param ownerAddress
+   * @param srcBidAddress
+   * @param treasuryBidAddress
+   * @param wallet
+   */
   approvePurchaseOrder = async (
     purchaseOrderAddress: string,
+    ownerAddress: string,
+    srcBidAddress: string,
+    treasuryBidAddress: string,
     wallet: WalletInterface,
   ): Promise<{ txId: string }> => {
-    const orderData = await this.getPurchaseOrderData(purchaseOrderAddress)
-    return Promise.resolve({ txId: '', orderAddress: '' })
+    if (!account.isAddress(purchaseOrderAddress))
+      throw new Error('Invalid purchase order address')
+
+    const purchaseOrderPublicKey = account.fromAddress(purchaseOrderAddress)
+
+    const approverAddress = await wallet.getAddress()
+    const approverPublicKey = account.fromAddress(approverAddress)
+
+    const ownerPublicKey = account.fromAddress(ownerAddress)
+
+    const srcBidPublicKey = account.fromAddress(srcBidAddress)
+
+    const { mint: mintBidAddress } = await this._splt.getAccountData(srcBidAddress)
+    const mintBidPublicKey = account.fromAddress(mintBidAddress)
+
+    const treasuryBidPublicKey = account.fromAddress(treasuryBidAddress)
+
+    const { mint: mintTreasuryBidAddress } = await this._splt.getAccountData(treasuryBidAddress)
+
+    if (mintBidAddress != mintTreasuryBidAddress)
+      throw new Error('Bid mint is not matching')
+
+    // transaction builder
+    let transaction = new Transaction()
+    transaction = await this.addRecentCommitment(transaction)
+
+    const layout = new soproxABI.struct(
+      [{ key: 'code', type: 'u8' }],
+      { code: InstructionCode.ApprovePurchaseOrder },
+    )
+
+    const instruction = new TransactionInstruction({
+      keys: [
+        { pubkey: approverPublicKey, isSigner: true, isWritable: true },
+        { pubkey: purchaseOrderPublicKey, isSigner: false, isWritable: false },
+        { pubkey: ownerPublicKey, isSigner: false, isWritable: false },
+        { pubkey: mintBidPublicKey, isSigner: false, isWritable: false },
+        { pubkey: srcBidPublicKey, isSigner: false, isWritable: false },
+        { pubkey: treasuryBidPublicKey, isSigner: false, isWritable: false },
+        { pubkey: this.spltProgramId, isSigner: false, isWritable: false },
+      ],
+      programId: this.purchasingProgramId,
+      data: layout.toBuffer(),
+    })
+    transaction.add(instruction)
+    transaction.feePayer = approverPublicKey
+
+    // Sign tx
+    const payerSig = await wallet.rawSignTransaction(transaction)
+    this.addSignature(transaction, payerSig)
+
+    // Send tx
+    const txId = await this.sendTransaction(transaction)
+    return { txId }
   }
 
+  /**
+   *
+   * @param purchaseOrderAddress
+   * @param wallet
+   */
   cancelPurchaseOrder = async (
     purchaseOrderAddress: string,
     wallet: WalletInterface,
   ): Promise<{ txId: string }> => {
     if (!account.isAddress(purchaseOrderAddress))
       throw new Error('Invalid purchase order address')
+
     const purchaseOrderPublicKey = account.fromAddress(purchaseOrderAddress)
 
     const ownerAddress = await wallet.getAddress()
@@ -211,6 +374,7 @@ class Purchasing extends Tx {
     // Sign tx
     const payerSig = await wallet.rawSignTransaction(transaction)
     this.addSignature(transaction, payerSig)
+
     // Send tx
     const txId = await this.sendTransaction(transaction)
     return { txId }
@@ -218,11 +382,24 @@ class Purchasing extends Tx {
 
   redeemPurchaseOrder = async (
     purchaseOrderAddress: string,
+    dstAskAddress: string,
+    treasuryAskAddress: string,
     wallet: WalletInterface,
   ): Promise<{ txId: string }> => {
     if (!account.isAddress(purchaseOrderAddress))
       throw new Error('Invalid purchase order address')
+
+    if (!account.isAddress(dstAskAddress))
+      throw new Error('Invalid destination ask address')
+
     const purchaseOrderPublicKey = account.fromAddress(purchaseOrderAddress)
+
+    const dstAskPublicKey = account.fromAddress(dstAskAddress)
+
+    const { mint: mintAskAddress } = await this._splt.getAccountData(dstAskAddress)
+    const mintAskPublicKey = account.fromAddress(mintAskAddress)
+
+    const treasuryAskPublicKey = account.fromAddress(treasuryAskAddress)
 
     const ownerAddress = await wallet.getAddress()
     const ownerPublicKey = account.fromAddress(ownerAddress)
@@ -238,6 +415,15 @@ class Purchasing extends Tx {
       keys: [
         { pubkey: ownerPublicKey, isSigner: true, isWritable: true },
         { pubkey: purchaseOrderPublicKey, isSigner: false, isWritable: false },
+
+        { pubkey: mintAskPublicKey, isSigner: false, isWritable: false },
+        { pubkey: dstAskPublicKey, isSigner: false, isWritable: false },
+        { pubkey: treasuryAskPublicKey, isSigner: false, isWritable: false },
+
+        { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
+        { pubkey: this.spltProgramId, isSigner: false, isWritable: false },
+        { pubkey: SYSVAR_RENT_PUBKEY, isSigner: false, isWritable: false },
+        { pubkey: this.splataProgramId, isSigner: false, isWritable: false },
       ],
       programId: this.purchasingProgramId,
       data: layout.toBuffer(),
@@ -248,6 +434,7 @@ class Purchasing extends Tx {
     // Sign tx
     const payerSig = await wallet.rawSignTransaction(transaction)
     this.addSignature(transaction, payerSig)
+
     // Send tx
     const txId = await this.sendTransaction(transaction)
     return { txId }
