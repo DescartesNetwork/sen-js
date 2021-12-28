@@ -25,7 +25,7 @@ export const genRetailerAccount = async (
       )
       return acc
     } catch (err) {
-      console.log(err)
+      continue
     }
   }
 }

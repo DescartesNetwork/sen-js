@@ -12,7 +12,7 @@ export enum InstructionCode {
 export const ErrorMapping = [
   'Invalid instruction',
   'Invalid owner',
-  'Invalid approver',
+  'Invalid verifier',
   'Incorrect program id',
   'Operation overflowed',
   'Already constructed',
@@ -25,5 +25,10 @@ export const ErrorMapping = [
   'Invalid input data, ask mint is not matching',
   'Invalid input data, source bid account is not matching',
   'Invalid input data, source ask account is not matching',
+  'Invalid input data, treasury ask account is not matching',
+  'Invalid input data, treasury bid account is not matching',
   'Locked time is not open',
+  'Retailer is not active',
+  'Retailer is not frozen',
+  'Retailer is not matching with order',
 ]

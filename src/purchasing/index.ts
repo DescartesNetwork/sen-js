@@ -36,7 +36,6 @@ class Purchasing extends Tx {
     nodeUrl: string,
   ) {
     super(nodeUrl, ErrorMapping)
-
     if (!account.isAddress(purchasingProgramAddress))
       throw new Error('Invalid stake program address')
     if (!account.isAddress(spltProgramAddress))
@@ -45,8 +44,8 @@ class Purchasing extends Tx {
       throw new Error('Invalid SPL associated token program address')
 
     this.purchasingProgramId = account.fromAddress(purchasingProgramAddress)
-    this.spltProgramId = account.fromAddress(purchasingProgramAddress)
-    this.splataProgramId = account.fromAddress(purchasingProgramAddress)
+    this.spltProgramId = account.fromAddress(spltProgramAddress)
+    this.splataProgramId = account.fromAddress(splataProgramAddress)
     this._splt = new SPLT(spltProgramAddress, splataProgramAddress, nodeUrl)
   }
 
@@ -326,7 +325,7 @@ class Purchasing extends Tx {
    * @param index
    * @param bidAmount
    * @param askAmount
-   * @param lockedTime
+   * @param lockedTime (seconds time unit)
    * @param retailerAddress
    * @param wallet
    */
