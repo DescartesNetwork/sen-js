@@ -118,7 +118,7 @@ class Stake extends Tx {
   /**
    * Parse farm buffer data
    * @param data - Buffer data (raw data) that you get by {@link https://solana-labs.github.io/solana-web3.js/classes/Connection.html#getAccountInfo | connection.getAccountInfo}
-   * @returns Readable json data respect to {@link https://descartesnetwork.github.io/sen-js/modules.html#schema | FARM_SCHEMA}
+   * @returns Readable json data respect to {@link https://descartesnetwork.github.io/sen-js/modules.html#schema | STAKE_FARM_SCHEMA}
    */
   parseFarmData = (data: Buffer): StakeFarmData => {
     const layout = new soproxABI.struct(schema.STAKE_FARM_SCHEMA)
@@ -130,7 +130,7 @@ class Stake extends Tx {
   /**
    * Get farm data
    * @param farmAddress - Farm account address
-   * @returns Readable json data respect to {@link https://descartesnetwork.github.io/sen-js/modules.html#schema | FARM_SCHEMA}
+   * @returns Readable json data respect to {@link https://descartesnetwork.github.io/sen-js/modules.html#schema | STAKE_FARM_SCHEMA}
    */
   getFarmData = async (farmAddress: string): Promise<StakeFarmData> => {
     if (!account.isAddress(farmAddress)) throw new Error('Invalid farm address')
@@ -143,7 +143,7 @@ class Stake extends Tx {
   /**
    * Parse debt buffer data
    * @param data - Buffer data (raw data) that you get by {@link https://solana-labs.github.io/solana-web3.js/classes/Connection.html#getAccountInfo | connection.getAccountInfo}
-   * @returns Readable json data respect to {@link https://descartesnetwork.github.io/sen-js/modules.html#schema | DEBT_SCHEMA}
+   * @returns Readable json data respect to {@link https://descartesnetwork.github.io/sen-js/modules.html#schema | STAKE_DEBT_SCHEMA}
    */
   parseDebtData = (data: Buffer): StakeDebtData => {
     const layout = new soproxABI.struct(schema.STAKE_DEBT_SCHEMA)
@@ -155,7 +155,7 @@ class Stake extends Tx {
   /**
    * Get debt data
    * @param debtAddress - Debt account address
-   * @returns Readable json data respect to {@link https://descartesnetwork.github.io/sen-js/modules.html#schema | DEBT_SCHEMA}
+   * @returns Readable json data respect to {@link https://descartesnetwork.github.io/sen-js/modules.html#schema | STAKE_DEBT_SCHEMA}
    */
   getDebtData = async (debtAddress: string): Promise<StakeDebtData> => {
     if (!account.isAddress(debtAddress)) throw new Error('Invalid debt address')
