@@ -669,6 +669,53 @@ class Purchasing extends Tx {
     const txId = await this.sendTransaction(transaction)
     return { txId }
   }
+
+  /**
+   * Transfer retailer's ownership
+   * @remarks Retailer owner only
+   * @param retailerAddress - Retailer address
+   * @param newOwnerAddress - New owner address
+   * @param wallet - {@link https://descartesnetwork.github.io/sen-js/interfaces/WalletInterface.html | Wallet instance}
+   * @returns Transaction hash `txId`
+   */
+  transferRetailerOwnership = async (
+    retailerAddress: string,
+    newOwnerAddress: string,
+    wallet: WalletInterface,
+  ): Promise<{ txId: string }> => {
+    if (!account.isAddress(retailerAddress))
+      throw new Error('Invalid retailer address')
+    if (!account.isAddress(newOwnerAddress))
+      throw new Error('Invalid new owner address')
+    const retailerPublicKey = account.fromAddress(retailerAddress)
+    const newOwnerPublicKey = account.fromAddress(newOwnerAddress)
+    // Get payer
+    const payerAddress = await wallet.getAddress()
+    const payerPublicKey = account.fromAddress(payerAddress)
+    // Build tx
+    let transaction = new Transaction()
+    transaction = await this.addRecentCommitment(transaction)
+    const layout = new soproxABI.struct([{ key: 'code', type: 'u8' }], {
+      code: InstructionCode.TransferRetailerOwnership,
+    })
+    const instruction = new TransactionInstruction({
+      keys: [
+        { pubkey: payerPublicKey, isSigner: true, isWritable: false },
+        { pubkey: retailerPublicKey, isSigner: false, isWritable: true },
+        { pubkey: newOwnerPublicKey, isSigner: false, isWritable: false },
+      ],
+      programId: this.purchasingProgramId,
+      data: layout.toBuffer(),
+    })
+    transaction.add(instruction)
+    transaction.feePayer = payerPublicKey
+    // Sign tx
+    const payerSig = await wallet.rawSignTransaction(transaction)
+    this.addSignature(transaction, payerSig)
+    // Send tx
+    const txId = await this.sendTransaction(transaction)
+    return { txId }
+  }
 }
 
 export default Purchasing

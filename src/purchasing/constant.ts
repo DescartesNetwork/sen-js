@@ -6,7 +6,8 @@ export enum InstructionCode {
   CancelOrder,
   RedeemOrder,
   ApproveOrder,
-  RejectOrder
+  RejectOrder,
+  TransferRetailerOwnership,
 }
 
 export const ErrorMapping = [
