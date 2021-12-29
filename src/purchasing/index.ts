@@ -496,7 +496,7 @@ class Purchasing extends Tx {
       keys: [
         { pubkey: verifierPublicKey, isSigner: true, isWritable: true },
         { pubkey: ownerPublicKey, isSigner: false, isWritable: false },
-        { pubkey: orderPublicKey, isSigner: false, isWritable: false },
+        { pubkey: orderPublicKey, isSigner: false, isWritable: true },
         { pubkey: retailerPublicKey, isSigner: false, isWritable: false },
         { pubkey: srcBidPublicKey, isSigner: false, isWritable: false },
         { pubkey: treasuryBidPublicKey, isSigner: false, isWritable: false },
