@@ -29,3 +29,6 @@ export { default as IDO } from './ido'
 
 export * from './stake'
 export { default as Stake } from './stake'
+
+export * from './purchasing'
+export { default as Purchasing } from './purchasing'

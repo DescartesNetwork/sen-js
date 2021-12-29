@@ -108,6 +108,26 @@ export type StakeFarmData = {
   scope: bigint
 }
 
+export type OrderData = {
+  owner: string
+  state: number
+  retailer: string
+  bid_amount: bigint
+  ask_amount: bigint
+  locked_time: bigint
+  created_at: bigint
+  updated_at: bigint
+}
+
+export type RetailerData = {
+  owner: string
+  state: number
+  mint_bid: string
+  treasury_bid: string
+  mint_ask: string
+  treasury_ask: string
+}
+
 const schema = {
   /**
    * Swap
@@ -274,6 +294,24 @@ const schema = {
     { key: 'reward_per_share', type: 'u64' },
     { key: 'period', type: 'u64' },
     { key: 'scope', type: 'u64' },
+  ],
+  ORDER_SCHEMA: [
+    { key: 'owner', type: 'pub' },
+    { key: 'state', type: 'u8' },
+    { key: 'retailer', type: 'pub' },
+    { key: 'bid_amount', type: 'u64' },
+    { key: 'ask_amount', type: 'u64' },
+    { key: 'locked_time', type: 'i64' },
+    { key: 'created_at', type: 'i64' },
+    { key: 'updated_at', type: 'i64' },
+  ],
+  RETAILER_SCHEMA: [
+    { key: 'owner', type: 'pub' },
+    { key: 'state', type: 'u8' },
+    { key: 'mint_bid', type: 'pub' },
+    { key: 'treasury_bid', type: 'pub' },
+    { key: 'mint_ask', type: 'pub' },
+    { key: 'treasury_ask', type: 'pub' },
   ],
 }
 
