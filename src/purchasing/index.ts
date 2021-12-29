@@ -482,7 +482,6 @@ class Purchasing extends Tx {
       mintBidAddress,
     )
     const srcBidPublicKey = account.fromAddress(srcBidAddress)
-
     const treasuryBidPublicKey = account.fromAddress(treasuryBidAddress)
 
     // transaction builder

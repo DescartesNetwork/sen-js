@@ -8,7 +8,6 @@ const { address: MINT_BID_ADDRESS } = mints[0]
 const { address: MINT_ASK_ADDRESS } = mints[1]
 
 let RETAILER_ADDRESS = ''
-let ORDER_ADDRESS = ''
 
 const RetailerState = {
   ACTIVE: 1,
