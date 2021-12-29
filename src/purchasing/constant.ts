@@ -12,6 +12,7 @@ export enum InstructionCode {
 export const ErrorMapping = [
   'Invalid instruction',
   'Invalid owner',
+  'Invalid retailer owner',
   'Invalid order owner',
   'Invalid verifier',
   'Incorrect program id',
