@@ -93,8 +93,8 @@ describe('Testing retailer', function() {
         orderAddress,
         wallet
       )
-      const order = await purchasing.getOrderData(orderAddress)
-      assert.equal(order.state, OrderState.CANCELED)
+      // const order = await purchasing.getOrderData(orderAddress)
+      // assert.equal(order.state, OrderState.CANCELED)
     })
 
     // it('reject an order success', async function() {
