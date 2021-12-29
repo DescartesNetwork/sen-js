@@ -433,8 +433,8 @@ class Purchasing extends Tx {
     )
     const instruction = new TransactionInstruction({
       keys: [
-        { pubkey: verifierPublicKey, isSigner: true, isWritable: true },
-        { pubkey: orderPublicKey, isSigner: false, isWritable: false },
+        { pubkey: verifierPublicKey, isSigner: true, isWritable: false },
+        { pubkey: orderPublicKey, isSigner: false, isWritable: true },
         { pubkey: retailerPublicKey, isSigner: false, isWritable: false },
       ],
       programId: this.purchasingProgramId,
@@ -540,8 +540,8 @@ class Purchasing extends Tx {
     )
     const instruction = new TransactionInstruction({
       keys: [
-        { pubkey: ownerPublicKey, isSigner: true, isWritable: true },
-        { pubkey: orderPublicKey, isSigner: false, isWritable: false },
+        { pubkey: ownerPublicKey, isSigner: true, isWritable: false },
+        { pubkey: orderPublicKey, isSigner: false, isWritable: true },
       ],
       programId: this.purchasingProgramId,
       data: layout.toBuffer(),
