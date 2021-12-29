@@ -15,6 +15,14 @@ const RetailerState = {
   FROZEN: 2,
 }
 
+const OrderState = {
+  OPEN: 1,
+  APPROVED: 2,
+  DONE: 3,
+  REJECTED: 4,
+  CANCELED: 5,
+}
+
 describe('Testing retailer', function() {
   it('initialize new retailer success', async function() {
     const purchasing = new Purchasing()
@@ -26,6 +34,7 @@ describe('Testing retailer', function() {
       wallet,
     )
     RETAILER_ADDRESS = retailerAddress
+    console.log(`RETAILER_ADDRESS: ${RETAILER_ADDRESS}`)
   })
 
   describe('testing retailer functional', async function() {
@@ -59,8 +68,57 @@ describe('Testing retailer', function() {
         wallet,
       )
       ORDER_ADDRESS = orderAddress
-      console.log(ORDER_ADDRESS)
-      console.log(txId)
+      console.log(`ORDER_ADDRESS: ${ORDER_ADDRESS}`)
+      console.log(`txId: ${txId}`)
+
+      const order = await purchasing.getOrderData(orderAddress)
+      assert.equal(order.state, OrderState.OPEN)
     })
+
+    it('cancel an order success', async function() {
+      const purchasing = new Purchasing()
+
+      const {
+        orderAddress: orderAddress,
+      } = await purchasing.placeOrder(
+        1,
+        100n,
+        20n,
+        86400n,
+        RETAILER_ADDRESS,
+        wallet,
+      )
+
+      await purchasing.cancelOrder(
+        orderAddress,
+        wallet
+      )
+      const order = await purchasing.getOrderData(orderAddress)
+      assert.equal(order.state, OrderState.CANCELED)
+    })
+
+    // it('reject an order success', async function() {
+    //   const purchasing = new Purchasing()
+    //   const {
+    //     orderAddress: orderAddress,
+    //   } = await purchasing.placeOrder(
+    //     2,
+    //     100n,
+    //     20n,
+    //     86400n,
+    //     RETAILER_ADDRESS,
+    //     wallet,
+    //   )
+    //   ORDER_ADDRESS = orderAddress
+    //   console.log(`ORDER_ADDRESS: ${ORDER_ADDRESS}`)
+    //
+    //   await purchasing.rejectOrder(
+    //     orderAddress,
+    //     wallet,
+    //   )
+    //
+    //   const order = await purchasing.getOrderData(orderAddress)
+    //   assert.equal(order.state, OrderState.REJECTED)
+    // })
   })
 })
