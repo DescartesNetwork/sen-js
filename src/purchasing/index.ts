@@ -334,6 +334,9 @@ class Purchasing extends Tx {
     // Get payer
     const ownerAddress = await wallet.getAddress()
     const ownerPublicKey = account.fromAddress(ownerAddress)
+    // Fetch necessary info
+    const { mint_bid: mintBidAddress, treasury_bid: treasuryBidAddress } =
+      await this.getRetailerData(retailerAddress)
     // Build public keys
     const retailerPublicKey = account.fromAddress(retailerAddress)
     const orderAddress = await this.deriveOrderAddress(
@@ -342,6 +345,12 @@ class Purchasing extends Tx {
       retailerAddress,
     )
     const orderPublicKey = account.fromAddress(orderAddress)
+    const srcBidAddress = await this._splt.deriveAssociatedAddress(
+      ownerAddress,
+      mintBidAddress,
+    )
+    const srcBidPublicKey = account.fromAddress(srcBidAddress)
+    const treasuryBidPublicKey = account.fromAddress(treasuryBidAddress)
     // Build tx
     let transaction = new Transaction()
     transaction = await this.addRecentCommitment(transaction)
@@ -365,8 +374,13 @@ class Purchasing extends Tx {
       keys: [
         { pubkey: ownerPublicKey, isSigner: true, isWritable: true },
         { pubkey: orderPublicKey, isSigner: false, isWritable: true },
-        { pubkey: retailerPublicKey, isSigner: false, isWritable: true },
+        { pubkey: retailerPublicKey, isSigner: false, isWritable: false },
+
+        { pubkey: srcBidPublicKey, isSigner: false, isWritable: true },
+        { pubkey: treasuryBidPublicKey, isSigner: false, isWritable: true },
+
         { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
+        { pubkey: this.spltProgramId, isSigner: false, isWritable: false },
         { pubkey: SYSVAR_RENT_PUBKEY, isSigner: false, isWritable: false },
       ],
       programId: this.purchasingProgramId,
@@ -397,8 +411,23 @@ class Purchasing extends Tx {
     // Get payer
     const ownerAddress = await wallet.getAddress()
     const ownerPublicKey = account.fromAddress(ownerAddress)
+    // Fetch necessary info
+    const { retailer: retailerAddress } = await this.getOrderData(orderAddress)
+    const { mint_bid: mintBidAddress, treasury_bid: treasuryBidAddress } =
+      await this.getRetailerData(retailerAddress)
     // Build public keys
     const orderPublicKey = account.fromAddress(orderAddress)
+    const retailerPublicKey = account.fromAddress(retailerAddress)
+    const dstBidAddress = await this._splt.deriveAssociatedAddress(
+      ownerAddress,
+      mintBidAddress,
+    )
+    const dstBidPublicKey = account.fromAddress(dstBidAddress)
+    const mintBidPublicKey = account.fromAddress(mintBidAddress)
+    const treasuryBidPublicKey = account.fromAddress(treasuryBidAddress)
+    const [treasurerBidAddress, _] =
+      await this.deriveRetailerTreasurerAddresses(retailerAddress)
+    const treasurerBidPublicKey = account.fromAddress(treasurerBidAddress)
     // Build tx
     let transaction = new Transaction()
     transaction = await this.addRecentCommitment(transaction)
@@ -409,6 +438,17 @@ class Purchasing extends Tx {
       keys: [
         { pubkey: ownerPublicKey, isSigner: true, isWritable: false },
         { pubkey: orderPublicKey, isSigner: false, isWritable: true },
+        { pubkey: retailerPublicKey, isSigner: false, isWritable: false },
+
+        { pubkey: dstBidPublicKey, isSigner: false, isWritable: true },
+        { pubkey: mintBidPublicKey, isSigner: false, isWritable: false },
+        { pubkey: treasuryBidPublicKey, isSigner: false, isWritable: true },
+        { pubkey: treasurerBidPublicKey, isSigner: false, isWritable: false },
+
+        { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
+        { pubkey: this.spltProgramId, isSigner: false, isWritable: false },
+        { pubkey: SYSVAR_RENT_PUBKEY, isSigner: false, isWritable: false },
+        { pubkey: this.splataProgramId, isSigner: false, isWritable: false },
       ],
       programId: this.purchasingProgramId,
       data: layout.toBuffer(),
@@ -466,10 +506,12 @@ class Purchasing extends Tx {
         { pubkey: ownerPublicKey, isSigner: true, isWritable: true },
         { pubkey: orderPublicKey, isSigner: false, isWritable: true },
         { pubkey: retailerPublicKey, isSigner: false, isWritable: false },
-        { pubkey: mintAskPublicKey, isSigner: false, isWritable: false },
+
         { pubkey: dstAskPublicKey, isSigner: false, isWritable: true },
+        { pubkey: mintAskPublicKey, isSigner: false, isWritable: false },
         { pubkey: treasuryAskPublicKey, isSigner: false, isWritable: true },
         { pubkey: treasurerAskPublicKey, isSigner: false, isWritable: false },
+
         { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
         { pubkey: this.spltProgramId, isSigner: false, isWritable: false },
         { pubkey: SYSVAR_RENT_PUBKEY, isSigner: false, isWritable: false },
@@ -504,10 +546,24 @@ class Purchasing extends Tx {
     const verifierAddress = await wallet.getAddress()
     const verifierPublicKey = account.fromAddress(verifierAddress)
     // Fetch necessary info
-    const { retailer: retailerAddress } = await this.getOrderData(orderAddress)
-    const retailerPublicKey = account.fromAddress(retailerAddress)
+    const { retailer: retailerAddress, owner: ownerAddress } =
+      await this.getOrderData(orderAddress)
+    const { mint_bid: mintBidAddress, treasury_bid: treasuryBidAddress } =
+      await this.getRetailerData(retailerAddress)
     // Build public keys
+    const ownerPublicKey = account.fromAddress(ownerAddress)
     const orderPublicKey = account.fromAddress(orderAddress)
+    const retailerPublicKey = account.fromAddress(retailerAddress)
+    const dstBidAddress = await this._splt.deriveAssociatedAddress(
+      ownerAddress,
+      mintBidAddress,
+    )
+    const dstBidPublicKey = account.fromAddress(dstBidAddress)
+    const mintBidPublicKey = account.fromAddress(mintBidAddress)
+    const treasuryBidPublicKey = account.fromAddress(treasuryBidAddress)
+    const [treasurerBidAddress, _] =
+      await this.deriveRetailerTreasurerAddresses(retailerAddress)
+    const treasurerBidPublicKey = account.fromAddress(treasurerBidAddress)
     // Build tx
     let transaction = new Transaction()
     transaction = await this.addRecentCommitment(transaction)
@@ -517,8 +573,19 @@ class Purchasing extends Tx {
     const instruction = new TransactionInstruction({
       keys: [
         { pubkey: verifierPublicKey, isSigner: true, isWritable: false },
+        { pubkey: ownerPublicKey, isSigner: false, isWritable: false },
         { pubkey: orderPublicKey, isSigner: false, isWritable: true },
         { pubkey: retailerPublicKey, isSigner: false, isWritable: false },
+
+        { pubkey: dstBidPublicKey, isSigner: false, isWritable: true },
+        { pubkey: mintBidPublicKey, isSigner: false, isWritable: false },
+        { pubkey: treasuryBidPublicKey, isSigner: false, isWritable: true },
+        { pubkey: treasurerBidPublicKey, isSigner: false, isWritable: false },
+
+        { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
+        { pubkey: this.spltProgramId, isSigner: false, isWritable: false },
+        { pubkey: SYSVAR_RENT_PUBKEY, isSigner: false, isWritable: false },
+        { pubkey: this.splataProgramId, isSigner: false, isWritable: false },
       ],
       programId: this.purchasingProgramId,
       data: layout.toBuffer(),
@@ -551,18 +618,31 @@ class Purchasing extends Tx {
     // Fetch necessary info
     const { owner: ownerAddress, retailer: retailerAddress } =
       await this.getOrderData(orderAddress)
-    const { mint_bid: mintBidAddress, treasury_bid: treasuryBidAddress } =
-      await this.getRetailerData(retailerAddress)
+    const {
+      mint_bid: mintBidAddress,
+      treasury_bid: treasuryBidAddress,
+      mint_ask: mintAskAddress,
+      treasury_ask: treasuryAskAddress,
+    } = await this.getRetailerData(retailerAddress)
     // Build public keys
     const orderPublicKey = account.fromAddress(orderAddress)
     const retailerPublicKey = account.fromAddress(retailerAddress)
-    const ownerPublicKey = account.fromAddress(ownerAddress)
     const srcBidAddress = await this._splt.deriveAssociatedAddress(
       ownerAddress,
       mintBidAddress,
     )
     const srcBidPublicKey = account.fromAddress(srcBidAddress)
+    const mintBidPublicKey = account.fromAddress(mintBidAddress)
     const treasuryBidPublicKey = account.fromAddress(treasuryBidAddress)
+    const [treasurerBidAddress, _] =
+      await this.deriveRetailerTreasurerAddresses(retailerAddress)
+    const treasurerBidPublicKey = account.fromAddress(treasurerBidAddress)
+    const srcAskAddress = await this._splt.deriveAssociatedAddress(
+      verifierAddress,
+      mintAskAddress,
+    )
+    const srcAskPublicKey = account.fromAddress(srcAskAddress)
+    const treasuryAskPublicKey = account.fromAddress(treasuryAskAddress)
     // Build tx
     let transaction = new Transaction()
     transaction = await this.addRecentCommitment(transaction)
@@ -572,12 +652,21 @@ class Purchasing extends Tx {
     const instruction = new TransactionInstruction({
       keys: [
         { pubkey: verifierPublicKey, isSigner: true, isWritable: true },
-        { pubkey: ownerPublicKey, isSigner: false, isWritable: false },
         { pubkey: orderPublicKey, isSigner: false, isWritable: true },
         { pubkey: retailerPublicKey, isSigner: false, isWritable: false },
-        { pubkey: srcBidPublicKey, isSigner: false, isWritable: false },
-        { pubkey: treasuryBidPublicKey, isSigner: false, isWritable: false },
+
+        { pubkey: srcBidPublicKey, isSigner: false, isWritable: true },
+        { pubkey: mintBidPublicKey, isSigner: false, isWritable: false },
+        { pubkey: treasuryBidPublicKey, isSigner: false, isWritable: true },
+        { pubkey: treasurerBidPublicKey, isSigner: false, isWritable: false },
+
+        { pubkey: srcAskPublicKey, isSigner: false, isWritable: true },
+        { pubkey: treasuryAskPublicKey, isSigner: false, isWritable: true },
+
+        { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
         { pubkey: this.spltProgramId, isSigner: false, isWritable: false },
+        { pubkey: SYSVAR_RENT_PUBKEY, isSigner: false, isWritable: false },
+        { pubkey: this.splataProgramId, isSigner: false, isWritable: false },
       ],
       programId: this.purchasingProgramId,
       data: layout.toBuffer(),
