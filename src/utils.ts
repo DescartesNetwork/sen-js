@@ -168,7 +168,7 @@ const util = {
         commitment,
       )
       if (!re) continue
-      data = data.concat(re)
+      data = data.concat(re as any)
     }
     return data
   },

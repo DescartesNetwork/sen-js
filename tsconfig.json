@@ -7,22 +7,19 @@
     "outDir": "./dist",
     "strict": true,
     "resolveJsonModule": true,
-    "lib": [
-      "es2020",
-      "esnext"
-    ]
+    "lib": ["es2020", "esnext"],
+    "moduleResolution": "node",
+    "sourceMap": true,
+    "allowSyntheticDefaultImports": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "noImplicitAny": true,
+    "typeRoots": ["types/", "node_modules/@types"]
   },
-  "include": [
-    "src"
-  ],
-  "exclude": [
-    "node_modules",
-    "test"
-  ],
+  "include": ["src"],
+  "exclude": ["node_modules", "test"],
   "typedocOptions": {
-    "entryPoints": [
-      "./src/index.ts"
-    ],
+    "entryPoints": ["./src/index.ts"],
     "out": "docs"
   }
 }

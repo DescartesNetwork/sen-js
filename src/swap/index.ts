@@ -1,3 +1,5 @@
+import { SwapProgram } from './../anchor/sentre/swapProgram'
+import { SentreProgram } from './../anchor/sentre/index'
 import {
   PublicKey,
   Transaction,
@@ -22,6 +24,8 @@ import {
 import { WalletInterface } from '../rawWallet'
 import oracle from './oracle'
 import { InstructionCode } from './constant'
+import { Program, Provider, web3, BN } from '@project-serum/anchor'
+import { getAnchorProvider } from '../anchor/sentre/anchorProvider'
 
 const soproxABI = require('soprox-abi')
 const xor = require('buffer-xor')
@@ -56,7 +60,7 @@ class Swap extends Tx {
   readonly spltProgramId: PublicKey
   readonly splataProgramId: PublicKey
   private _splt: SPLT
-
+  private swapProgram: Program<SwapProgram> = SentreProgram.swap()
   static oracle = oracle
 
   constructor(
@@ -80,6 +84,9 @@ class Swap extends Tx {
     this._splt = new SPLT(spltProgramAddress, splataProgramAddress, nodeUrl)
   }
 
+  async provider(wallet: WalletInterface) {
+    return getAnchorProvider(this._splt.connection, wallet)
+  }
   /**
    * Watch account changes
    * @param callback
@@ -373,10 +380,10 @@ class Swap extends Tx {
    * @returns Transaction id, pool address, mint LPT address, lpt address
    */
   initializePool = async (
-    deltaA: bigint,
-    deltaB: bigint,
-    feeRatio: bigint,
-    taxRatio: bigint,
+    deltaA: BN,
+    deltaB: BN,
+    feeRatio: BN,
+    taxRatio: BN,
     ownerAddress: string,
     srcAAddress: string,
     srcBAddress: string,
@@ -398,6 +405,11 @@ class Swap extends Tx {
     if (!account.isAddress(taxmanAddress))
       throw new Error('Invalid taxman address')
     // Get payer
+    // const anchorProvider = await getAnchorProvider(
+    //   this._splt.connection,
+    //   wallet,
+    // )
+
     const payerAddress = await wallet.getAddress()
     const payerPublicKey = account.fromAddress(payerAddress)
     // Fetch necessary info
@@ -436,72 +448,89 @@ class Swap extends Tx {
     // Build tx
     let transaction = new Transaction()
     transaction = await this.addRecentCommitment(transaction)
-    const layout = new soproxABI.struct(
-      [
-        { key: 'code', type: 'u8' },
-        { key: 'delta_a', type: 'u64' },
-        { key: 'delta_b', type: 'u64' },
-        { key: 'fee_ratio', type: 'u64' },
-        { key: 'tax_ratio', type: 'u64' },
-      ],
+
+    console.log('this.swapProgram', this.swapProgram)
+    await this.swapProgram.rpc.initializePool(
+      new BN(0),
+      deltaA,
+      deltaB,
+      feeRatio,
+      taxRatio,
       {
-        code: InstructionCode.InitializePool.valueOf(),
-        delta_a: deltaA,
-        delta_b: deltaB,
-        fee_ratio: feeRatio,
-        tax_ratio: taxRatio,
+        accounts: {
+          payerPublicKey,
+          ownerPublicKey,
+          poolPublicKey: pool.publicKey,
+          lptPublicKey: lptPublicKey,
+          mintLptPublicKey: mintLPT.publicKey,
+          taxmanPublicKey,
+          proofPublicKey,
+
+          srcAPublicKey,
+          mintAPublicKey,
+          treasuryAPublicKey,
+          srcBPublicKey,
+          mintBPublicKey,
+          treasuryBPublicKey,
+          treasurerPublicKey,
+          //
+          systemProgram: SystemProgram.programId,
+          spltProgramId: new PublicKey(DEFAULT_SPLT_PROGRAM_ADDRESS),
+          rent: web3.SYSVAR_RENT_PUBKEY,
+          splataProgramId: new PublicKey(DEFAULT_SPLATA_PROGRAM_ADDRESS),
+        },
       },
     )
-    const instruction = new TransactionInstruction({
-      keys: [
-        { pubkey: payerPublicKey, isSigner: true, isWritable: true },
-        { pubkey: ownerPublicKey, isSigner: false, isWritable: false },
-        { pubkey: pool.publicKey, isSigner: true, isWritable: true },
-        { pubkey: lptPublicKey, isSigner: false, isWritable: true },
-        { pubkey: mintLPT.publicKey, isSigner: true, isWritable: true },
-        { pubkey: taxmanPublicKey, isSigner: false, isWritable: false },
-        { pubkey: proofPublicKey, isSigner: false, isWritable: false },
+    // const instruction = new TransactionInstruction({
+    //   keys: [
+    //     { pubkey: payerPublicKey, isSigner: true, isWritable: true },
+    //     { pubkey: ownerPublicKey, isSigner: false, isWritable: false },
+    //     { pubkey: pool.publicKey, isSigner: true, isWritable: true },
+    //     { pubkey: lptPublicKey, isSigner: false, isWritable: true },
+    //     { pubkey: mintLPT.publicKey, isSigner: true, isWritable: true },
+    //     { pubkey: taxmanPublicKey, isSigner: false, isWritable: false },
+    //     { pubkey: proofPublicKey, isSigner: false, isWritable: false },
 
-        { pubkey: srcAPublicKey, isSigner: false, isWritable: true },
-        { pubkey: mintAPublicKey, isSigner: false, isWritable: false },
-        { pubkey: treasuryAPublicKey, isSigner: false, isWritable: true },
+    //     { pubkey: srcAPublicKey, isSigner: false, isWritable: true },
+    //     { pubkey: mintAPublicKey, isSigner: false, isWritable: false },
+    //     { pubkey: treasuryAPublicKey, isSigner: false, isWritable: true },
 
-        { pubkey: srcBPublicKey, isSigner: false, isWritable: true },
-        { pubkey: mintBPublicKey, isSigner: false, isWritable: false },
-        { pubkey: treasuryBPublicKey, isSigner: false, isWritable: true },
+    //     { pubkey: srcBPublicKey, isSigner: false, isWritable: true },
+    //     { pubkey: mintBPublicKey, isSigner: false, isWritable: false },
+    //     { pubkey: treasuryBPublicKey, isSigner: false, isWritable: true },
 
-        { pubkey: treasurerPublicKey, isSigner: false, isWritable: false },
-        { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
-        { pubkey: this.spltProgramId, isSigner: false, isWritable: false },
-        { pubkey: SYSVAR_RENT_PUBKEY, isSigner: false, isWritable: false },
-        { pubkey: this.splataProgramId, isSigner: false, isWritable: false },
-      ],
-      programId: this.swapProgramId,
-      data: layout.toBuffer(),
-    })
-    transaction.add(instruction)
-    transaction.feePayer = payerPublicKey
-    // Pretest / Rerun if the tx exceeds computation limit
-    const ok = await this.pretestInitializePool(transaction)
-    if (!ok)
-      return await this.initializePool(
-        deltaA,
-        deltaB,
-        feeRatio,
-        taxRatio,
-        ownerAddress,
-        srcAAddress,
-        srcBAddress,
-        taxmanAddress,
-        wallet,
-      )
-    // Sign tx
-    const payerSig = await wallet.rawSignTransaction(transaction)
-    this.addSignature(transaction, payerSig)
-    const poolSig = await this.selfSign(transaction, pool)
-    this.addSignature(transaction, poolSig)
-    const mintLPTSig = await this.selfSign(transaction, mintLPT)
-    this.addSignature(transaction, mintLPTSig)
+    //     { pubkey: treasurerPublicKey, isSigner: false, isWritable: false },
+    //     { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
+    //     { pubkey: this.spltProgramId, isSigner: false, isWritable: false },
+    //     { pubkey: SYSVAR_RENT_PUBKEY, isSigner: false, isWritable: false },
+    //     { pubkey: this.splataProgramId, isSigner: false, isWritable: false },
+    //   ],
+    //   programId: this.swapProgramId,
+    //   data: layout.toBuffer(),
+    // })
+    // transaction.add(instruction)
+    // transaction.feePayer = payerPublicKey
+    // // Pretest / Rerun if the tx exceeds computation limit
+    // const ok = await this.pretestInitializePool(transaction)
+    // if (!ok)
+    //   return await this.initializePool(
+    //     deltaA,
+    //     deltaB,
+    //     feeRatio,
+    //     taxRatio,
+    //     ownerAddress,
+    //     srcAAddress,
+    //     srcBAddress,
+    //     taxmanAddress,
+    //     wallet,
+    //   )
+    // // Sign tx
+    // const payerSig = await wallet.rawSignTransaction(transaction)
+    // this.addSignature(transaction, payerSig)
+    // const poolSig = await this.selfSign(transaction, pool)
+    // this.addSignature(transaction, poolSig)
+    // const mintLPTSig = await this.selfSign(transaction, mintLPT)
+    // this.addSignature(transaction, mintLPTSig)
     // Send tx
     const txId = await this.sendTransaction(transaction)
     return { txId, mintLPTAddress, poolAddress, lptAddress }
