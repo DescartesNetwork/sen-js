@@ -1,5 +1,5 @@
 import axios from 'axios'
-import * as BN from 'bn.js'
+import { BN } from '@project-serum/anchor'
 import * as nacl from 'tweetnacl'
 import {
   AccountInfo,

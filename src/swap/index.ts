@@ -60,7 +60,6 @@ class Swap extends Tx {
   readonly spltProgramId: PublicKey
   readonly splataProgramId: PublicKey
   private _splt: SPLT
-  private swapProgram: Program<SwapProgram> = SentreProgram.swap()
   static oracle = oracle
 
   constructor(
@@ -405,11 +404,12 @@ class Swap extends Tx {
     if (!account.isAddress(taxmanAddress))
       throw new Error('Invalid taxman address')
     // Get payer
-    // const anchorProvider = await getAnchorProvider(
-    //   this._splt.connection,
-    //   wallet,
-    // )
-
+    const anchorProvider = await getAnchorProvider(
+      this._splt.connection,
+      wallet,
+    )
+    const swapProgram: Program<SwapProgram> = SentreProgram.swap(anchorProvider)
+    console.log('anchorProvider', anchorProvider.wallet.publicKey.toBase58())
     const payerAddress = await wallet.getAddress()
     const payerPublicKey = account.fromAddress(payerAddress)
     // Fetch necessary info
@@ -449,8 +449,8 @@ class Swap extends Tx {
     let transaction = new Transaction()
     transaction = await this.addRecentCommitment(transaction)
 
-    console.log('this.swapProgram', this.swapProgram)
-    await this.swapProgram.rpc.initializePool(
+    console.log('this.swapProgram', swapProgram)
+    await swapProgram.rpc.initializePool(
       new BN(0),
       deltaA,
       deltaB,
@@ -479,6 +479,7 @@ class Swap extends Tx {
           rent: web3.SYSVAR_RENT_PUBKEY,
           splataProgramId: new PublicKey(DEFAULT_SPLATA_PROGRAM_ADDRESS),
         },
+        signers: [pool, mintLPT],
       },
     )
     // const instruction = new TransactionInstruction({

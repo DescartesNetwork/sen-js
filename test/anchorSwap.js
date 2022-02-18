@@ -45,8 +45,8 @@ describe('Swap library', function () {
         await swap.initializePool(
           new anchor.BN(1),
           new anchor.BN(1),
-          FEE,
-          TAX,
+          new anchor.BN(1),
+          new anchor.BN(1),
           payerAddress,
           srcAddresses[0],
           srcAddresses[1],
