@@ -35,6 +35,7 @@ describe('Swap library', function () {
     it('Should initialize pool 0', async function () {
       const swap = new Swap()
       const payerAddress = await wallet.getAddress()
+      console.log('payerAddress', payerAddress)
       const srcAddresses = await Promise.all(
         mints.map(({ address: mintAddress }) =>
           account.deriveAssociatedAddress(payerAddress, mintAddress),
@@ -43,10 +44,10 @@ describe('Swap library', function () {
       const taxmanAddress = srcAddresses[0]
       const { mintLPTAddress, poolAddress, lptAddress } =
         await swap.initializePool(
-          new anchor.BN(1),
-          new anchor.BN(1),
-          new anchor.BN(1),
-          new anchor.BN(1),
+          new anchor.BN(100000000000),
+          new anchor.BN(500000000000),
+          new anchor.BN(2500000),
+          new anchor.BN(500000),
           payerAddress,
           srcAddresses[0],
           srcAddresses[1],

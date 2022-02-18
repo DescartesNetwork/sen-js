@@ -403,13 +403,15 @@ class Swap extends Tx {
       throw new Error('Invalid source B address')
     if (!account.isAddress(taxmanAddress))
       throw new Error('Invalid taxman address')
-    // Get payer
+
+    // Get Provider
     const anchorProvider = await getAnchorProvider(
       this._splt.connection,
       wallet,
     )
     const swapProgram: Program<SwapProgram> = SentreProgram.swap(anchorProvider)
-    console.log('anchorProvider', anchorProvider.wallet.publicKey.toBase58())
+
+    // Get payer
     const payerAddress = await wallet.getAddress()
     const payerPublicKey = account.fromAddress(payerAddress)
     // Fetch necessary info
@@ -449,9 +451,8 @@ class Swap extends Tx {
     let transaction = new Transaction()
     transaction = await this.addRecentCommitment(transaction)
 
-    console.log('this.swapProgram', swapProgram)
-    await swapProgram.rpc.initializePool(
-      new BN(0),
+    const txId = await swapProgram.rpc.initializePool(
+      new BN(InstructionCode.InitializePool.valueOf()),
       deltaA,
       deltaB,
       feeRatio,
@@ -533,7 +534,7 @@ class Swap extends Tx {
     // const mintLPTSig = await this.selfSign(transaction, mintLPT)
     // this.addSignature(transaction, mintLPTSig)
     // Send tx
-    const txId = await this.sendTransaction(transaction)
+    // const txId = await this.sendTransaction(transaction)
     return { txId, mintLPTAddress, poolAddress, lptAddress }
   }
 
