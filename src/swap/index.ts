@@ -83,8 +83,13 @@ class Swap extends Tx {
     this._splt = new SPLT(spltProgramAddress, splataProgramAddress, nodeUrl)
   }
 
-  async provider(wallet: WalletInterface) {
-    return getAnchorProvider(this._splt.connection, wallet)
+  async getSwapProgram(wallet?: WalletInterface) {
+    const anchorProvider = await getAnchorProvider(
+      this._splt.connection,
+      wallet,
+    )
+    const swapProgram: Program<SwapProgram> = SentreProgram.swap(anchorProvider)
+    return swapProgram
   }
   /**
    * Watch account changes
@@ -301,9 +306,19 @@ class Swap extends Tx {
   getPoolData = async (poolAddress: string): Promise<PoolData> => {
     if (!account.isAddress(poolAddress)) throw new Error('Invalid pool address')
     const poolPublicKey = account.fromAddress(poolAddress)
-    const { data } = (await this.connection.getAccountInfo(poolPublicKey)) || {}
-    if (!data) throw new Error(`Cannot read data of ${poolAddress}`)
-    return this.parsePoolData(data)
+
+    const swapProgram = await this.getSwapProgram()
+    const data = await swapProgram.account.pool.fetch(poolPublicKey)
+    console.log(' ??==>', {
+      owner: data.owner.toBase58(),
+      mint_lpt: data.mint_lpt.toBase58(),
+      treasury_a: data.treasury_a.toBase58(),
+      reserve_a: data.reserve_a.toNumber(),
+      tax_ratio: data.tax_ratio.toNumber(),
+    })
+
+    if (!data) throw new Error('Invalid pool address')
+    return data as any
   }
 
   /**
@@ -404,12 +419,8 @@ class Swap extends Tx {
     if (!account.isAddress(taxmanAddress))
       throw new Error('Invalid taxman address')
 
-    // Get Provider
-    const anchorProvider = await getAnchorProvider(
-      this._splt.connection,
-      wallet,
-    )
-    const swapProgram: Program<SwapProgram> = SentreProgram.swap(anchorProvider)
+    // Get swapProgram
+    const swapProgram = await this.getSwapProgram(wallet)
 
     // Get payer
     const payerAddress = await wallet.getAddress()
@@ -449,7 +460,6 @@ class Swap extends Tx {
     const proofPublicKey = account.fromAddress(proofAddress)
 
     const txId = await swapProgram.rpc.initializePool(
-      new BN(InstructionCode.InitializePool.valueOf()),
       deltaA,
       deltaB,
       feeRatio,

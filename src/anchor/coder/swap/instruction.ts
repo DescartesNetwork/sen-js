@@ -1,3 +1,4 @@
+import { InstructionCode } from './../../../swap/constant'
 import { Idl } from '@project-serum/anchor'
 import * as BufferLayout from 'buffer-layout'
 import camelCase from 'camelcase'
@@ -19,7 +20,7 @@ export class SwapInstructionCoder implements InstructionCoder {
   }
 
   encodeState(_ixName: string, _ix: any): Buffer {
-    throw new Error('SPL token does not have state')
+    throw new Error('Swap does not have state')
   }
 }
 
@@ -38,9 +39,8 @@ function encodeInitializePool({
 
 const LAYOUT = BufferLayout.union(BufferLayout.u8('instruction'))
 LAYOUT.addVariant(
-  0,
+  InstructionCode.InitializePool.valueOf(),
   BufferLayout.struct([
-    BufferLayout.u8('code'),
     BufferLayout.nu64('delta_a'),
     BufferLayout.nu64('delta_b'),
     BufferLayout.nu64('fee_ratio'),

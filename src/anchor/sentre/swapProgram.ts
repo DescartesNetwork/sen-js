@@ -104,10 +104,6 @@ export type SwapProgram = {
       ]
       args: [
         {
-          name: 'code'
-          type: 'u8'
-        },
-        {
           name: 'delta_a'
           type: 'u64'
         },
@@ -126,7 +122,31 @@ export type SwapProgram = {
       ]
     },
   ]
-  accounts: []
+  accounts: [
+    {
+      name: 'pool'
+      type: {
+        kind: 'struct'
+        fields: [
+          { name: 'owner'; type: 'publicKey' },
+          { name: 'state'; type: 'u8' },
+          { name: 'mint_lpt'; type: 'publicKey' },
+          { name: 'taxman'; type: 'publicKey' },
+
+          { name: 'mint_a'; type: 'publicKey' },
+          { name: 'treasury_a'; type: 'publicKey' },
+          { name: 'reserve_a'; type: 'u64' },
+
+          { name: 'mint_b'; type: 'publicKey' },
+          { name: 'treasury_b'; type: 'publicKey' },
+          { name: 'reserve_b'; type: 'u64' },
+
+          { name: 'fee_ratio'; type: 'u64' },
+          { name: 'tax_ratio'; type: 'u64' },
+        ]
+      }
+    },
+  ]
 }
 
 export const IDL: SwapProgram = {
@@ -216,10 +236,6 @@ export const IDL: SwapProgram = {
       ],
       args: [
         {
-          name: 'code',
-          type: 'u8',
-        },
-        {
           name: 'delta_a',
           type: 'u64',
         },
@@ -238,5 +254,29 @@ export const IDL: SwapProgram = {
       ],
     },
   ],
-  accounts: [],
+  accounts: [
+    {
+      name: 'pool',
+      type: {
+        kind: 'struct',
+        fields: [
+          { name: 'owner', type: 'publicKey' },
+          { name: 'state', type: 'u8' },
+          { name: 'mint_lpt', type: 'publicKey' },
+          { name: 'taxman', type: 'publicKey' },
+
+          { name: 'mint_a', type: 'publicKey' },
+          { name: 'treasury_a', type: 'publicKey' },
+          { name: 'reserve_a', type: 'u64' },
+
+          { name: 'mint_b', type: 'publicKey' },
+          { name: 'treasury_b', type: 'publicKey' },
+          { name: 'reserve_b', type: 'u64' },
+
+          { name: 'fee_ratio', type: 'u64' },
+          { name: 'tax_ratio', type: 'u64' },
+        ],
+      },
+    },
+  ],
 }
