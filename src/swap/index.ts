@@ -447,9 +447,6 @@ class Swap extends Tx {
     // Generate proof
     const proofAddress = await this.genProofAddress(poolAddress)
     const proofPublicKey = account.fromAddress(proofAddress)
-    // Build tx
-    let transaction = new Transaction()
-    transaction = await this.addRecentCommitment(transaction)
 
     const txId = await swapProgram.rpc.initializePool(
       new BN(InstructionCode.InitializePool.valueOf()),
@@ -483,58 +480,6 @@ class Swap extends Tx {
         signers: [pool, mintLPT],
       },
     )
-    // const instruction = new TransactionInstruction({
-    //   keys: [
-    //     { pubkey: payerPublicKey, isSigner: true, isWritable: true },
-    //     { pubkey: ownerPublicKey, isSigner: false, isWritable: false },
-    //     { pubkey: pool.publicKey, isSigner: true, isWritable: true },
-    //     { pubkey: lptPublicKey, isSigner: false, isWritable: true },
-    //     { pubkey: mintLPT.publicKey, isSigner: true, isWritable: true },
-    //     { pubkey: taxmanPublicKey, isSigner: false, isWritable: false },
-    //     { pubkey: proofPublicKey, isSigner: false, isWritable: false },
-
-    //     { pubkey: srcAPublicKey, isSigner: false, isWritable: true },
-    //     { pubkey: mintAPublicKey, isSigner: false, isWritable: false },
-    //     { pubkey: treasuryAPublicKey, isSigner: false, isWritable: true },
-
-    //     { pubkey: srcBPublicKey, isSigner: false, isWritable: true },
-    //     { pubkey: mintBPublicKey, isSigner: false, isWritable: false },
-    //     { pubkey: treasuryBPublicKey, isSigner: false, isWritable: true },
-
-    //     { pubkey: treasurerPublicKey, isSigner: false, isWritable: false },
-    //     { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
-    //     { pubkey: this.spltProgramId, isSigner: false, isWritable: false },
-    //     { pubkey: SYSVAR_RENT_PUBKEY, isSigner: false, isWritable: false },
-    //     { pubkey: this.splataProgramId, isSigner: false, isWritable: false },
-    //   ],
-    //   programId: this.swapProgramId,
-    //   data: layout.toBuffer(),
-    // })
-    // transaction.add(instruction)
-    // transaction.feePayer = payerPublicKey
-    // // Pretest / Rerun if the tx exceeds computation limit
-    // const ok = await this.pretestInitializePool(transaction)
-    // if (!ok)
-    //   return await this.initializePool(
-    //     deltaA,
-    //     deltaB,
-    //     feeRatio,
-    //     taxRatio,
-    //     ownerAddress,
-    //     srcAAddress,
-    //     srcBAddress,
-    //     taxmanAddress,
-    //     wallet,
-    //   )
-    // // Sign tx
-    // const payerSig = await wallet.rawSignTransaction(transaction)
-    // this.addSignature(transaction, payerSig)
-    // const poolSig = await this.selfSign(transaction, pool)
-    // this.addSignature(transaction, poolSig)
-    // const mintLPTSig = await this.selfSign(transaction, mintLPT)
-    // this.addSignature(transaction, mintLPTSig)
-    // Send tx
-    // const txId = await this.sendTransaction(transaction)
     return { txId, mintLPTAddress, poolAddress, lptAddress }
   }
 
