@@ -202,6 +202,79 @@ export type SwapProgram = {
         },
       ]
     },
+    {
+      name: 'removeLiquidity'
+      accounts: [
+        {
+          name: 'payerPublicKey'
+          isMut: false
+          isSigner: true
+        },
+        {
+          name: 'poolPublicKey'
+          isMut: true
+          isSigner: false
+        },
+        {
+          name: 'lptPublicKey'
+          isMut: true
+          isSigner: false
+        },
+        {
+          name: 'mintLPTPublicKey'
+          isMut: true
+          isSigner: false
+        },
+
+        {
+          name: 'dstAPublicKey'
+          isMut: true
+          isSigner: false
+        },
+        {
+          name: 'mintAPublicKey'
+          isMut: false
+          isSigner: false
+        },
+        {
+          name: 'treasuryAPublicKey'
+          isMut: true
+          isSigner: false
+        },
+
+        {
+          name: 'dstBPublicKey'
+          isMut: true
+          isSigner: false
+        },
+        {
+          name: 'mintBPublicKey'
+          isMut: false
+          isSigner: false
+        },
+        {
+          name: 'treasuryBPublicKey'
+          isMut: true
+          isSigner: false
+        },
+
+        {
+          name: 'treasurerPublicKey'
+          isMut: false
+          isSigner: false
+        },
+        { name: 'systemProgram'; isMut: false; isSigner: false },
+        { name: 'spltProgramId'; isMut: false; isSigner: false },
+        { name: 'rent'; isMut: false; isSigner: false },
+        { name: 'splataProgramId'; isMut: false; isSigner: false },
+      ]
+      args: [
+        {
+          name: 'lpt'
+          type: 'u64'
+        },
+      ]
+    },
   ]
   accounts: [
     {
@@ -411,6 +484,79 @@ export const IDL: SwapProgram = {
         },
         {
           name: 'delta_b',
+          type: 'u64',
+        },
+      ],
+    },
+    {
+      name: 'removeLiquidity',
+      accounts: [
+        {
+          name: 'payerPublicKey',
+          isMut: false,
+          isSigner: true,
+        },
+        {
+          name: 'poolPublicKey',
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: 'lptPublicKey',
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: 'mintLPTPublicKey',
+          isMut: true,
+          isSigner: false,
+        },
+
+        {
+          name: 'dstAPublicKey',
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: 'mintAPublicKey',
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: 'treasuryAPublicKey',
+          isMut: true,
+          isSigner: false,
+        },
+
+        {
+          name: 'dstBPublicKey',
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: 'mintBPublicKey',
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: 'treasuryBPublicKey',
+          isMut: true,
+          isSigner: false,
+        },
+
+        {
+          name: 'treasurerPublicKey',
+          isMut: false,
+          isSigner: false,
+        },
+        { name: 'systemProgram', isMut: false, isSigner: false },
+        { name: 'spltProgramId', isMut: false, isSigner: false },
+        { name: 'rent', isMut: false, isSigner: false },
+        { name: 'splataProgramId', isMut: false, isSigner: false },
+      ],
+      args: [
+        {
+          name: 'lpt',
           type: 'u64',
         },
       ],

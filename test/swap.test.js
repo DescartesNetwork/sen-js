@@ -8,11 +8,12 @@ const {
 } = require('../dist')
 const { payer, mints } = require('./config')
 const assert = require('assert')
+const anchor = require('@project-serum/anchor')
 
 const wallet = new RawWallet(payer.secretKey)
 // Fee & Tax
-const FEE = BigInt(2500000)
-const TAX = BigInt(500000)
+const FEE = new anchor.BN(2500000)
+const TAX = new anchor.BN(500000)
 // Primary Mint
 const { address: MINT_ADDRESS_0 } = mints[0]
 // Mint 1
@@ -41,8 +42,8 @@ describe('Swap library', function () {
       const taxmanAddress = srcAddresses[0]
       const { mintLPTAddress, poolAddress, lptAddress } =
         await swap.initializePool(
-          100000000000n,
-          500000000000n,
+          new anchor.BN(100000000000),
+          new anchor.BN(500000000000),
           FEE,
           TAX,
           payerAddress,
@@ -67,8 +68,8 @@ describe('Swap library', function () {
       const taxmanAddress = srcAddresses[0]
       const { mintLPTAddress, poolAddress, lptAddress } =
         await swap.initializePool(
-          100000000000n,
-          20000000000n,
+          new anchor.BN(100000000000),
+          new anchor.BN(20000000000),
           FEE,
           TAX,
           payerAddress,
@@ -142,8 +143,8 @@ describe('Swap library', function () {
       const taxmanAddress = srcAddresses[0]
       try {
         await swap.initializePool(
-          0n,
-          50000000000n,
+          new anchor.BN(0),
+          new anchor.BN(50000000000),
           FEE,
           TAX,
           payerAddress,
@@ -168,8 +169,8 @@ describe('Swap library', function () {
         ),
       )
       await swap.swap(
-        1000000000n,
-        0n,
+        new anchor.BN(1000000000),
+        new anchor.BN(0),
         POOL_ADDRESS_0,
         srcAddresses[0],
         srcAddresses[1],
@@ -187,8 +188,8 @@ describe('Swap library', function () {
       )
       try {
         await swap.swap(
-          1000000000n,
-          1000000000n,
+          new anchor.BN(1000000000),
+          new anchor.BN(1000000000),
           POOL_ADDRESS_1,
           srcAddresses[0],
           srcAddresses[2],
@@ -210,8 +211,8 @@ describe('Swap library', function () {
       )
 
       await swap.route(
-        1000n,
-        0n,
+        new anchor.BN(1000),
+        new anchor.BN(0),
         [
           {
             poolAddress: POOL_ADDRESS_0,
@@ -239,8 +240,8 @@ describe('Swap library', function () {
 
       try {
         await swap.route(
-          1000n,
-          0n,
+          new anchor.BN(1000),
+          new anchor.BN(0),
           [
             {
               srcAddress: srcAddresses[0],
@@ -274,8 +275,8 @@ describe('Swap library', function () {
 
       try {
         const result = await swap.route(
-          0n,
-          20000000000n,
+          new anchor.BN(0),
+          new anchor.BN(20000000000),
           [
             {
               srcAddress: srcAddresses[0],
@@ -301,8 +302,8 @@ describe('Swap library', function () {
 
       try {
         const result = await swap.route(
-          10n,
-          20000000000n,
+          new anchor.BN(10),
+          new anchor.BN(20000000000),
           [
             {
               srcAddress: srcAddresses[0],

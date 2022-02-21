@@ -16,6 +16,9 @@ export class SwapInstructionCoder implements InstructionCoder {
       case 'addSidedLiquidity': {
         return encodeAddSidedLiquidity(ix)
       }
+      case 'removeLiquidity': {
+        return encodeRemoveLiquidity(ix)
+      }
       default: {
         throw new Error(`Invalid instruction: ${ixName}`)
       }
@@ -46,6 +49,13 @@ function encodeAddSidedLiquidity({ delta_a, delta_b }: any): Buffer {
   return data
 }
 
+function encodeRemoveLiquidity({ lpt }: any): Buffer {
+  const data = encodeData({
+    removeLiquidity: { lpt },
+  })
+  return data
+}
+
 const LAYOUT = BufferLayout.union(BufferLayout.u8('instruction'))
 LAYOUT.addVariant(
   InstructionCode.InitializePool.valueOf(),
@@ -64,6 +74,11 @@ LAYOUT.addVariant(
     BufferLayout.nu64('delta_b'),
   ]),
   'addSidedLiquidity',
+)
+LAYOUT.addVariant(
+  InstructionCode.RemoveLiquidity.valueOf(),
+  BufferLayout.struct([BufferLayout.nu64('lpt')]),
+  'removeLiquidity',
 )
 
 function encodeData(instruction: any): Buffer {

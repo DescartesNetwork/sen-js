@@ -1,4 +1,4 @@
-import { Provider } from '@project-serum/anchor'
+import { Provider, web3 } from '@project-serum/anchor'
 import { Connection, PublicKey, Transaction } from '@solana/web3.js'
 import { WalletInterface } from '../../rawWallet'
 
@@ -17,14 +17,18 @@ export const getAnchorProvider = async (
     }
 
     const publicKey = await wallet.getAddress()
+
     return new Provider(
-      connection,
+      new web3.Connection('https://api.devnet.solana.com', 'confirmed'),
       {
         publicKey: new PublicKey(publicKey),
         signTransaction: wallet.signTransaction,
         signAllTransactions,
       },
-      {},
+      {
+        skipPreflight: true,
+        commitment: 'confirmed',
+      },
     )
   }
   return new Provider(
