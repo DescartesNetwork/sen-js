@@ -13,6 +13,9 @@ export class SwapInstructionCoder implements InstructionCoder {
       case 'initializePool': {
         return encodeInitializePool(ix)
       }
+      case 'addLiquidity': {
+        return encodeAddLiquidity(ix)
+      }
       case 'addSidedLiquidity': {
         return encodeAddSidedLiquidity(ix)
       }
@@ -38,6 +41,13 @@ function encodeInitializePool({
 }: any): Buffer {
   const data = encodeData({
     initializePool: { delta_a, delta_b, fee_ratio, tax_ratio },
+  })
+  return data
+}
+
+function encodeAddLiquidity({ delta_a, delta_b }: any): Buffer {
+  const data = encodeData({
+    addLiquidity: { delta_a, delta_b },
   })
   return data
 }
@@ -68,6 +78,14 @@ LAYOUT.addVariant(
   'initializePool',
 )
 LAYOUT.addVariant(
+  InstructionCode.AddLiquidity.valueOf(),
+  BufferLayout.struct([
+    BufferLayout.nu64('delta_a'),
+    BufferLayout.nu64('delta_b'),
+  ]),
+  'addLiquidity',
+)
+LAYOUT.addVariant(
   InstructionCode.AddSidedLiquidity.valueOf(),
   BufferLayout.struct([
     BufferLayout.nu64('delta_a'),
@@ -78,7 +96,7 @@ LAYOUT.addVariant(
 LAYOUT.addVariant(
   InstructionCode.RemoveLiquidity.valueOf(),
   BufferLayout.struct([BufferLayout.nu64('lpt')]),
-  'removeLiquidity',
+  'RemoveLiquidity',
 )
 
 function encodeData(instruction: any): Buffer {

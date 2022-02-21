@@ -7,11 +7,11 @@ const SWAP_PROGRAM_ID = new PublicKey(
 )
 
 export function program(provider?: Provider): Program<SwapProgram> {
-  return new Program<SwapProgram>(IDL, SWAP_PROGRAM_ID, provider, coder())
+  return new Program<SwapProgram>(SwapIDL, SWAP_PROGRAM_ID, provider, coder())
 }
 
 export function coder(): SwapCoder {
-  return new SwapCoder(IDL)
+  return new SwapCoder(SwapIDL)
 }
 
 /**
@@ -117,6 +117,83 @@ export type SwapProgram = {
         },
         {
           name: 'tax_ratio'
+          type: 'u64'
+        },
+      ]
+    },
+    {
+      name: 'addLiquidity'
+      accounts: [
+        {
+          name: 'payerPublicKey'
+          isMut: false
+          isSigner: true
+        },
+        {
+          name: 'poolPublicKey'
+          isMut: true
+          isSigner: false
+        },
+        {
+          name: 'lptPublicKey'
+          isMut: true
+          isSigner: false
+        },
+        {
+          name: 'mintLPTPublicKey'
+          isMut: true
+          isSigner: false
+        },
+
+        {
+          name: 'srcAPublicKey'
+          isMut: true
+          isSigner: false
+        },
+        {
+          name: 'mintAPublicKey'
+          isMut: false
+          isSigner: false
+        },
+        {
+          name: 'treasuryAPublicKey'
+          isMut: true
+          isSigner: false
+        },
+
+        {
+          name: 'srcBPublicKey'
+          isMut: true
+          isSigner: false
+        },
+        {
+          name: 'mintBPublicKey'
+          isMut: false
+          isSigner: false
+        },
+        {
+          name: 'treasuryBPublicKey'
+          isMut: true
+          isSigner: false
+        },
+
+        {
+          name: 'treasurerPublicKey'
+          isMut: false
+          isSigner: false
+        },
+        { name: 'systemProgram'; isMut: false; isSigner: false },
+        { name: 'spltProgramId'; isMut: false; isSigner: false },
+        { name: 'rent'; isMut: false; isSigner: false },
+        { name: 'splataProgramId'; isMut: false; isSigner: false },
+      ]
+      args: [
+        {
+          name: 'delta_a'
+          type: 'u64'
+        },
+        {
+          name: 'delta_b'
           type: 'u64'
         },
       ]
@@ -303,7 +380,7 @@ export type SwapProgram = {
   ]
 }
 
-export const IDL: SwapProgram = {
+export const SwapIDL: SwapProgram = {
   version: '0.1.0',
   name: 'sen_swap',
   instructions: [
@@ -403,6 +480,83 @@ export const IDL: SwapProgram = {
         },
         {
           name: 'tax_ratio',
+          type: 'u64',
+        },
+      ],
+    },
+    {
+      name: 'addLiquidity',
+      accounts: [
+        {
+          name: 'payerPublicKey',
+          isMut: false,
+          isSigner: true,
+        },
+        {
+          name: 'poolPublicKey',
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: 'lptPublicKey',
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: 'mintLPTPublicKey',
+          isMut: true,
+          isSigner: false,
+        },
+
+        {
+          name: 'srcAPublicKey',
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: 'mintAPublicKey',
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: 'treasuryAPublicKey',
+          isMut: true,
+          isSigner: false,
+        },
+        //
+        {
+          name: 'srcBPublicKey',
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: 'mintBPublicKey',
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: 'treasuryBPublicKey',
+          isMut: true,
+          isSigner: false,
+        },
+
+        {
+          name: 'treasurerPublicKey',
+          isMut: false,
+          isSigner: false,
+        },
+        { name: 'systemProgram', isMut: false, isSigner: false },
+        { name: 'spltProgramId', isMut: false, isSigner: false },
+        { name: 'rent', isMut: false, isSigner: false },
+        { name: 'splataProgramId', isMut: false, isSigner: false },
+      ],
+      args: [
+        {
+          name: 'delta_a',
+          type: 'u64',
+        },
+        {
+          name: 'delta_b',
           type: 'u64',
         },
       ],

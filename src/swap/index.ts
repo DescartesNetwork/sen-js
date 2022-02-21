@@ -518,8 +518,8 @@ class Swap extends Tx {
    * @returns Transaction id, LPT address
    */
   addLiquidity = async (
-    deltaA: bigint,
-    deltaB: bigint,
+    deltaA: BN,
+    deltaB: BN,
     poolAddress: string,
     srcAAddress: string,
     srcBAddress: string,
@@ -563,51 +563,31 @@ class Swap extends Tx {
       treasuryBAddress,
     ].map((treasuryAddress) => account.fromAddress(treasuryAddress))
     // Build tx
-    let transaction = new Transaction()
-    transaction = await this.addRecentCommitment(transaction)
-    const layout = new soproxABI.struct(
-      [
-        { key: 'code', type: 'u8' },
-        { key: 'delta_a', type: 'u64' },
-        { key: 'delta_b', type: 'u64' },
-      ],
-      {
-        code: InstructionCode.AddLiquidity.valueOf(),
-        delta_a: deltaA,
-        delta_b: deltaB,
+    // Build tx
+    const swapProgram = await this.getSwapProgram(wallet)
+    const txId = await swapProgram.rpc.addLiquidity(deltaA, deltaB, {
+      accounts: {
+        payerPublicKey,
+        poolPublicKey,
+        lptPublicKey,
+        mintLPTPublicKey,
+
+        srcAPublicKey,
+        mintAPublicKey,
+        treasuryAPublicKey,
+
+        srcBPublicKey,
+        mintBPublicKey,
+        treasuryBPublicKey,
+
+        treasurerPublicKey,
+        systemProgram: SystemProgram.programId,
+        spltProgramId: this.spltProgramId,
+        rent: SYSVAR_RENT_PUBKEY,
+        splataProgramId: this.splataProgramId,
       },
-    )
-    const instruction = new TransactionInstruction({
-      keys: [
-        { pubkey: payerPublicKey, isSigner: true, isWritable: false },
-        { pubkey: poolPublicKey, isSigner: false, isWritable: true },
-        { pubkey: lptPublicKey, isSigner: false, isWritable: true },
-        { pubkey: mintLPTPublicKey, isSigner: false, isWritable: true },
-
-        { pubkey: srcAPublicKey, isSigner: false, isWritable: true },
-        { pubkey: mintAPublicKey, isSigner: false, isWritable: false },
-        { pubkey: treasuryAPublicKey, isSigner: false, isWritable: true },
-
-        { pubkey: srcBPublicKey, isSigner: false, isWritable: true },
-        { pubkey: mintBPublicKey, isSigner: false, isWritable: false },
-        { pubkey: treasuryBPublicKey, isSigner: false, isWritable: true },
-
-        { pubkey: treasurerPublicKey, isSigner: false, isWritable: false },
-        { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
-        { pubkey: this.spltProgramId, isSigner: false, isWritable: false },
-        { pubkey: SYSVAR_RENT_PUBKEY, isSigner: false, isWritable: false },
-        { pubkey: this.splataProgramId, isSigner: false, isWritable: false },
-      ],
-      programId: this.swapProgramId,
-      data: layout.toBuffer(),
     })
-    transaction.add(instruction)
-    transaction.feePayer = payerPublicKey
-    // Sign tx
-    const payerSig = await wallet.rawSignTransaction(transaction)
-    this.addSignature(transaction, payerSig)
-    // Send tx
-    const txId = await this.sendTransaction(transaction)
+
     return { txId, lptAddress }
   }
 

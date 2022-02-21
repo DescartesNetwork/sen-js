@@ -322,7 +322,7 @@ describe('Swap library', function () {
     it('Should be wrapped', async function () {
       const swap = new Swap()
       const splt = new SPLT()
-      const amount = 1000000n // 0.001
+      const amount = new anchor.BN(1000000) // 0.001
       const walletAddress = await wallet.getAddress()
       const wsolAddress = await splt.deriveAssociatedAddress(
         walletAddress,
@@ -354,8 +354,8 @@ describe('Swap library', function () {
         ),
       )
       await swap.addLiquidity(
-        10000000000n,
-        2000000000n,
+        new anchor.BN(10000000000),
+        new anchor.BN(2000000000),
         POOL_ADDRESS_1,
         srcAddresses[0],
         srcAddresses[2],
@@ -377,8 +377,8 @@ describe('Swap library', function () {
       )
       // console.log(prevRA, prevRB)
       const { txId } = await swap.addSidedLiquidity(
-        10000000000n,
-        0n,
+        new anchor.BN(10000000000),
+        new anchor.BN(0),
         POOL_ADDRESS_1,
         srcAddresses[0],
         srcAddresses[2],
@@ -400,7 +400,7 @@ describe('Swap library', function () {
           account.deriveAssociatedAddress(payerAddress, mintAddress),
         ),
       )
-      const amount = 5000000000n
+      const amount = new anchor.BN(5000000000)
       const { amount: prevAmount } = await swap.getLPTData(LPT_ADDRESS_1)
       await swap.removeLiquidity(
         amount,
@@ -424,8 +424,8 @@ describe('Swap library', function () {
       )
       const taxmanAddress = srcAddresses[0]
       const { poolAddress, lptAddress } = await swap.initializePool(
-        10000000000n,
-        5000000000n,
+        new anchor.BN(10000000000),
+        new anchor.BN(5000000000),
         FEE,
         TAX,
         payerAddress,
@@ -456,10 +456,16 @@ describe('Swap library', function () {
 
     it('Should update fee', async function () {
       const swap = new Swap()
-      await swap.updateFee(2n * FEE, 0n, POOL_ADDRESS_0, wallet)
+      await swap.updateFee(
+        new anchor.BN(2) * FEE,
+        new anchor.BN(0),
+        POOL_ADDRESS_0,
+        wallet,
+      )
       const { fee_ratio, tax_ratio } = await swap.getPoolData(POOL_ADDRESS_0)
-      if (fee_ratio != 2n * FEE) throw new Error('Cannot update fee')
-      if (tax_ratio != 0n) throw new Error('Cannot update tax')
+      if (fee_ratio != new anchor.BN(2) * FEE)
+        throw new Error('Cannot update fee')
+      if (tax_ratio != new anchor.BN(0)) throw new Error('Cannot update tax')
     })
 
     it('Should transfer taxman', async function () {
