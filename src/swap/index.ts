@@ -91,6 +91,7 @@ class Swap extends Tx {
     const swapProgram: Program<SwapProgram> = SentreProgram.swap(anchorProvider)
     return swapProgram
   }
+
   /**
    * Watch account changes
    * @param callback
@@ -309,13 +310,6 @@ class Swap extends Tx {
 
     const swapProgram = await this.getSwapProgram()
     const data = await swapProgram.account.pool.fetch(poolPublicKey)
-    console.log(' ??==>', {
-      owner: data.owner.toBase58(),
-      mint_lpt: data.mint_lpt.toBase58(),
-      treasury_a: data.treasury_a.toBase58(),
-      reserve_a: data.reserve_a.toNumber(),
-      tax_ratio: data.tax_ratio.toNumber(),
-    })
 
     if (!data) throw new Error('Invalid pool address')
     return data as any
@@ -1201,8 +1195,8 @@ class Swap extends Tx {
    * @returns Transaction id, LPT address
    */
   addSidedLiquidity = async (
-    deltaA: bigint,
-    deltaB: bigint,
+    deltaA: BN,
+    deltaB: BN,
     poolAddress: string,
     srcAAddress: string,
     srcBAddress: string,
@@ -1255,55 +1249,34 @@ class Swap extends Tx {
       treasuryBAddress,
     ].map((treasuryAddress) => account.fromAddress(treasuryAddress))
     // Build tx
-    let transaction = new Transaction()
-    transaction = await this.addRecentCommitment(transaction)
-    const layout = new soproxABI.struct(
-      [
-        { key: 'code', type: 'u8' },
-        { key: 'delta_a', type: 'u64' },
-        { key: 'delta_b', type: 'u64' },
-      ],
-      {
-        code: InstructionCode.AddSidedLiquidity.valueOf(),
-        delta_a: deltaA,
-        delta_b: deltaB,
+    const swapProgram = await this.getSwapProgram(wallet)
+    const txId = await swapProgram.rpc.addSidedLiquidity(deltaA, deltaB, {
+      accounts: {
+        payerPublicKey,
+        poolPublicKey,
+        lptPublicKey,
+        mintLPTPublicKey,
+
+        srcAPublicKey,
+        mintAPublicKey,
+        treasuryAPublicKey,
+
+        srcBPublicKey,
+        mintBPublicKey,
+        treasuryBPublicKey,
+
+        taxmanPublicKey,
+        treasuryTaxmanAPublicKey,
+        treasuryTaxmanBPublicKey,
+
+        treasurerPublicKey,
+        systemProgram: SystemProgram.programId,
+        spltProgramId: this.spltProgramId,
+        rent: SYSVAR_RENT_PUBKEY,
+        splataProgramId: this.splataProgramId,
       },
-    )
-    const instruction = new TransactionInstruction({
-      keys: [
-        { pubkey: payerPublicKey, isSigner: true, isWritable: false },
-        { pubkey: poolPublicKey, isSigner: false, isWritable: true },
-        { pubkey: lptPublicKey, isSigner: false, isWritable: true },
-        { pubkey: mintLPTPublicKey, isSigner: false, isWritable: true },
-
-        { pubkey: srcAPublicKey, isSigner: false, isWritable: true },
-        { pubkey: mintAPublicKey, isSigner: false, isWritable: false },
-        { pubkey: treasuryAPublicKey, isSigner: false, isWritable: true },
-
-        { pubkey: srcBPublicKey, isSigner: false, isWritable: true },
-        { pubkey: mintBPublicKey, isSigner: false, isWritable: false },
-        { pubkey: treasuryBPublicKey, isSigner: false, isWritable: true },
-
-        { pubkey: taxmanPublicKey, isSigner: false, isWritable: false },
-        { pubkey: treasuryTaxmanAPublicKey, isSigner: false, isWritable: true },
-        { pubkey: treasuryTaxmanBPublicKey, isSigner: false, isWritable: true },
-
-        { pubkey: treasurerPublicKey, isSigner: false, isWritable: false },
-        { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
-        { pubkey: this.spltProgramId, isSigner: false, isWritable: false },
-        { pubkey: SYSVAR_RENT_PUBKEY, isSigner: false, isWritable: false },
-        { pubkey: this.splataProgramId, isSigner: false, isWritable: false },
-      ],
-      programId: this.swapProgramId,
-      data: layout.toBuffer(),
     })
-    transaction.add(instruction)
-    transaction.feePayer = payerPublicKey
-    // Sign tx
-    const payerSig = await wallet.rawSignTransaction(transaction)
-    this.addSignature(transaction, payerSig)
-    // Send tx
-    const txId = await this.sendTransaction(transaction)
+
     return { txId, lptAddress }
   }
 

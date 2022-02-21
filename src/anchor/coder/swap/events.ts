@@ -10,6 +10,6 @@ export class SwapEventsCoder implements EventCoder {
   decode<E extends IdlEvent = IdlEvent, T = Record<string, string>>(
     _log: string,
   ): Event<E, T> | null {
-    throw new Error('SPL token program does not have events')
+    throw new Error('Swap program does not have events')
   }
 }

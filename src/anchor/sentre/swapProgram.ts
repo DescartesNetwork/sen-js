@@ -121,6 +121,87 @@ export type SwapProgram = {
         },
       ]
     },
+    {
+      name: 'addSidedLiquidity'
+      accounts: [
+        {
+          name: 'payerPublicKey'
+          isMut: false
+          isSigner: true
+        },
+        {
+          name: 'poolPublicKey'
+          isMut: true
+          isSigner: false
+        },
+        {
+          name: 'lptPublicKey'
+          isMut: true
+          isSigner: false
+        },
+        {
+          name: 'mintLPTPublicKey'
+          isMut: true
+          isSigner: false
+        },
+
+        {
+          name: 'srcAPublicKey'
+          isMut: true
+          isSigner: false
+        },
+        {
+          name: 'mintAPublicKey'
+          isMut: false
+          isSigner: false
+        },
+        {
+          name: 'treasuryAPublicKey'
+          isMut: true
+          isSigner: false
+        },
+
+        {
+          name: 'srcBPublicKey'
+          isMut: true
+          isSigner: false
+        },
+        {
+          name: 'mintBPublicKey'
+          isMut: false
+          isSigner: false
+        },
+        {
+          name: 'treasuryBPublicKey'
+          isMut: true
+          isSigner: false
+        },
+
+        { name: 'taxmanPublicKey'; isSigner: false; isMut: false },
+        { name: 'treasuryTaxmanAPublicKey'; isSigner: false; isMut: true },
+        { name: 'treasuryTaxmanBPublicKey'; isSigner: false; isMut: true },
+        //
+        {
+          name: 'treasurerPublicKey'
+          isMut: false
+          isSigner: false
+        },
+        { name: 'systemProgram'; isMut: false; isSigner: false },
+        { name: 'spltProgramId'; isMut: false; isSigner: false },
+        { name: 'rent'; isMut: false; isSigner: false },
+        { name: 'splataProgramId'; isMut: false; isSigner: false },
+      ]
+      args: [
+        {
+          name: 'delta_a'
+          type: 'u64'
+        },
+        {
+          name: 'delta_b'
+          type: 'u64'
+        },
+      ]
+    },
   ]
   accounts: [
     {
@@ -249,6 +330,87 @@ export const IDL: SwapProgram = {
         },
         {
           name: 'tax_ratio',
+          type: 'u64',
+        },
+      ],
+    },
+    {
+      name: 'addSidedLiquidity',
+      accounts: [
+        {
+          name: 'payerPublicKey',
+          isMut: false,
+          isSigner: true,
+        },
+        {
+          name: 'poolPublicKey',
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: 'lptPublicKey',
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: 'mintLPTPublicKey',
+          isMut: true,
+          isSigner: false,
+        },
+
+        {
+          name: 'srcAPublicKey',
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: 'mintAPublicKey',
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: 'treasuryAPublicKey',
+          isMut: true,
+          isSigner: false,
+        },
+        //
+        {
+          name: 'srcBPublicKey',
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: 'mintBPublicKey',
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: 'treasuryBPublicKey',
+          isMut: true,
+          isSigner: false,
+        },
+        //
+        { name: 'taxmanPublicKey', isSigner: false, isMut: false },
+        { name: 'treasuryTaxmanAPublicKey', isSigner: false, isMut: true },
+        { name: 'treasuryTaxmanBPublicKey', isSigner: false, isMut: true },
+        //
+        {
+          name: 'treasurerPublicKey',
+          isMut: false,
+          isSigner: false,
+        },
+        { name: 'systemProgram', isMut: false, isSigner: false },
+        { name: 'spltProgramId', isMut: false, isSigner: false },
+        { name: 'rent', isMut: false, isSigner: false },
+        { name: 'splataProgramId', isMut: false, isSigner: false },
+      ],
+      args: [
+        {
+          name: 'delta_a',
+          type: 'u64',
+        },
+        {
+          name: 'delta_b',
           type: 'u64',
         },
       ],

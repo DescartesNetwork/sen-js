@@ -132,5 +132,32 @@ describe('Swap library', function () {
       const swap = new Swap()
       await swap.getPoolData(POOL_ADDRESS_0)
     })
+    it('Should add sided liquidity', async function () {
+      const swap = new Swap()
+      const payerAddress = await wallet.getAddress()
+      const srcAddresses = await Promise.all(
+        mints.map(({ address: mintAddress }) =>
+          account.deriveAssociatedAddress(payerAddress, mintAddress),
+        ),
+      )
+      const { reserve_a: prevRA, reserve_b: prevRB } = await swap.getPoolData(
+        POOL_ADDRESS_1,
+      )
+      // console.log(prevRA, prevRB)
+      const { txId } = await swap.addSidedLiquidity(
+        new anchor.BN(10000000000),
+        new anchor.BN(0),
+        POOL_ADDRESS_1,
+        srcAddresses[0],
+        srcAddresses[2],
+        wallet,
+      )
+      const { reserve_a: nextRA, reserve_b: nextRB } = await swap.getPoolData(
+        POOL_ADDRESS_1,
+      )
+      // console.log(nextRA, nextRB)
+      const data = await swap.getLPTData(LPT_ADDRESS_0)
+      // console.log(data)
+    })
   })
 })
