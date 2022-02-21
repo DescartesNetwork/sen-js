@@ -96,7 +96,7 @@ LAYOUT.addVariant(
 LAYOUT.addVariant(
   InstructionCode.RemoveLiquidity.valueOf(),
   BufferLayout.struct([BufferLayout.nu64('lpt')]),
-  'RemoveLiquidity',
+  'removeLiquidity',
 )
 
 function encodeData(instruction: any): Buffer {
