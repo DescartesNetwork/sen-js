@@ -160,164 +160,164 @@ describe('Swap library', function () {
       }
     })
 
-    // it('Should be a successful swap', async function () {
-    //   const swap = new Swap()
-    //   const payerAddress = await wallet.getAddress()
-    //   const srcAddresses = await Promise.all(
-    //     mints.map(({ address: mintAddress }) =>
-    //       account.deriveAssociatedAddress(payerAddress, mintAddress),
-    //     ),
-    //   )
-    //   await swap.swap(
-    //     new anchor.BN(1000000000),
-    //     new anchor.BN(0),
-    //     POOL_ADDRESS_0,
-    //     srcAddresses[0],
-    //     srcAddresses[1],
-    //     wallet,
-    //   )
-    // })
+    it('Should be a successful swap', async function () {
+      const swap = new Swap()
+      const payerAddress = await wallet.getAddress()
+      const srcAddresses = await Promise.all(
+        mints.map(({ address: mintAddress }) =>
+          account.deriveAssociatedAddress(payerAddress, mintAddress),
+        ),
+      )
+      await swap.swap(
+        new anchor.BN(1000000000),
+        new anchor.BN(0),
+        POOL_ADDRESS_0,
+        srcAddresses[0],
+        srcAddresses[1],
+        wallet,
+      )
+    })
 
-    // it('Should be a failed swap (exceed limit)', async function () {
-    //   const swap = new Swap()
-    //   const payerAddress = await wallet.getAddress()
-    //   const srcAddresses = await Promise.all(
-    //     mints.map(({ address: mintAddress }) =>
-    //       account.deriveAssociatedAddress(payerAddress, mintAddress),
-    //     ),
-    //   )
-    //   try {
-    //     await swap.swap(
-    //       new anchor.BN(1000000000),
-    //       new anchor.BN(1000000000),
-    //       POOL_ADDRESS_1,
-    //       srcAddresses[0],
-    //       srcAddresses[2],
-    //       wallet,
-    //     )
-    //     throw new Error('No error')
-    //   } catch (er) {
-    //     if (er.message === 'No error') throw new Error('Swap bypass the limit')
-    //   }
-    // })
+    it('Should be a failed swap (exceed limit)', async function () {
+      const swap = new Swap()
+      const payerAddress = await wallet.getAddress()
+      const srcAddresses = await Promise.all(
+        mints.map(({ address: mintAddress }) =>
+          account.deriveAssociatedAddress(payerAddress, mintAddress),
+        ),
+      )
+      try {
+        await swap.swap(
+          new anchor.BN(1000000000),
+          new anchor.BN(1000000000),
+          POOL_ADDRESS_1,
+          srcAddresses[0],
+          srcAddresses[2],
+          wallet,
+        )
+        throw new Error('No error')
+      } catch (er) {
+        if (er.message === 'No error') throw new Error('Swap bypass the limit')
+      }
+    })
 
-    // it('Should be successful routing', async function () {
-    //   const swap = new Swap()
-    //   const payerAddress = await wallet.getAddress()
-    //   const srcAddresses = await Promise.all(
-    //     mints.map(({ address: mintAddress }) =>
-    //       account.deriveAssociatedAddress(payerAddress, mintAddress),
-    //     ),
-    //   )
+    it('Should be successful routing', async function () {
+      const swap = new Swap()
+      const payerAddress = await wallet.getAddress()
+      const srcAddresses = await Promise.all(
+        mints.map(({ address: mintAddress }) =>
+          account.deriveAssociatedAddress(payerAddress, mintAddress),
+        ),
+      )
 
-    //   await swap.route(
-    //     new anchor.BN(1000),
-    //     new anchor.BN(0),
-    //     [
-    //       {
-    //         poolAddress: POOL_ADDRESS_0,
-    //         srcAddress: srcAddresses[1],
-    //         dstAddress: srcAddresses[0],
-    //       },
-    //       {
-    //         poolAddress: POOL_ADDRESS_1,
-    //         srcAddress: srcAddresses[0],
-    //         dstAddress: srcAddresses[2],
-    //       },
-    //     ],
-    //     wallet,
-    //   )
-    // })
+      await swap.route(
+        new anchor.BN(1000),
+        new anchor.BN(0),
+        [
+          {
+            poolAddress: POOL_ADDRESS_0,
+            srcAddress: srcAddresses[1],
+            dstAddress: srcAddresses[0],
+          },
+          {
+            poolAddress: POOL_ADDRESS_1,
+            srcAddress: srcAddresses[0],
+            dstAddress: srcAddresses[2],
+          },
+        ],
+        wallet,
+      )
+    })
 
-    // it('Should be failed routing because of treasury account not matched', async function () {
-    //   const swap = new Swap()
-    //   const payerAddress = await wallet.getAddress()
-    //   const srcAddresses = await Promise.all(
-    //     mints.map(({ address: mintAddress }) =>
-    //       account.deriveAssociatedAddress(payerAddress, mintAddress),
-    //     ),
-    //   )
+    it('Should be failed routing because of treasury account not matched', async function () {
+      const swap = new Swap()
+      const payerAddress = await wallet.getAddress()
+      const srcAddresses = await Promise.all(
+        mints.map(({ address: mintAddress }) =>
+          account.deriveAssociatedAddress(payerAddress, mintAddress),
+        ),
+      )
 
-    //   try {
-    //     await swap.route(
-    //       new anchor.BN(1000),
-    //       new anchor.BN(0),
-    //       [
-    //         {
-    //           srcAddress: srcAddresses[0],
-    //           dstAddress: srcAddresses[1],
-    //           poolAddress: POOL_ADDRESS_0,
-    //         },
-    //         {
-    //           srcAddress: srcAddresses[1],
-    //           dstAddress: srcAddresses[2],
-    //           poolAddress: POOL_ADDRESS_0,
-    //         },
-    //       ],
-    //       wallet,
-    //     )
-    //   } catch (er) {
-    //     assert.deepStrictEqual(
-    //       er.message,
-    //       'Cannot match mint addresses in pool',
-    //     )
-    //   }
-    // })
+      try {
+        await swap.route(
+          new anchor.BN(1000),
+          new anchor.BN(0),
+          [
+            {
+              srcAddress: srcAddresses[0],
+              dstAddress: srcAddresses[1],
+              poolAddress: POOL_ADDRESS_0,
+            },
+            {
+              srcAddress: srcAddresses[1],
+              dstAddress: srcAddresses[2],
+              poolAddress: POOL_ADDRESS_0,
+            },
+          ],
+          wallet,
+        )
+      } catch (er) {
+        assert.deepStrictEqual(
+          er.message,
+          'Cannot match mint addresses in pool',
+        )
+      }
+    })
 
-    // it('Should be failed routing because of amount input is zero', async function () {
-    //   const swap = new Swap()
-    //   const payerAddress = await wallet.getAddress()
-    //   const srcAddresses = await Promise.all(
-    //     mints.map(({ address: mintAddress }) =>
-    //       account.deriveAssociatedAddress(payerAddress, mintAddress),
-    //     ),
-    //   )
+    it('Should be failed routing because of amount input is zero', async function () {
+      const swap = new Swap()
+      const payerAddress = await wallet.getAddress()
+      const srcAddresses = await Promise.all(
+        mints.map(({ address: mintAddress }) =>
+          account.deriveAssociatedAddress(payerAddress, mintAddress),
+        ),
+      )
 
-    //   try {
-    //     const result = await swap.route(
-    //       new anchor.BN(0),
-    //       new anchor.BN(20000000000),
-    //       [
-    //         {
-    //           srcAddress: srcAddresses[0],
-    //           dstAddress: srcAddresses[2],
-    //           poolAddress: POOL_ADDRESS_1,
-    //         },
-    //       ],
-    //       wallet,
-    //     )
-    //   } catch (er) {
-    //     assert.deepStrictEqual(er.message, 'Cannot input a zero amount')
-    //   }
-    // })
+      try {
+        const result = await swap.route(
+          new anchor.BN(0),
+          new anchor.BN(20000000000),
+          [
+            {
+              srcAddress: srcAddresses[0],
+              dstAddress: srcAddresses[2],
+              poolAddress: POOL_ADDRESS_1,
+            },
+          ],
+          wallet,
+        )
+      } catch (er) {
+        assert.deepStrictEqual(er.message, 'Cannot input a zero amount')
+      }
+    })
 
-    // it('Should be failed routing because of exceed limit', async function () {
-    //   const swap = new Swap()
-    //   const payerAddress = await wallet.getAddress()
-    //   const srcAddresses = await Promise.all(
-    //     mints.map(({ address: mintAddress }) =>
-    //       account.deriveAssociatedAddress(payerAddress, mintAddress),
-    //     ),
-    //   )
+    it('Should be failed routing because of exceed limit', async function () {
+      const swap = new Swap()
+      const payerAddress = await wallet.getAddress()
+      const srcAddresses = await Promise.all(
+        mints.map(({ address: mintAddress }) =>
+          account.deriveAssociatedAddress(payerAddress, mintAddress),
+        ),
+      )
 
-    //   try {
-    //     const result = await swap.route(
-    //       new anchor.BN(10),
-    //       new anchor.BN(20000000000),
-    //       [
-    //         {
-    //           srcAddress: srcAddresses[0],
-    //           dstAddress: srcAddresses[2],
-    //           poolAddress: POOL_ADDRESS_1,
-    //         },
-    //       ],
-    //       wallet,
-    //     )
-    //     console.log(result)
-    //   } catch (er) {
-    //     assert.deepStrictEqual(er.message, 'Exceed limit')
-    //   }
-    // })
+      try {
+        const result = await swap.route(
+          new anchor.BN(10),
+          new anchor.BN(20000000000),
+          [
+            {
+              srcAddress: srcAddresses[0],
+              dstAddress: srcAddresses[2],
+              poolAddress: POOL_ADDRESS_1,
+            },
+          ],
+          wallet,
+        )
+        console.log(result)
+      } catch (er) {
+        assert.deepStrictEqual(er.message, 'Exceed limit')
+      }
+    })
 
     it('Should be wrapped', async function () {
       const swap = new Swap()
@@ -328,17 +328,22 @@ describe('Swap library', function () {
         walletAddress,
         DEFAULT_WSOL,
       )
-      await splt.closeAccount(wsolAddress, wallet)
+      try {
+        await splt.closeAccount(wsolAddress, wallet)
+      } catch (error) {}
+
       await swap.wrapSol(amount, wallet)
       let { amount: prevAmount } = await splt.getAccountData(wsolAddress)
-      prevAmount = new anchor.BN(Number(prevAmount.toString()))
+      const prevAmountBN = new anchor.BN(Number(prevAmount.toString()))
 
-      if (prevAmount !== amount) throw new Error('Incorrect wrapped amount')
+      if (prevAmountBN.toNumber() !== amount.toNumber())
+        throw new Error('Incorrect wrapped amount')
+
       await swap.wrapSol(amount, wallet)
       let { amount: nextAmount } = await splt.getAccountData(wsolAddress)
-      nextAmount = new anchor.BN(Number(nextAmount.toString()))
+      const nextAmountBN = new anchor.BN(Number(nextAmount.toString()))
 
-      if (nextAmount !== 2n * amount)
+      if (nextAmountBN.toString() !== (new anchor.BN(2) * amount).toString())
         throw new Error('Incorrect wrapped amount')
     })
   })
