@@ -1248,11 +1248,11 @@ class Swap extends Tx {
    * Wrap sol
    */
   wrapSol = async (
-    amount: bigint,
+    amount: BN,
     wallet: WalletInterface,
   ): Promise<{ accountAddress: string; txId: string }> => {
     // Validation
-    if (amount < 0n) throw new Error('Invalid amount')
+    if (amount < new BN(0)) throw new Error('Invalid amount')
     // Get payer & associated account
     const payerAddress = await wallet.getAddress()
     const payerPublicKey = account.fromAddress(payerAddress)
@@ -1263,35 +1263,18 @@ class Swap extends Tx {
     const accountPublicKey = account.fromAddress(accountAddress)
     const mintPublicKey = account.fromAddress(DEFAULT_WSOL)
     // Build tx
-    let transaction = new Transaction()
-    transaction = await this.addRecentCommitment(transaction)
-    const layout = new soproxABI.struct(
-      [
-        { key: 'code', type: 'u8' },
-        { key: 'amount', type: 'u64' },
-      ],
-      { code: InstructionCode.WrapSol.valueOf(), amount },
-    )
-    const instruction = new TransactionInstruction({
-      keys: [
-        { pubkey: payerPublicKey, isSigner: true, isWritable: true },
-        { pubkey: accountPublicKey, isSigner: false, isWritable: true },
-        { pubkey: mintPublicKey, isSigner: false, isWritable: false },
-        { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
-        { pubkey: this.spltProgramId, isSigner: false, isWritable: false },
-        { pubkey: SYSVAR_RENT_PUBKEY, isSigner: false, isWritable: false },
-        { pubkey: this.splataProgramId, isSigner: false, isWritable: false },
-      ],
-      programId: this.swapProgramId,
-      data: layout.toBuffer(),
+    const swapProgram = await this.getSwapProgram(wallet)
+    const txId = await swapProgram.rpc.wrapSol(amount, {
+      accounts: {
+        payerPublicKey,
+        accountPublicKey,
+        mintPublicKey,
+        systemProgram: SystemProgram.programId,
+        spltProgramId: this.spltProgramId,
+        rent: SYSVAR_RENT_PUBKEY,
+        splataProgramId: this.splataProgramId,
+      },
     })
-    transaction.add(instruction)
-    transaction.feePayer = payerPublicKey
-    // Sign tx
-    const payerSig = await wallet.rawSignTransaction(transaction)
-    this.addSignature(transaction, payerSig)
-    // Send tx
-    const txId = await this.sendTransaction(transaction)
     return { accountAddress, txId }
   }
 }

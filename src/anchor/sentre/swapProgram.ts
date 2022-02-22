@@ -352,6 +352,36 @@ export type SwapProgram = {
         },
       ]
     },
+    {
+      name: 'wrapSol'
+      accounts: [
+        {
+          name: 'payerPublicKey'
+          isMut: true
+          isSigner: true
+        },
+        {
+          name: 'accountPublicKey'
+          isMut: true
+          isSigner: false
+        },
+        {
+          name: 'mintPublicKey'
+          isMut: false
+          isSigner: false
+        },
+        { name: 'systemProgram'; isMut: false; isSigner: false },
+        { name: 'spltProgramId'; isMut: false; isSigner: false },
+        { name: 'rent'; isMut: false; isSigner: false },
+        { name: 'splataProgramId'; isMut: false; isSigner: false },
+      ]
+      args: [
+        {
+          name: 'amount'
+          type: 'u64'
+        },
+      ]
+    },
   ]
   accounts: [
     {
@@ -711,6 +741,36 @@ export const SwapIDL: SwapProgram = {
       args: [
         {
           name: 'lpt',
+          type: 'u64',
+        },
+      ],
+    },
+    {
+      name: 'wrapSol',
+      accounts: [
+        {
+          name: 'payerPublicKey',
+          isMut: true,
+          isSigner: true,
+        },
+        {
+          name: 'accountPublicKey',
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: 'mintPublicKey',
+          isMut: false,
+          isSigner: false,
+        },
+        { name: 'systemProgram', isMut: false, isSigner: false },
+        { name: 'spltProgramId', isMut: false, isSigner: false },
+        { name: 'rent', isMut: false, isSigner: false },
+        { name: 'splataProgramId', isMut: false, isSigner: false },
+      ],
+      args: [
+        {
+          name: 'amount',
           type: 'u64',
         },
       ],

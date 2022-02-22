@@ -319,24 +319,28 @@ describe('Swap library', function () {
     //   }
     // })
 
-    // it('Should be wrapped', async function () {
-    //   const swap = new Swap()
-    //   const splt = new SPLT()
-    //   const amount = new anchor.BN(1000000) // 0.001
-    //   const walletAddress = await wallet.getAddress()
-    //   const wsolAddress = await splt.deriveAssociatedAddress(
-    //     walletAddress,
-    //     DEFAULT_WSOL,
-    //   )
-    //   await splt.closeAccount(wsolAddress, wallet)
-    //   await swap.wrapSol(amount, wallet)
-    //   const { amount: prevAmount } = await splt.getAccountData(wsolAddress)
-    //   if (prevAmount !== amount) throw new Error('Incorrect wrapped amount')
-    //   await swap.wrapSol(amount, wallet)
-    //   const { amount: nextAmount } = await splt.getAccountData(wsolAddress)
-    //   if (nextAmount !== 2n * amount)
-    //     throw new Error('Incorrect wrapped amount')
-    // })
+    it('Should be wrapped', async function () {
+      const swap = new Swap()
+      const splt = new SPLT()
+      const amount = new anchor.BN(1000000) // 0.001
+      const walletAddress = await wallet.getAddress()
+      const wsolAddress = await splt.deriveAssociatedAddress(
+        walletAddress,
+        DEFAULT_WSOL,
+      )
+      await splt.closeAccount(wsolAddress, wallet)
+      await swap.wrapSol(amount, wallet)
+      let { amount: prevAmount } = await splt.getAccountData(wsolAddress)
+      prevAmount = new anchor.BN(Number(prevAmount.toString()))
+
+      if (prevAmount !== amount) throw new Error('Incorrect wrapped amount')
+      await swap.wrapSol(amount, wallet)
+      let { amount: nextAmount } = await splt.getAccountData(wsolAddress)
+      nextAmount = new anchor.BN(Number(nextAmount.toString()))
+
+      if (nextAmount !== 2n * amount)
+        throw new Error('Incorrect wrapped amount')
+    })
   })
 
   describe('Test LPT', function () {
