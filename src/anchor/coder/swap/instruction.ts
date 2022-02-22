@@ -25,6 +25,12 @@ export class SwapInstructionCoder implements InstructionCoder {
       case 'wrapSol': {
         return encodeWrapSol(ix)
       }
+      case 'swap': {
+        return encodeSwap(ix)
+      }
+      case 'route': {
+        return encodeRoute(ix)
+      }
       default: {
         throw new Error(`Invalid instruction: ${ixName}`)
       }
@@ -76,6 +82,20 @@ function encodeWrapSol({ amount }: any): Buffer {
   return data
 }
 
+function encodeSwap({ amount, limit }: any): Buffer {
+  const data = encodeData({
+    swap: { amount, limit },
+  })
+  return data
+}
+
+function encodeRoute({ amount, limit }: any): Buffer {
+  const data = encodeData({
+    route: { amount, limit },
+  })
+  return data
+}
+
 const LAYOUT = BufferLayout.union(BufferLayout.u8('instruction'))
 LAYOUT.addVariant(
   InstructionCode.InitializePool.valueOf(),
@@ -112,6 +132,23 @@ LAYOUT.addVariant(
   InstructionCode.WrapSol.valueOf(),
   BufferLayout.struct([BufferLayout.nu64('amount')]),
   'wrapSol',
+)
+
+LAYOUT.addVariant(
+  InstructionCode.Swap.valueOf(),
+  BufferLayout.struct([
+    BufferLayout.nu64('amount'),
+    BufferLayout.nu64('limit'),
+  ]),
+  'swap',
+)
+LAYOUT.addVariant(
+  InstructionCode.Routing.valueOf(),
+  BufferLayout.struct([
+    BufferLayout.nu64('amount'),
+    BufferLayout.nu64('limit'),
+  ]),
+  'route',
 )
 
 function encodeData(instruction: any): Buffer {

@@ -287,6 +287,7 @@ describe('Swap library', function () {
           wallet,
         )
       } catch (er) {
+        console.log('er.message', er.message)
         assert.deepStrictEqual(er.message, 'Cannot input a zero amount')
       }
     })

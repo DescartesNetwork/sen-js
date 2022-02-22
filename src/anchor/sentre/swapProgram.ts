@@ -382,6 +382,84 @@ export type SwapProgram = {
         },
       ]
     },
+    {
+      name: 'swap'
+      accounts: [
+        {
+          name: 'payerPublicKey'
+          isMut: false
+          isSigner: true
+        },
+        {
+          name: 'poolPublicKey'
+          isMut: true
+          isSigner: false
+        },
+
+        {
+          name: 'srcPublicKey'
+          isMut: true
+          isSigner: false
+        },
+        {
+          name: 'srcMintPublicKey'
+          isMut: false
+          isSigner: false
+        },
+        {
+          name: 'treasuryBidPublicKey'
+          isMut: true
+          isSigner: false
+        },
+
+        {
+          name: 'dstPublicKey'
+          isMut: true
+          isSigner: false
+        },
+        {
+          name: 'dstMintPublicKey'
+          isMut: false
+          isSigner: false
+        },
+        {
+          name: 'treasuryAskPublicKey'
+          isMut: true
+          isSigner: false
+        },
+
+        {
+          name: 'taxmanPublicKey'
+          isMut: true
+          isSigner: false
+        },
+        {
+          name: 'treasuryTaxmanPublicKey'
+          isMut: true
+          isSigner: false
+        },
+        {
+          name: 'treasurerPublicKey'
+          isMut: false
+          isSigner: false
+        },
+
+        { name: 'systemProgram'; isMut: false; isSigner: false },
+        { name: 'spltProgramId'; isMut: false; isSigner: false },
+        { name: 'rent'; isMut: false; isSigner: false },
+        { name: 'splataProgramId'; isMut: false; isSigner: false },
+      ]
+      args: [
+        {
+          name: 'amount'
+          type: 'u64'
+        },
+        {
+          name: 'limit'
+          type: 'u64'
+        },
+      ]
+    },
   ]
   accounts: [
     {
@@ -771,6 +849,84 @@ export const SwapIDL: SwapProgram = {
       args: [
         {
           name: 'amount',
+          type: 'u64',
+        },
+      ],
+    },
+    {
+      name: 'swap',
+      accounts: [
+        {
+          name: 'payerPublicKey',
+          isMut: false,
+          isSigner: true,
+        },
+        {
+          name: 'poolPublicKey',
+          isMut: true,
+          isSigner: false,
+        },
+
+        {
+          name: 'srcPublicKey',
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: 'srcMintPublicKey',
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: 'treasuryBidPublicKey',
+          isMut: true,
+          isSigner: false,
+        },
+
+        {
+          name: 'dstPublicKey',
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: 'dstMintPublicKey',
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: 'treasuryAskPublicKey',
+          isMut: true,
+          isSigner: false,
+        },
+
+        {
+          name: 'taxmanPublicKey',
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: 'treasuryTaxmanPublicKey',
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: 'treasurerPublicKey',
+          isMut: false,
+          isSigner: false,
+        },
+
+        { name: 'systemProgram', isMut: false, isSigner: false },
+        { name: 'spltProgramId', isMut: false, isSigner: false },
+        { name: 'rent', isMut: false, isSigner: false },
+        { name: 'splataProgramId', isMut: false, isSigner: false },
+      ],
+      args: [
+        {
+          name: 'amount',
+          type: 'u64',
+        },
+        {
+          name: 'limit',
           type: 'u64',
         },
       ],
