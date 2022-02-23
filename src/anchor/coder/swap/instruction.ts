@@ -31,6 +31,9 @@ export class SwapInstructionCoder implements InstructionCoder {
       case 'route': {
         return encodeRoute(ix)
       }
+      case 'updateFee': {
+        return encodeUpdateFee(ix)
+      }
       default: {
         throw new Error(`Invalid instruction: ${ixName}`)
       }
@@ -96,6 +99,13 @@ function encodeRoute({ amount, limit }: any): Buffer {
   return data
 }
 
+function encodeUpdateFee({ fee_ratio, tax_ratio }: any): Buffer {
+  const data = encodeData({
+    updateFee: { fee_ratio, tax_ratio },
+  })
+  return data
+}
+
 const LAYOUT = BufferLayout.union(BufferLayout.u8('instruction'))
 LAYOUT.addVariant(
   InstructionCode.InitializePool.valueOf(),
@@ -142,6 +152,7 @@ LAYOUT.addVariant(
   ]),
   'swap',
 )
+
 LAYOUT.addVariant(
   InstructionCode.Routing.valueOf(),
   BufferLayout.struct([
@@ -149,6 +160,15 @@ LAYOUT.addVariant(
     BufferLayout.nu64('limit'),
   ]),
   'route',
+)
+
+LAYOUT.addVariant(
+  InstructionCode.UpdateFee.valueOf(),
+  BufferLayout.struct([
+    BufferLayout.nu64('fee_ratio'),
+    BufferLayout.nu64('tax_ratio'),
+  ]),
+  'updateFee',
 )
 
 function encodeData(instruction: any): Buffer {

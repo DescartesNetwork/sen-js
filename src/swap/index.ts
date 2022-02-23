@@ -1070,8 +1070,8 @@ class Swap extends Tx {
    * @returns
    */
   updateFee = async (
-    feeRatio: bigint,
-    taxRatio: bigint,
+    feeRatio: BN,
+    taxRatio: BN,
     poolAddress: string,
     wallet: WalletInterface,
   ): Promise<{ txId: string }> => {
@@ -1081,35 +1081,14 @@ class Swap extends Tx {
     const payerAddress = await wallet.getAddress()
     const payerPublicKey = account.fromAddress(payerAddress)
     // Build tx
-    let transaction = new Transaction()
-    transaction = await this.addRecentCommitment(transaction)
-    const layout = new soproxABI.struct(
-      [
-        { key: 'code', type: 'u8' },
-        { key: 'fee_ratio', type: 'u64' },
-        { key: 'tax_ratio', type: 'u64' },
-      ],
-      {
-        code: InstructionCode.UpdateFee.valueOf(),
-        fee_ratio: feeRatio,
-        tax_ratio: taxRatio,
+    const swapProgram = await this.getSwapProgram(wallet)
+    const txId = await swapProgram.rpc.updateFee(feeRatio, taxRatio, {
+      accounts: {
+        payerPublicKey,
+        poolPublicKey,
       },
-    )
-    const instruction = new TransactionInstruction({
-      keys: [
-        { pubkey: payerPublicKey, isSigner: true, isWritable: false },
-        { pubkey: poolPublicKey, isSigner: false, isWritable: true },
-      ],
-      programId: this.swapProgramId,
-      data: layout.toBuffer(),
     })
-    transaction.add(instruction)
-    transaction.feePayer = payerPublicKey
-    // Sign tx
-    const payerSig = await wallet.rawSignTransaction(transaction)
-    this.addSignature(transaction, payerSig)
-    // Send tx
-    const txId = await this.sendTransaction(transaction)
+
     return { txId }
   }
 

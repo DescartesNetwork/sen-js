@@ -25,6 +25,7 @@ export const getAnchorProvider = async (
         signAllTransactions,
       },
       {
+        skipPreflight: true,
         commitment: 'confirmed',
       },
     )

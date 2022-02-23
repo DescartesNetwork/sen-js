@@ -460,6 +460,31 @@ export type SwapProgram = {
         },
       ]
     },
+    {
+      name: 'updateFee'
+      accounts: [
+        {
+          name: 'payerPublicKey'
+          isMut: false
+          isSigner: true
+        },
+        {
+          name: 'poolPublicKey'
+          isMut: true
+          isSigner: false
+        },
+      ]
+      args: [
+        {
+          name: 'fee_ratio'
+          type: 'u64'
+        },
+        {
+          name: 'tax_ratio'
+          type: 'u64'
+        },
+      ]
+    },
   ]
   accounts: [
     {
@@ -927,6 +952,31 @@ export const SwapIDL: SwapProgram = {
         },
         {
           name: 'limit',
+          type: 'u64',
+        },
+      ],
+    },
+    {
+      name: 'updateFee',
+      accounts: [
+        {
+          name: 'payerPublicKey',
+          isMut: false,
+          isSigner: true,
+        },
+        {
+          name: 'poolPublicKey',
+          isMut: true,
+          isSigner: false,
+        },
+      ],
+      args: [
+        {
+          name: 'fee_ratio',
+          type: 'u64',
+        },
+        {
+          name: 'tax_ratio',
           type: 'u64',
         },
       ],

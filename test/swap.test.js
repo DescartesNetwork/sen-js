@@ -428,84 +428,86 @@ describe('Swap library', function () {
         throw new Error('Inconsistent amount')
     })
 
-    // it('Should close LPT Account', async function () {
-    //   const swap = new Swap()
-    //   const payerAddress = await wallet.getAddress()
-    //   const srcAddresses = await Promise.all(
-    //     mints.map(({ address: mintAddress }) =>
-    //       account.deriveAssociatedAddress(payerAddress, mintAddress),
-    //     ),
-    //   )
-    //   const taxmanAddress = srcAddresses[0]
-    //   const { poolAddress, lptAddress } = await swap.initializePool(
-    //     new anchor.BN(10000000000),
-    //     new anchor.BN(5000000000),
-    //     FEE,
-    //     TAX,
-    //     payerAddress,
-    //     srcAddresses[0],
-    //     srcAddresses[1],
-    //     taxmanAddress,
-    //     wallet,
-    //   )
-    //   const { amount } = await swap.getLPTData(lptAddress)
-    //   await swap.removeLiquidity(
-    //     amount,
-    //     poolAddress,
-    //     srcAddresses[0],
-    //     srcAddresses[1],
-    //     wallet,
-    //   )
-    //   await swap.closeLPT(lptAddress, wallet)
-    // })
+    it('Should close LPT Account', async function () {
+      const swap = new Swap()
+      const payerAddress = await wallet.getAddress()
+      const srcAddresses = await Promise.all(
+        mints.map(({ address: mintAddress }) =>
+          account.deriveAssociatedAddress(payerAddress, mintAddress),
+        ),
+      )
+      const taxmanAddress = srcAddresses[0]
+      const { poolAddress, lptAddress } = await swap.initializePool(
+        new anchor.BN(10000000000),
+        new anchor.BN(5000000000),
+        FEE,
+        TAX,
+        payerAddress,
+        srcAddresses[0],
+        srcAddresses[1],
+        taxmanAddress,
+        wallet,
+      )
+      const { amount } = await swap.getLPTData(lptAddress)
+      const amountBN = new anchor.BN(Number(amount.toString()))
+      await swap.removeLiquidity(
+        amountBN,
+        poolAddress,
+        srcAddresses[0],
+        srcAddresses[1],
+        wallet,
+      )
+      await swap.closeLPT(lptAddress, wallet)
+    })
   })
 
-  // describe('Test pool owner', function () {
-  //   it('Should freeze/thaw pool', async function () {
-  //     const swap = new Swap()
-  //     await swap.freezePool(POOL_ADDRESS_0, wallet)
-  //     await swap.thawPool(POOL_ADDRESS_0, wallet)
-  //     await swap.getPoolData(POOL_ADDRESS_0)
-  //   })
+  describe('Test pool owner', function () {
+    it('Should freeze/thaw pool', async function () {
+      const swap = new Swap()
+      await swap.freezePool(POOL_ADDRESS_0, wallet)
+      await swap.thawPool(POOL_ADDRESS_0, wallet)
+      await swap.getPoolData(POOL_ADDRESS_0)
+    })
 
-  //   it('Should update fee', async function () {
-  //     const swap = new Swap()
-  //     await swap.updateFee(
-  //       new anchor.BN(2) * FEE,
-  //       new anchor.BN(0),
-  //       POOL_ADDRESS_0,
-  //       wallet,
-  //     )
-  //     const { fee_ratio, tax_ratio } = await swap.getPoolData(POOL_ADDRESS_0)
-  //     if (fee_ratio != new anchor.BN(2) * FEE)
-  //       throw new Error('Cannot update fee')
-  //     if (tax_ratio != new anchor.BN(0)) throw new Error('Cannot update tax')
-  //   })
+    it('Should update fee', async function () {
+      const swap = new Swap()
+      await swap.updateFee(
+        new anchor.BN(2).mul(FEE),
+        new anchor.BN(0),
+        POOL_ADDRESS_0,
+        wallet,
+      )
+      const { fee_ratio, tax_ratio } = await swap.getPoolData(POOL_ADDRESS_0)
+      if (fee_ratio.toString() != new anchor.BN(2).mul(FEE).toString())
+        throw new Error('Cannot update fee')
+      if (tax_ratio.toString() != new anchor.BN(0).toString())
+        throw new Error('Cannot update tax')
+    })
 
-  //   it('Should transfer taxman', async function () {
-  //     const swap = new Swap()
-  //     const lamports = new Lamports()
-  //     const splt = new SPLT()
-  //     const payer = new RawWallet(account.createAccount().secretKey)
-  //     const payerAddress = await payer.getAddress()
-  //     await lamports.airdrop(100000000n, payerAddress)
-  //     const { accountAddress } = await splt.initializeAccount(
-  //       MINT_ADDRESS_0,
-  //       payerAddress,
-  //       payer,
-  //     )
-  //     await swap.transferTaxman(POOL_ADDRESS_1, accountAddress, wallet)
-  //     const { taxman } = await swap.getPoolData(POOL_ADDRESS_1)
-  //     if (taxman != accountAddress) throw new Error('Cannot transfer taxman')
-  //   })
+    it('Should transfer taxman', async function () {
+      const swap = new Swap()
+      const lamports = new Lamports()
+      const splt = new SPLT()
+      const payer = new RawWallet(account.createAccount().secretKey)
+      const payerAddress = await payer.getAddress()
+      await lamports.airdrop(100000000n, payerAddress)
+      const { accountAddress } = await splt.initializeAccount(
+        MINT_ADDRESS_0,
+        payerAddress,
+        payer,
+      )
+      await swap.transferTaxman(POOL_ADDRESS_1, accountAddress, wallet)
+      const { taxman } = await swap.getPoolData(POOL_ADDRESS_1)
+      if (taxman != accountAddress) throw new Error('Cannot transfer taxman')
+    })
 
-  //   it('Should transfer pool ownership', async function () {
-  //     const swap = new Swap()
-  //     const newOwnerAddress = account.createAccount().publicKey.toBase58()
-  //     await swap.transferPoolOwnership(POOL_ADDRESS_1, newOwnerAddress, wallet)
-  //     const { owner } = await swap.getPoolData(POOL_ADDRESS_1)
-  //     if (owner != newOwnerAddress)
-  //       throw new Error('Cannot transfer pool ownership')
-  //   })
-  // })
+    it('Should transfer pool ownership', async function () {
+      const swap = new Swap()
+      const newOwnerAddress = account.createAccount().publicKey.toBase58()
+      await swap.transferPoolOwnership(POOL_ADDRESS_1, newOwnerAddress, wallet)
+      const { owner } = await swap.getPoolData(POOL_ADDRESS_1)
+      if (owner != newOwnerAddress)
+        throw new Error('Cannot transfer pool ownership')
+    })
+  })
 })
