@@ -34,6 +34,12 @@ export class SwapInstructionCoder implements InstructionCoder {
       case 'updateFee': {
         return encodeUpdateFee(ix)
       }
+      case 'freezePool': {
+        return encodeFreezePool(ix)
+      }
+      case 'thawPool': {
+        return encodeThawPool(ix)
+      }
       default: {
         throw new Error(`Invalid instruction: ${ixName}`)
       }
@@ -105,6 +111,18 @@ function encodeUpdateFee({ fee_ratio, tax_ratio }: any): Buffer {
   })
   return data
 }
+function encodeFreezePool(_: any): Buffer {
+  const data = encodeData({
+    freezePool: {},
+  })
+  return data
+}
+function encodeThawPool(_: any): Buffer {
+  const data = encodeData({
+    thawPool: {},
+  })
+  return data
+}
 
 const LAYOUT = BufferLayout.union(BufferLayout.u8('instruction'))
 LAYOUT.addVariant(
@@ -169,6 +187,17 @@ LAYOUT.addVariant(
     BufferLayout.nu64('tax_ratio'),
   ]),
   'updateFee',
+)
+
+LAYOUT.addVariant(
+  InstructionCode.FreezePool.valueOf(),
+  BufferLayout.struct([]),
+  'freezePool',
+)
+LAYOUT.addVariant(
+  InstructionCode.ThawPool.valueOf(),
+  BufferLayout.struct([]),
+  'thawPool',
 )
 
 function encodeData(instruction: any): Buffer {

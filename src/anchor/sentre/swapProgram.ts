@@ -485,6 +485,38 @@ export type SwapProgram = {
         },
       ]
     },
+    {
+      name: 'freezePool'
+      accounts: [
+        {
+          name: 'payerPublicKey'
+          isMut: false
+          isSigner: true
+        },
+        {
+          name: 'poolPublicKey'
+          isMut: true
+          isSigner: false
+        },
+      ]
+      args: []
+    },
+    {
+      name: 'thawPool'
+      accounts: [
+        {
+          name: 'payerPublicKey'
+          isMut: false
+          isSigner: true
+        },
+        {
+          name: 'poolPublicKey'
+          isMut: true
+          isSigner: false
+        },
+      ]
+      args: []
+    },
   ]
   accounts: [
     {
@@ -980,6 +1012,38 @@ export const SwapIDL: SwapProgram = {
           type: 'u64',
         },
       ],
+    },
+    {
+      name: 'freezePool',
+      accounts: [
+        {
+          name: 'payerPublicKey',
+          isMut: false,
+          isSigner: true,
+        },
+        {
+          name: 'poolPublicKey',
+          isMut: true,
+          isSigner: false,
+        },
+      ],
+      args: [],
+    },
+    {
+      name: 'thawPool',
+      accounts: [
+        {
+          name: 'payerPublicKey',
+          isMut: false,
+          isSigner: true,
+        },
+        {
+          name: 'poolPublicKey',
+          isMut: true,
+          isSigner: false,
+        },
+      ],
+      args: [],
     },
   ],
   accounts: [

@@ -760,26 +760,13 @@ class Swap extends Tx {
     const payerAddress = await wallet.getAddress()
     const payerPublicKey = account.fromAddress(payerAddress)
     // Build tx
-    let transaction = new Transaction()
-    transaction = await this.addRecentCommitment(transaction)
-    const layout = new soproxABI.struct([{ key: 'code', type: 'u8' }], {
-      code: InstructionCode.FreezePool.valueOf(),
+    const swapProgram = await this.getSwapProgram(wallet)
+    const txId = await swapProgram.rpc.freezePool({
+      accounts: {
+        payerPublicKey,
+        poolPublicKey,
+      },
     })
-    const instruction = new TransactionInstruction({
-      keys: [
-        { pubkey: payerPublicKey, isSigner: true, isWritable: false },
-        { pubkey: poolPublicKey, isSigner: false, isWritable: true },
-      ],
-      programId: this.swapProgramId,
-      data: layout.toBuffer(),
-    })
-    transaction.add(instruction)
-    transaction.feePayer = payerPublicKey
-    // Sign tx
-    const payerSig = await wallet.rawSignTransaction(transaction)
-    this.addSignature(transaction, payerSig)
-    // Send tx
-    const txId = await this.sendTransaction(transaction)
     return { txId }
   }
 
@@ -799,26 +786,13 @@ class Swap extends Tx {
     const payerAddress = await wallet.getAddress()
     const payerPublicKey = account.fromAddress(payerAddress)
     // Build tx
-    let transaction = new Transaction()
-    transaction = await this.addRecentCommitment(transaction)
-    const layout = new soproxABI.struct([{ key: 'code', type: 'u8' }], {
-      code: InstructionCode.ThawPool.valueOf(),
+    const swapProgram = await this.getSwapProgram(wallet)
+    const txId = await swapProgram.rpc.thawPool({
+      accounts: {
+        payerPublicKey,
+        poolPublicKey,
+      },
     })
-    const instruction = new TransactionInstruction({
-      keys: [
-        { pubkey: payerPublicKey, isSigner: true, isWritable: false },
-        { pubkey: poolPublicKey, isSigner: false, isWritable: true },
-      ],
-      programId: this.swapProgramId,
-      data: layout.toBuffer(),
-    })
-    transaction.add(instruction)
-    transaction.feePayer = payerPublicKey
-    // Sign tx
-    const payerSig = await wallet.rawSignTransaction(transaction)
-    this.addSignature(transaction, payerSig)
-    // Send tx
-    const txId = await this.sendTransaction(transaction)
     return { txId }
   }
 
@@ -1040,21 +1014,20 @@ class Swap extends Tx {
     }
     // Build transaction
     const swapProgram = await this.getSwapProgram(wallet)
-    let transaction = new Transaction()
-    transaction = await this.addRecentCommitment(transaction)
-    const data = swapProgram.coder.instruction.encode('route', {
-      code: InstructionCode.Routing.valueOf(),
-      amount,
-      limit,
-    })
 
     const instruction = new TransactionInstruction({
       keys: keys,
       programId: this.swapProgramId,
-      data,
+      data: swapProgram.coder.instruction.encode('route', {
+        code: InstructionCode.Routing.valueOf(),
+        amount,
+        limit,
+      }),
     })
+
+    let transaction = new Transaction()
     transaction.add(instruction)
-    transaction.feePayer = payerPublicKey
+
     // Send tx
     const txId = await swapProgram.provider.send(transaction)
     const dst = routingAddress[routingAddress.length - 1].poolAddress
