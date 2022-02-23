@@ -1,4 +1,4 @@
-import { SwapIDL, SwapProgram } from './../anchor/sentre/swapProgram'
+import { SwapProgram } from './../anchor/sentre/swapProgram'
 import { SentreProgram } from './../anchor/sentre/index'
 import {
   PublicKey,
@@ -10,11 +10,13 @@ import {
   KeyedAccountInfo,
   AccountMeta,
 } from '@solana/web3.js'
+import { TypeDef } from '@project-serum/anchor/dist/cjs/program/namespace/types'
+import { Program, web3, BN } from '@project-serum/anchor'
 
 import Tx from '../core/tx'
 import SPLT from '../splt'
 import account from '../account'
-import schema, { AccountData, PoolData } from '../schema'
+import { AccountData, PoolData } from '../schema'
 import {
   DEFAULT_SWAP_PROGRAM_ADDRESS,
   DEFAULT_SPLT_PROGRAM_ADDRESS,
@@ -24,12 +26,10 @@ import {
 import { WalletInterface } from '../rawWallet'
 import oracle from './oracle'
 import { InstructionCode } from './constant'
-import { Program, web3, BN } from '@project-serum/anchor'
 import {
   getAnchorProvider,
   getRawAnchorProvider,
 } from '../anchor/sentre/anchorProvider'
-import { TypeDef } from '@project-serum/anchor/dist/cjs/program/namespace/types'
 
 const xor = require('buffer-xor')
 
@@ -86,7 +86,7 @@ class Swap extends Tx {
     this._splt = new SPLT(spltProgramAddress, splataProgramAddress, nodeUrl)
   }
 
-  async getSwapProgram(wallet?: WalletInterface) {
+  async getSwapProgram(wallet: WalletInterface) {
     const anchorProvider = await getAnchorProvider(
       this._splt.connection,
       wallet,
@@ -351,7 +351,7 @@ class Swap extends Tx {
   getPoolData = async (poolAddress: string): Promise<PoolData> => {
     if (!account.isAddress(poolAddress)) throw new Error('Invalid pool address')
     const poolPublicKey = account.fromAddress(poolAddress)
-    const swapProgram = await this.getSwapProgram()
+    const swapProgram = this.getRawSwapProgram()
     const data = await swapProgram.account.pool.fetch(poolPublicKey)
 
     if (!data) throw new Error('Invalid pool address')
@@ -366,7 +366,7 @@ class Swap extends Tx {
   getAllPoolsData = async (
     filter: Buffer | GetProgramAccountsFilter[] | undefined,
   ): Promise<Record<string, PoolData>> => {
-    const swapProgram = await this.getSwapProgram()
+    const swapProgram = this.getRawSwapProgram()
     const data = await swapProgram.account.pool.all(filter)
     const allPoolData: Record<string, PoolData> = {}
     for (const poolData of data) {
