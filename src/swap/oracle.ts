@@ -13,7 +13,7 @@ function sqrtBN(self: BN) {
   }
   return end
 }
-BigInt(1).toString()
+
 const PRECISION = new BN(1000_000_000) // 10^9
 
 const oracle = {
