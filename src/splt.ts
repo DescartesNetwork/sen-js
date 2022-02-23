@@ -20,6 +20,9 @@ import {
   DEFAULT_WSOL,
 } from './default'
 import { WalletInterface } from './rawWallet'
+import { program as splTokenProgram } from '@project-serum/anchor/dist/cjs/spl/token'
+import { getAnchorProvider } from './anchor/sentre/anchorProvider'
+import { Provider, Spl, SplToken, web3 } from '@project-serum/anchor'
 
 const soproxABI = require('soprox-abi')
 
@@ -68,6 +71,7 @@ const ErrorMapping = [
   'Instruction does not support non-native tokens',
 ]
 
+// const splProgram = Spl.token()
 class SPLT extends Tx {
   spltProgramId: PublicKey
   splataProgramId: PublicKey
@@ -80,7 +84,6 @@ class SPLT extends Tx {
     nodeUrl: string,
   ) {
     super(nodeUrl, ErrorMapping)
-
     if (!account.isAddress(spltProgramAddress))
       throw new Error('Invalid SPL token program address')
     if (!account.isAddress(splataProgramAddress))
@@ -268,54 +271,32 @@ class SPLT extends Tx {
     mint: Keypair,
     wallet: WalletInterface,
   ): Promise<{ txId: string }> => {
+    const anchorProvider = await getAnchorProvider(this.connection, wallet)
+    const spltProgram = splTokenProgram(anchorProvider)
     freezeAuthorityAddress = freezeAuthorityAddress || DEFAULT_EMPTY_ADDRESS
     // Validation
     if (!account.isAddress(mintAuthorityAddress))
       throw new Error('Invalid mint authority address')
     if (!account.isAddress(freezeAuthorityAddress))
       throw new Error('Invalid freeze authority address')
-    // Get payer
-    const payerAddress = await wallet.getAddress()
-    const payerPublicKey = account.fromAddress(payerAddress)
-    // Rent mint
-    const mintSpace = new soproxABI.struct(schema.MINT_SCHEMA).space
-    await this.rentAccount(wallet, mint, mintSpace, this.spltProgramId)
-    // Build tx
-    let transaction = new Transaction()
-    transaction = await this.addRecentCommitment(transaction)
-    const layout = new soproxABI.struct(
-      [
-        { key: 'code', type: 'u8' },
-        { key: 'decimals', type: 'u8' },
-        { key: 'mint_authority', type: 'pub' },
-        { key: 'freeze_authority_option', type: 'u8' },
-        { key: 'freeze_authority', type: 'pub' },
-      ],
+
+    const ix = await (spltProgram.account as any).mint.createInstruction(mint)
+    const tx = new web3.Transaction().add(ix)
+    await anchorProvider.send(tx, [mint])
+
+    const txIds = await spltProgram.rpc.initializeMint(
+      decimals,
+      account.fromAddress(mintAuthorityAddress),
+      account.fromAddress(mintAuthorityAddress),
       {
-        code: 0,
-        decimals,
-        mint_authority: mintAuthorityAddress,
-        freeze_authority_option:
-          freezeAuthorityAddress === DEFAULT_EMPTY_ADDRESS ? 0 : 1,
-        freeze_authority: freezeAuthorityAddress,
+        accounts: {
+          mint: mint.publicKey,
+          rent: web3.SYSVAR_RENT_PUBKEY,
+        },
+        signers: [],
       },
     )
-    const instruction = new TransactionInstruction({
-      keys: [
-        { pubkey: mint.publicKey, isSigner: false, isWritable: true },
-        { pubkey: SYSVAR_RENT_PUBKEY, isSigner: false, isWritable: false },
-      ],
-      programId: this.spltProgramId,
-      data: layout.toBuffer(),
-    })
-    transaction.add(instruction)
-    transaction.feePayer = payerPublicKey
-    // Sign tx
-    const payerSig = await wallet.rawSignTransaction(transaction)
-    this.addSignature(transaction, payerSig)
-    // Send tx
-    const txId = await this.sendTransaction(transaction)
-    return { txId }
+    return { txId: txIds }
   }
 
   /**
