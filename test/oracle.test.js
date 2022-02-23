@@ -11,26 +11,44 @@ const {
   slippage,
 } = Swap.oracle
 
-const FEE = BigInt(2500000) // 0.25%
-const TAX = BigInt(500000) // 0.05%
+const anchor = require('@project-serum/anchor')
+const { BN } = require('@project-serum/anchor')
 
-const bidAmount = 1000000000n
-const bidReserve = 1000000000000000n
-const askAmount = 1000000000000n
-const askReserve = 300000000000000000n
+const FEE = new BN(2500000) // 0.25%
+const TAX = new BN(500000) // 0.05%
 
-const deltaA = 2000000000n
-const deltaB = 3000000000n
-const reserveA = 5000000000000n
-const reserveB = 200000000000n
-const liquidity = (5000000000000n * 200000000000n).sqrt()
+const bidAmount = new BN(1000000000)
+const bidReserve = new BN(1000000000000000)
+const askAmount = new BN(1000000000000)
+const askReserve = new BN('300000000000000000')
+
+const deltaA = new BN(2000000000)
+const deltaB = new BN(3000000000)
+const reserveA = new BN(5000000000000)
+const reserveB = new BN(200000000000)
+
+function sqrtBN(self) {
+  const one = new BN(1)
+  const two = new BN(2)
+  if (two.gt(self)) return self
+  let bits = new BN(self.toString(2).length + 1).div(two)
+  let start = one.shln(bits.sub(one).toNumber())
+  let end = one.shln(bits.add(one).toNumber())
+  while (end.gt(start)) {
+    end = new BN(start.add(end)).div(two)
+    start = new BN(self.div(end))
+  }
+  return end
+}
+
+const liquidity = sqrtBN(new BN(5000000000000).mul(new BN(200000000000)))
 
 describe('Oracle library', function () {
   describe('Extract & Rake', function () {
     it('Should extract', async function () {
       const [a, b] = extract(deltaA, deltaB, reserveA, reserveB)
-      if (a / b !== reserveA / reserveB) throw new Error('Wrong extract')
-      if (b / a !== reserveB / reserveA) throw new Error('Wrong extract')
+      if (!a.div(b).eq(reserveA.div(reserveB))) throw new Error('Wrong extract')
+      if (!b.div(a).eq(reserveB.div(reserveA))) throw new Error('Wrong extract')
     })
 
     it('Should rake', async function () {
@@ -53,7 +71,8 @@ describe('Oracle library', function () {
   describe('Main', function () {
     it('Should swap', function () {
       const { askAmount } = swap(bidAmount, bidReserve, askReserve, FEE, TAX)
-      if (askAmount !== 299100075901n) throw new Error('Wrong market state')
+      if (!askAmount.eq(new BN(299100075901)))
+        throw new Error('Wrong market state')
     })
 
     it('Should inverse swap', function () {
@@ -66,32 +85,33 @@ describe('Oracle library', function () {
         TAX,
       )
       const { askAmount: upperAskAmount } = swap(
-        bidAmount + 1n,
+        bidAmount.add(new BN(1)),
         bidReserve,
         askReserve,
         FEE,
         TAX,
       )
-      if (lowerAskAmount > askAmount || askAmount > upperAskAmount)
+
+      if (lowerAskAmount.gt(askAmount) || askAmount.gt(upperAskAmount))
         throw new Error('Wrong market state')
     })
 
     it('Should compute slippage', function () {
       const slpg = slippage(bidAmount, bidReserve, askReserve, FEE, TAX)
-      if (slpg !== 1997n) throw new Error('Wrong slippage')
+      if (!slpg.eqn(1997)) throw new Error('Wrong slippage')
     })
 
     it('Should deposit #1', function () {
       const { lpt, newReserveA, newReserveB } = deposit(
         deltaA,
         deltaB,
-        0n,
-        0n,
-        0n,
+        new BN(0),
+        new BN(0),
+        new BN(0),
       )
-      if (lpt !== 2449489742n) throw new Error('Wrong deposit')
-      if (newReserveA !== deltaA) throw new Error('Wrong deposit')
-      if (newReserveB !== deltaB) throw new Error('Wrong deposit')
+      if (!lpt.eq(new BN(2449489742))) throw new Error('Wrong deposit lpt')
+      if (!newReserveA.eq(deltaA)) throw new Error('Wrong deposit newReserveA')
+      if (!newReserveB.eq(deltaB)) throw new Error('Wrong deposit newReserveB')
     })
 
     it('Should deposit #2', function () {
@@ -102,10 +122,13 @@ describe('Oracle library', function () {
         reserveB,
         liquidity,
       )
-      if (lpt !== 400000000n) throw new Error('Wrong deposit')
-      if (newReserveA !== 5002000000000n) throw new Error('Wrong deposit')
-      if (newReserveB !== 200080000000n) throw new Error('Wrong deposit')
-      if (newLiquidity !== liquidity + lpt) throw new Error('Wrong deposit')
+      if (!lpt.eq(new BN(400000000))) throw new Error('Wrong deposit 1')
+      if (!newReserveA.eq(new BN(5002000000000)))
+        throw new Error('Wrong deposit 2')
+      if (!newReserveB.eq(new BN(200080000000)))
+        throw new Error('Wrong deposit 3')
+      if (!newLiquidity.eq(liquidity.add(lpt)))
+        throw new Error('Wrong deposit 4')
     })
 
     it('Should sided deposit #1', function () {
@@ -118,37 +141,42 @@ describe('Oracle library', function () {
         FEE,
         TAX,
       )
-      if (lpt !== 7662569938n) throw new Error('Wrong sided deposit')
-      if (newReserveA !== 5001981965463n) throw new Error('Wrong sided deposit')
-      if (newReserveB !== 203000000000n) throw new Error('Wrong sided deposit')
-      if (newLiquidity !== liquidity + lpt)
-        throw new Error('Wrong sided deposit')
+
+      if (!lpt.eq(new BN(7662569938))) throw new Error('Wrong sided deposit 1')
+      if (!newReserveA.eq(new BN(5001981965463)))
+        throw new Error('Wrong sided deposit 2')
+      if (!newReserveB.eq(new BN(203000000000)))
+        throw new Error('Wrong sided deposit 3')
+      if (!newLiquidity.eq(liquidity.add(lpt)))
+        throw new Error('Wrong sided deposit 4')
     })
 
     it('Should withdraw #1', function () {
       const { deltaA, deltaB, newReserveA, newReserveB } = withdraw(
-        10n,
-        100n,
+        new BN(10),
+        new BN(100),
         reserveA,
         reserveB,
       )
-      if (deltaA !== 500000000000n) throw new Error('Wrong withdraw')
-      if (deltaB !== 20000000000n) throw new Error('Wrong withdraw')
-      if (newReserveA !== 4500000000000n) throw new Error('Wrong withdraw')
-      if (newReserveB !== 180000000000n) throw new Error('Wrong withdraw')
+      if (!deltaA.eq(new BN(500000000000))) throw new Error('Wrong withdraw')
+      if (!deltaB.eq(new BN(20000000000))) throw new Error('Wrong withdraw')
+      if (!newReserveA.eq(new BN(4500000000000)))
+        throw new Error('Wrong withdraw')
+      if (!newReserveB.eq(new BN(180000000000)))
+        throw new Error('Wrong withdraw')
     })
 
     it('Should withdraw #2', function () {
       const { deltaA, deltaB, newReserveA, newReserveB } = withdraw(
-        100n,
-        100n,
+        new BN(100),
+        new BN(100),
         reserveA,
         reserveB,
       )
-      if (deltaA !== reserveA) throw new Error('Wrong withdraw')
-      if (deltaB !== reserveB) throw new Error('Wrong withdraw')
-      if (newReserveA !== 0n) throw new Error('Wrong withdraw')
-      if (newReserveB !== 0n) throw new Error('Wrong withdraw')
+      if (!deltaA.eq(reserveA)) throw new Error('Wrong withdraw')
+      if (!deltaB.eq(reserveB)) throw new Error('Wrong withdraw')
+      if (!newReserveA.eq(new BN(0))) throw new Error('Wrong withdraw')
+      if (!newReserveB.eq(new BN(0))) throw new Error('Wrong withdraw')
     })
   })
 })

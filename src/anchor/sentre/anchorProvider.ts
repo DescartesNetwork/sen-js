@@ -4,31 +4,32 @@ import { WalletInterface } from '../../rawWallet'
 
 export const getAnchorProvider = async (
   connection: Connection,
-  wallet?: WalletInterface,
+  wallet: WalletInterface,
 ): Promise<Provider> => {
-  if (wallet) {
-    const signAllTransactions = async (transactions: Transaction[]) => {
-      const signedTransactions = []
-      for (const transaction of transactions) {
-        const signedTransaction = await wallet.signTransaction(transaction)
-        signedTransactions.push(signedTransaction)
-      }
-      return signedTransactions
+  const signAllTransactions = async (transactions: Transaction[]) => {
+    const signedTransactions = []
+    for (const transaction of transactions) {
+      const signedTransaction = await wallet.signTransaction(transaction)
+      signedTransactions.push(signedTransaction)
     }
-
-    const publicKey = await wallet.getAddress()
-    return new Provider(
-      connection,
-      {
-        publicKey: new PublicKey(publicKey),
-        signTransaction: wallet.signTransaction,
-        signAllTransactions,
-      },
-      {
-        commitment: 'confirmed',
-      },
-    )
+    return signedTransactions
   }
+  const publicKey = await wallet.getAddress()
+  return new Provider(
+    connection,
+    {
+      publicKey: new PublicKey(publicKey),
+      signTransaction: wallet.signTransaction,
+      signAllTransactions,
+    },
+    {
+      skipPreflight: true,
+      commitment: 'confirmed',
+    },
+  )
+}
+
+export const getRawAnchorProvider = (connection: Connection): Provider => {
   return new Provider(
     connection,
     {

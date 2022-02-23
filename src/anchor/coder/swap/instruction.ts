@@ -22,6 +22,30 @@ export class SwapInstructionCoder implements InstructionCoder {
       case 'removeLiquidity': {
         return encodeRemoveLiquidity(ix)
       }
+      case 'wrapSol': {
+        return encodeWrapSol(ix)
+      }
+      case 'swap': {
+        return encodeSwap(ix)
+      }
+      case 'route': {
+        return encodeRoute(ix)
+      }
+      case 'updateFee': {
+        return encodeUpdateFee(ix)
+      }
+      case 'freezePool': {
+        return encodeFreezePool(ix)
+      }
+      case 'thawPool': {
+        return encodeThawPool(ix)
+      }
+      case 'transferTaxman': {
+        return encodeTransferTaxman(ix)
+      }
+      case 'transferPoolOwnership': {
+        return encodeTransferPoolOwnership(ix)
+      }
       default: {
         throw new Error(`Invalid instruction: ${ixName}`)
       }
@@ -66,6 +90,58 @@ function encodeRemoveLiquidity({ lpt }: any): Buffer {
   return data
 }
 
+function encodeWrapSol({ amount }: any): Buffer {
+  const data = encodeData({
+    wrapSol: { amount },
+  })
+  return data
+}
+
+function encodeSwap({ amount, limit }: any): Buffer {
+  const data = encodeData({
+    swap: { amount, limit },
+  })
+  return data
+}
+
+function encodeRoute({ amount, limit }: any): Buffer {
+  const data = encodeData({
+    route: { amount, limit },
+  })
+  return data
+}
+
+function encodeUpdateFee({ fee_ratio, tax_ratio }: any): Buffer {
+  const data = encodeData({
+    updateFee: { fee_ratio, tax_ratio },
+  })
+  return data
+}
+function encodeFreezePool(_: any): Buffer {
+  const data = encodeData({
+    freezePool: {},
+  })
+  return data
+}
+function encodeThawPool(_: any): Buffer {
+  const data = encodeData({
+    thawPool: {},
+  })
+  return data
+}
+function encodeTransferTaxman(_: any): Buffer {
+  const data = encodeData({
+    transferTaxman: {},
+  })
+  return data
+}
+function encodeTransferPoolOwnership(_: any): Buffer {
+  const data = encodeData({
+    transferPoolOwnership: {},
+  })
+  return data
+}
+
 const LAYOUT = BufferLayout.union(BufferLayout.u8('instruction'))
 LAYOUT.addVariant(
   InstructionCode.InitializePool.valueOf(),
@@ -97,6 +173,61 @@ LAYOUT.addVariant(
   InstructionCode.RemoveLiquidity.valueOf(),
   BufferLayout.struct([BufferLayout.nu64('lpt')]),
   'removeLiquidity',
+)
+LAYOUT.addVariant(
+  InstructionCode.WrapSol.valueOf(),
+  BufferLayout.struct([BufferLayout.nu64('amount')]),
+  'wrapSol',
+)
+
+LAYOUT.addVariant(
+  InstructionCode.Swap.valueOf(),
+  BufferLayout.struct([
+    BufferLayout.nu64('amount'),
+    BufferLayout.nu64('limit'),
+  ]),
+  'swap',
+)
+
+LAYOUT.addVariant(
+  InstructionCode.Routing.valueOf(),
+  BufferLayout.struct([
+    BufferLayout.nu64('amount'),
+    BufferLayout.nu64('limit'),
+  ]),
+  'route',
+)
+
+LAYOUT.addVariant(
+  InstructionCode.UpdateFee.valueOf(),
+  BufferLayout.struct([
+    BufferLayout.nu64('fee_ratio'),
+    BufferLayout.nu64('tax_ratio'),
+  ]),
+  'updateFee',
+)
+
+LAYOUT.addVariant(
+  InstructionCode.FreezePool.valueOf(),
+  BufferLayout.struct([]),
+  'freezePool',
+)
+LAYOUT.addVariant(
+  InstructionCode.ThawPool.valueOf(),
+  BufferLayout.struct([]),
+  'thawPool',
+)
+
+LAYOUT.addVariant(
+  InstructionCode.TransferTaxman.valueOf(),
+  BufferLayout.struct([]),
+  'transferTaxman',
+)
+
+LAYOUT.addVariant(
+  InstructionCode.TransferOwnership.valueOf(),
+  BufferLayout.struct([]),
+  'transferPoolOwnership',
 )
 
 function encodeData(instruction: any): Buffer {

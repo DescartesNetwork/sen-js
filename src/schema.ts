@@ -1,3 +1,5 @@
+import { BN } from '@project-serum/anchor'
+
 export type MintData = {
   mint_authority_option: number
   mint_authority: string
@@ -36,12 +38,12 @@ export type PoolData = {
   taxman: string
   mint_a: string
   treasury_a: string
-  reserve_a: bigint
+  reserve_a: BN
   mint_b: string
   treasury_b: string
-  reserve_b: bigint
-  fee_ratio: bigint
-  tax_ratio: bigint
+  reserve_b: BN
+  fee_ratio: BN
+  tax_ratio: BN
 }
 
 export type DebtData = {
