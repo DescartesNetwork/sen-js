@@ -3,11 +3,11 @@ import { BN } from '@project-serum/anchor'
 function sqrtBN(self: BN) {
   const one = new BN(1)
   const two = new BN(2)
-  if (self < two) return self
+  if (two.gt(self)) return self
   let bits = new BN(self.toString(2).length + 1).div(two)
   let start = one.shln(bits.sub(one).toNumber())
   let end = one.shln(bits.add(one).toNumber())
-  while (start < end) {
+  while (end.gt(start)) {
     end = new BN(start.add(end)).div(two)
     start = new BN(self.div(end))
   }
@@ -23,8 +23,8 @@ const oracle = {
     if (a.isZero() || b.isZero()) return [new BN(0), new BN(0)]
     const l = a.mul(reserveB)
     const r = b.mul(reserveA)
-    if (l > r) return [r.div(reserveB), b]
-    if (l < r) return [a, l.div(reserveA)]
+    if (l.gt(r)) return [r.div(reserveB), b]
+    if (r.gt(l)) return [a, l.div(reserveA)]
     return [a, b]
   },
 
@@ -36,7 +36,7 @@ const oracle = {
     taxRatio: BN,
   ) => {
     let delta = amount
-    let bidAmount = amount.divn(2)
+    let bidAmount = amount.div(new BN(2))
     while (true) {
       const { askAmount, newReserveBid, newReserveAsk } = oracle.swap(
         bidAmount,
@@ -47,19 +47,17 @@ const oracle = {
       )
       const remainer = amount.sub(bidAmount)
       const expectedRemainer = askAmount.mul(newReserveBid).div(newReserveAsk)
-      const nextDelta =
-        remainer > expectedRemainer
-          ? remainer.sub(expectedRemainer).divn(2)
-          : expectedRemainer.sub(remainer).divn(2)
-      if (delta > nextDelta) {
+      const nextDelta = remainer.gt(expectedRemainer)
+        ? remainer.sub(expectedRemainer).div(new BN(2))
+        : expectedRemainer.sub(remainer).div(new BN(2))
+      if (delta.gt(nextDelta)) {
         delta = nextDelta
       } else {
         break
       }
-      bidAmount =
-        remainer > expectedRemainer
-          ? bidAmount.add(delta)
-          : bidAmount.sub(delta)
+      bidAmount = remainer.gt(expectedRemainer)
+        ? bidAmount.add(delta)
+        : bidAmount.sub(delta)
     }
     return bidAmount
   },
@@ -71,7 +69,7 @@ const oracle = {
     reserveB: BN,
     liquidity: BN,
   ) => {
-    if (!reserveA && !reserveB) {
+    if (reserveA.isZero() && reserveB.isZero()) {
       const lpt = sqrtBN(deltaA.mul(deltaB))
       return {
         deltaA,
@@ -109,7 +107,8 @@ const oracle = {
     } = oracle.deposit(deltaA, deltaB, reserveA, reserveB, liquidity)
     const aRemainer = deltaA.sub(unrakedAStar)
     const bRemainer = deltaB.sub(unrakedBStar)
-    if (aRemainer > new BN(0)) {
+
+    if (aRemainer.gt(new BN(0))) {
       const bidAmount = oracle.rake(
         aRemainer,
         unrakedReserveA,
@@ -148,7 +147,7 @@ const oracle = {
       }
     }
 
-    if (bRemainer > new BN(0)) {
+    if (bRemainer.gt(new BN(0))) {
       const bidAmount = oracle.rake(
         bRemainer,
         unrakedReserveB,
@@ -177,6 +176,7 @@ const oracle = {
         newReserveBid,
         unrakedLiquidity,
       )
+
       return {
         deltaA: unrakedAStar.add(rakedAStar).sub(askAmount),
         deltaB: unrakedBStar.add(bidAmount).add(rakedBStar),
@@ -240,8 +240,7 @@ const oracle = {
     taxRatio: BN,
   ) => {
     const tempAskAmount = askAmount
-      .mul(PRECISION)
-      .pow(new BN(2))
+      .mul(PRECISION.pow(new BN(2)))
       .div(PRECISION.sub(taxRatio))
       .div(PRECISION.sub(feeRatio))
     const tempReserveAsk = reserveAsk.sub(tempAskAmount)
