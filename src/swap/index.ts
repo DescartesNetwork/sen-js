@@ -1,4 +1,4 @@
-import { SwapProgram } from './../anchor/sentre/swapProgram'
+import { SwapIDL, SwapProgram } from './../anchor/sentre/swapProgram'
 import { SentreProgram } from './../anchor/sentre/index'
 import {
   PublicKey,
@@ -24,10 +24,13 @@ import {
 import { WalletInterface } from '../rawWallet'
 import oracle from './oracle'
 import { InstructionCode } from './constant'
-import { Program, Provider, web3, BN } from '@project-serum/anchor'
-import { getAnchorProvider } from '../anchor/sentre/anchorProvider'
+import { Program, web3, BN } from '@project-serum/anchor'
+import {
+  getAnchorProvider,
+  getRawAnchorProvider,
+} from '../anchor/sentre/anchorProvider'
+import { TypeDef } from '@project-serum/anchor/dist/cjs/program/namespace/types'
 
-const soproxABI = require('soprox-abi')
 const xor = require('buffer-xor')
 
 export type SwapAccountChangeInfo = {
@@ -92,6 +95,12 @@ class Swap extends Tx {
     return swapProgram
   }
 
+  getRawSwapProgram() {
+    const anchorProvider = getRawAnchorProvider(this._splt.connection)
+    const swapProgram: Program<SwapProgram> = SentreProgram.swap(anchorProvider)
+    return swapProgram
+  }
+
   /**
    * Watch account changes
    * @param callback
@@ -109,8 +118,10 @@ class Swap extends Tx {
       accountId,
       accountInfo: { data: buf },
     }: KeyedAccountInfo) => {
+      const swapProgram = this.getRawSwapProgram()
       const address = accountId.toBase58()
-      const poolSpace = new soproxABI.struct(schema.POOL_SCHEMA).space
+      const poolSpace = swapProgram.account.pool.size
+
       let type = null
       let data = {}
       if (buf.length === poolSpace) {
@@ -293,10 +304,43 @@ class Swap extends Tx {
    * @returns
    */
   parsePoolData = (data: Buffer): PoolData => {
-    const layout = new soproxABI.struct(schema.POOL_SCHEMA)
-    if (data.length !== layout.space) throw new Error('Unmatched buffer length')
-    layout.fromBuffer(data)
-    return layout.value
+    const swapProgram = this.getRawSwapProgram()
+    const poolData = swapProgram.coder.accounts.decode('pool', data)
+    return this.convertPoolData(poolData)
+  }
+
+  convertPoolData = (
+    poolData: TypeDef<SwapProgram['accounts']['0'], SwapProgram>,
+  ): PoolData => {
+    const {
+      fee_ratio,
+      mint_a,
+      mint_b,
+      mint_lpt,
+      owner,
+      reserve_a,
+      reserve_b,
+      state,
+      tax_ratio,
+      taxman,
+      treasury_a,
+      treasury_b,
+    } = poolData
+
+    return {
+      fee_ratio,
+      mint_a: mint_a.toBase58(),
+      mint_b: mint_b.toBase58(),
+      mint_lpt: mint_lpt.toBase58(),
+      owner: owner.toBase58(),
+      reserve_a,
+      reserve_b,
+      state,
+      tax_ratio,
+      taxman: taxman.toBase58(),
+      treasury_a: treasury_a.toBase58(),
+      treasury_b: treasury_b.toBase58(),
+    }
   }
 
   /**
@@ -307,12 +351,30 @@ class Swap extends Tx {
   getPoolData = async (poolAddress: string): Promise<PoolData> => {
     if (!account.isAddress(poolAddress)) throw new Error('Invalid pool address')
     const poolPublicKey = account.fromAddress(poolAddress)
-
     const swapProgram = await this.getSwapProgram()
     const data = await swapProgram.account.pool.fetch(poolPublicKey)
 
     if (!data) throw new Error('Invalid pool address')
-    return data as any
+    return this.convertPoolData(data)
+  }
+
+  /**
+   * Get all pool data
+   * @param
+   * @returns Record<string:poolAddress, PoolData>
+   */
+  getAllPoolsData = async (
+    filter: Buffer | GetProgramAccountsFilter[] | undefined,
+  ): Promise<Record<string, PoolData>> => {
+    const swapProgram = await this.getSwapProgram()
+    const data = await swapProgram.account.pool.all(filter)
+    const allPoolData: Record<string, PoolData> = {}
+    for (const poolData of data) {
+      allPoolData[poolData.publicKey.toBase58()] = this.convertPoolData(
+        poolData.account,
+      )
+    }
+    return allPoolData
   }
 
   /**
@@ -817,27 +879,10 @@ class Swap extends Tx {
     const payerAddress = await wallet.getAddress()
     const payerPublicKey = account.fromAddress(payerAddress)
     // Build tx
-    let transaction = new Transaction()
-    transaction = await this.addRecentCommitment(transaction)
-    const layout = new soproxABI.struct([{ key: 'code', type: 'u8' }], {
-      code: InstructionCode.TransferTaxman.valueOf(),
+    const swapProgram = await this.getSwapProgram(wallet)
+    const txId = await swapProgram.rpc.transferTaxman({
+      accounts: { newTaxmanPublicKey, payerPublicKey, poolPublicKey },
     })
-    const instruction = new TransactionInstruction({
-      keys: [
-        { pubkey: payerPublicKey, isSigner: true, isWritable: false },
-        { pubkey: poolPublicKey, isSigner: false, isWritable: true },
-        { pubkey: newTaxmanPublicKey, isSigner: false, isWritable: false },
-      ],
-      programId: this.swapProgramId,
-      data: layout.toBuffer(),
-    })
-    transaction.add(instruction)
-    transaction.feePayer = payerPublicKey
-    // Sign tx
-    const payerSig = await wallet.rawSignTransaction(transaction)
-    this.addSignature(transaction, payerSig)
-    // Send tx
-    const txId = await this.sendTransaction(transaction)
     return { txId }
   }
 
@@ -875,27 +920,15 @@ class Swap extends Tx {
     const payerAddress = await wallet.getAddress()
     const payerPublicKey = account.fromAddress(payerAddress)
     // Build tx
-    let transaction = new Transaction()
-    transaction = await this.addRecentCommitment(transaction)
-    const layout = new soproxABI.struct([{ key: 'code', type: 'u8' }], {
-      code: InstructionCode.TransferOwnership.valueOf(),
+    const swapProgram = await this.getSwapProgram(wallet)
+
+    const txId = await swapProgram.rpc.transferPoolOwnership({
+      accounts: {
+        newOwnerPublicKey,
+        payerPublicKey,
+        poolPublicKey,
+      },
     })
-    const instruction = new TransactionInstruction({
-      keys: [
-        { pubkey: payerPublicKey, isSigner: true, isWritable: false },
-        { pubkey: poolPublicKey, isSigner: false, isWritable: true },
-        { pubkey: newOwnerPublicKey, isSigner: false, isWritable: false },
-      ],
-      programId: this.swapProgramId,
-      data: layout.toBuffer(),
-    })
-    transaction.add(instruction)
-    transaction.feePayer = payerPublicKey
-    // Sign tx
-    const payerSig = await wallet.rawSignTransaction(transaction)
-    this.addSignature(transaction, payerSig)
-    // Send tx
-    const txId = await this.sendTransaction(transaction)
     return { txId }
   }
 

@@ -40,3 +40,15 @@ export const getAnchorProvider = async (
     {},
   )
 }
+
+export const getRawAnchorProvider = (connection: Connection): Provider => {
+  return new Provider(
+    connection,
+    {
+      publicKey: '' as any,
+      signTransaction: (): any => {},
+      signAllTransactions: (): any => {},
+    },
+    {},
+  )
+}

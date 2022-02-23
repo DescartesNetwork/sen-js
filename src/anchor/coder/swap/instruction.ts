@@ -40,6 +40,12 @@ export class SwapInstructionCoder implements InstructionCoder {
       case 'thawPool': {
         return encodeThawPool(ix)
       }
+      case 'transferTaxman': {
+        return encodeTransferTaxman(ix)
+      }
+      case 'transferPoolOwnership': {
+        return encodeTransferPoolOwnership(ix)
+      }
       default: {
         throw new Error(`Invalid instruction: ${ixName}`)
       }
@@ -123,6 +129,18 @@ function encodeThawPool(_: any): Buffer {
   })
   return data
 }
+function encodeTransferTaxman(_: any): Buffer {
+  const data = encodeData({
+    transferTaxman: {},
+  })
+  return data
+}
+function encodeTransferPoolOwnership(_: any): Buffer {
+  const data = encodeData({
+    transferPoolOwnership: {},
+  })
+  return data
+}
 
 const LAYOUT = BufferLayout.union(BufferLayout.u8('instruction'))
 LAYOUT.addVariant(
@@ -198,6 +216,18 @@ LAYOUT.addVariant(
   InstructionCode.ThawPool.valueOf(),
   BufferLayout.struct([]),
   'thawPool',
+)
+
+LAYOUT.addVariant(
+  InstructionCode.TransferTaxman.valueOf(),
+  BufferLayout.struct([]),
+  'transferTaxman',
+)
+
+LAYOUT.addVariant(
+  InstructionCode.TransferOwnership.valueOf(),
+  BufferLayout.struct([]),
+  'transferPoolOwnership',
 )
 
 function encodeData(instruction: any): Buffer {

@@ -517,6 +517,48 @@ export type SwapProgram = {
       ]
       args: []
     },
+    {
+      name: 'transferTaxman'
+      accounts: [
+        {
+          name: 'payerPublicKey'
+          isMut: false
+          isSigner: true
+        },
+        {
+          name: 'poolPublicKey'
+          isMut: true
+          isSigner: false
+        },
+        {
+          name: 'newTaxmanPublicKey'
+          isMut: false
+          isSigner: false
+        },
+      ]
+      args: []
+    },
+    {
+      name: 'transferPoolOwnership'
+      accounts: [
+        {
+          name: 'payerPublicKey'
+          isMut: false
+          isSigner: true
+        },
+        {
+          name: 'poolPublicKey'
+          isMut: true
+          isSigner: false
+        },
+        {
+          name: 'newOwnerPublicKey'
+          isMut: false
+          isSigner: false
+        },
+      ]
+      args: []
+    },
   ]
   accounts: [
     {
@@ -1040,6 +1082,48 @@ export const SwapIDL: SwapProgram = {
         {
           name: 'poolPublicKey',
           isMut: true,
+          isSigner: false,
+        },
+      ],
+      args: [],
+    },
+    {
+      name: 'transferTaxman',
+      accounts: [
+        {
+          name: 'payerPublicKey',
+          isMut: false,
+          isSigner: true,
+        },
+        {
+          name: 'poolPublicKey',
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: 'newTaxmanPublicKey',
+          isMut: false,
+          isSigner: false,
+        },
+      ],
+      args: [],
+    },
+    {
+      name: 'transferPoolOwnership',
+      accounts: [
+        {
+          name: 'payerPublicKey',
+          isMut: false,
+          isSigner: true,
+        },
+        {
+          name: 'poolPublicKey',
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: 'newOwnerPublicKey',
+          isMut: false,
           isSigner: false,
         },
       ],

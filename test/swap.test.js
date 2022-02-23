@@ -210,7 +210,7 @@ describe('Swap library', function () {
         ),
       )
 
-      await swap.route(
+      const txId = await swap.route(
         new anchor.BN(1000),
         new anchor.BN(0),
         [
@@ -227,6 +227,7 @@ describe('Swap library', function () {
         ],
         wallet,
       )
+      console.log('txId', txId)
     })
 
     it('Should be failed routing because of treasury account not matched', async function () {
