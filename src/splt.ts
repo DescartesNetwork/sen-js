@@ -1,6 +1,5 @@
 import {
   Transaction,
-  SystemProgram,
   TransactionInstruction,
   SYSVAR_RENT_PUBKEY,
   PublicKey,
@@ -8,6 +7,11 @@ import {
   GetProgramAccountsFilter,
   Keypair,
 } from '@solana/web3.js'
+import {
+  ASSOCIATED_TOKEN_PROGRAM_ID,
+  createAssociatedTokenAccountInstruction,
+  TOKEN_PROGRAM_ID,
+} from '@solana/spl-token'
 
 import Tx from './core/tx'
 import account from './account'
@@ -25,7 +29,7 @@ import {
   getAnchorProvider,
   getRawAnchorProvider,
 } from './anchor/sentre/anchorProvider'
-import { Provider, Spl, SplToken, web3 } from '@project-serum/anchor'
+import { web3 } from '@project-serum/anchor'
 
 const soproxABI = require('soprox-abi')
 
@@ -330,9 +334,6 @@ class SPLT extends Tx {
       throw new Error('Invalid owner address')
     const mintPublicKey = account.fromAddress(mintAddress)
     const ownerPublicKey = account.fromAddress(ownerAddress)
-    // Get payer
-    const payerAddress = await wallet.getAddress()
-    const payerPublicKey = account.fromAddress(payerAddress)
     // Generate the associated account address
     const accountAddress = await this.deriveAssociatedAddress(
       ownerAddress,
@@ -340,28 +341,17 @@ class SPLT extends Tx {
     )
     const accountPublicKey = account.fromAddress(accountAddress)
     // Build tx
-    let transaction = new Transaction()
-    transaction = await this.addRecentCommitment(transaction)
-    const instruction = new TransactionInstruction({
-      keys: [
-        { pubkey: payerPublicKey, isSigner: true, isWritable: true },
-        { pubkey: accountPublicKey, isSigner: false, isWritable: true },
-        { pubkey: ownerPublicKey, isSigner: false, isWritable: false },
-        { pubkey: mintPublicKey, isSigner: false, isWritable: false },
-        { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
-        { pubkey: this.spltProgramId, isSigner: false, isWritable: false },
-        { pubkey: SYSVAR_RENT_PUBKEY, isSigner: false, isWritable: false },
-      ],
-      programId: this.splataProgramId,
-      data: Buffer.from([]),
-    })
-    transaction.add(instruction)
-    transaction.feePayer = payerPublicKey
-    // Sign tx
-    const payerSig = await wallet.rawSignTransaction(transaction)
-    this.addSignature(transaction, payerSig)
-    // Send tx
-    const txId = await this.sendTransaction(transaction)
+    const splProgram = await this.getSplProgram(wallet)
+    const instruction = createAssociatedTokenAccountInstruction(
+      splProgram.provider.wallet.publicKey,
+      accountPublicKey,
+      ownerPublicKey,
+      mintPublicKey,
+      TOKEN_PROGRAM_ID,
+      ASSOCIATED_TOKEN_PROGRAM_ID,
+    )
+    let transaction = new web3.Transaction().add(instruction)
+    const txId = await splProgram.provider.send(transaction)
     return { accountAddress, txId }
   }
 
