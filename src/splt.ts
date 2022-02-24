@@ -21,7 +21,10 @@ import {
 } from './default'
 import { WalletInterface } from './rawWallet'
 import { program as splTokenProgram } from '@project-serum/anchor/dist/cjs/spl/token'
-import { getAnchorProvider } from './anchor/sentre/anchorProvider'
+import {
+  getAnchorProvider,
+  getRawAnchorProvider,
+} from './anchor/sentre/anchorProvider'
 import { Provider, Spl, SplToken, web3 } from '@project-serum/anchor'
 
 const soproxABI = require('soprox-abi')
@@ -112,6 +115,16 @@ class SPLT extends Tx {
     )
   }
 
+  async getSplProgram(wallet: WalletInterface) {
+    const anchorProvider = await getAnchorProvider(this.connection, wallet)
+    return splTokenProgram(anchorProvider)
+  }
+
+  getRawSplProgram() {
+    const anchorProvider = getRawAnchorProvider(this.connection)
+    return splTokenProgram(anchorProvider)
+  }
+
   /**
    * Watch account changes
    * @param callback
@@ -158,6 +171,7 @@ class SPLT extends Tx {
         data: data as AccountData | MintData | MultisigData,
       })
     }
+
     return this.connection.onProgramAccountChange(
       this.spltProgramId,
       cb,
