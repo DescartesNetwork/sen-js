@@ -29,7 +29,7 @@ import {
   getAnchorProvider,
   getRawAnchorProvider,
 } from './anchor/sentre/anchorProvider'
-import { web3 } from '@project-serum/anchor'
+import { web3, BN } from '@project-serum/anchor'
 
 const soproxABI = require('soprox-abi')
 
@@ -625,7 +625,7 @@ class SPLT extends Tx {
    * @returns
    */
   mintTo = async (
-    amount: bigint,
+    amount: BN,
     mintAddress: string,
     dstAddress: string,
     wallet: WalletInterface,
@@ -635,35 +635,18 @@ class SPLT extends Tx {
       throw new Error('Invalid destination address')
     const mintPublicKey = account.fromAddress(mintAddress)
     const dstPublicKey = account.fromAddress(dstAddress)
-    // Get payer
-    const payerAddress = await wallet.getAddress()
-    const payerPublicKey = account.fromAddress(payerAddress)
+
     // Build tx
-    let transaction = new Transaction()
-    transaction = await this.addRecentCommitment(transaction)
-    const layout = new soproxABI.struct(
-      [
-        { key: 'code', type: 'u8' },
-        { key: 'amount', type: 'u64' },
-      ],
-      { code: 7, amount },
-    )
-    const instruction = new TransactionInstruction({
-      keys: [
-        { pubkey: mintPublicKey, isSigner: false, isWritable: true },
-        { pubkey: dstPublicKey, isSigner: false, isWritable: true },
-        { pubkey: payerPublicKey, isSigner: true, isWritable: false },
-      ],
-      programId: this.spltProgramId,
-      data: layout.toBuffer(),
+    const splProgram = await this.getSplProgram(wallet)
+    const txId = await splProgram.rpc.mintTo(amount, {
+      accounts: {
+        mint: mintPublicKey,
+        to: dstPublicKey,
+        authority: splProgram.provider.wallet.publicKey,
+      },
+      signers: [],
     })
-    transaction.add(instruction)
-    transaction.feePayer = payerPublicKey
-    // Sign tx
-    const payerSig = await wallet.rawSignTransaction(transaction)
-    this.addSignature(transaction, payerSig)
-    // Send tx
-    const txId = await this.sendTransaction(transaction)
+
     return { txId }
   }
 
