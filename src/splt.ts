@@ -1,3 +1,4 @@
+import { TypeDef } from '@project-serum/anchor/dist/cjs/program/namespace/types'
 import {
   Transaction,
   TransactionInstruction,
@@ -30,6 +31,7 @@ import {
   getRawAnchorProvider,
 } from './anchor/sentre/anchorProvider'
 import { web3, BN } from '@project-serum/anchor'
+import { SplToken } from '@project-serum/anchor/dist/cjs/spl/token'
 
 const soproxABI = require('soprox-abi')
 
@@ -206,6 +208,19 @@ class SPLT extends Tx {
     return layout.value
   }
 
+  convertMintData = (
+    mintData: TypeDef<SplToken['accounts']['0'], SplToken>,
+  ): MintData => {
+    const { mintAuthority, decimals, freezeAuthority, isInitialized, supply } =
+      mintData
+    return {
+      mint_authority: (mintAuthority as PublicKey).toBase58(),
+      supply,
+      decimals,
+      is_initialized: isInitialized,
+      freeze_authority: (freezeAuthority as PublicKey).toBase58(),
+    }
+  }
   /**
    * Get mint data
    * @param mintAddress
@@ -214,9 +229,9 @@ class SPLT extends Tx {
   getMintData = async (mintAddress: string): Promise<MintData> => {
     if (!account.isAddress(mintAddress)) throw new Error('Invalid mint address')
     const mintPublicKey = account.fromAddress(mintAddress)
-    const { data } = (await this.connection.getAccountInfo(mintPublicKey)) || {}
-    if (!data) throw new Error(`Cannot read data of ${mintAddress}`)
-    return this.parseMintData(data)
+    const sptProgram = this.getRawSplProgram()
+    const mintData = await sptProgram.account.Mint.fetch(mintPublicKey)
+    return this.convertMintData(mintData)
   }
 
   /**
@@ -659,7 +674,7 @@ class SPLT extends Tx {
    * @returns
    */
   burn = async (
-    amount: bigint,
+    amount: BN,
     srcAddress: string,
     mintAddress: string,
     wallet: WalletInterface,
@@ -669,35 +684,17 @@ class SPLT extends Tx {
     if (!account.isAddress(mintAddress)) throw new Error('Invalid mint address')
     const srcPublicKey = account.fromAddress(srcAddress)
     const mintPublicKey = account.fromAddress(mintAddress)
-    // Get payer
-    const payerAddress = await wallet.getAddress()
-    const payerPublicKey = account.fromAddress(payerAddress)
     // Build tx
-    let transaction = new Transaction()
-    transaction = await this.addRecentCommitment(transaction)
-    const layout = new soproxABI.struct(
-      [
-        { key: 'code', type: 'u8' },
-        { key: 'amount', type: 'u64' },
-      ],
-      { code: 8, amount },
-    )
-    const instruction = new TransactionInstruction({
-      keys: [
-        { pubkey: srcPublicKey, isSigner: false, isWritable: true },
-        { pubkey: mintPublicKey, isSigner: false, isWritable: true },
-        { pubkey: payerPublicKey, isSigner: true, isWritable: false },
-      ],
-      programId: this.spltProgramId,
-      data: layout.toBuffer(),
+    const splProgram = await this.getSplProgram(wallet)
+    const txId = await splProgram.rpc.burn(amount, {
+      accounts: {
+        source: srcPublicKey,
+        mint: mintPublicKey,
+        authority: splProgram.provider.wallet.publicKey,
+      },
+      signers: [],
     })
-    transaction.add(instruction)
-    transaction.feePayer = payerPublicKey
-    // Sign tx
-    const payerSig = await wallet.rawSignTransaction(transaction)
-    this.addSignature(transaction, payerSig)
-    // Send tx
-    const txId = await this.sendTransaction(transaction)
+
     return { txId }
   }
 

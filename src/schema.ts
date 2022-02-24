@@ -1,12 +1,10 @@
 import { BN } from '@project-serum/anchor'
 
 export type MintData = {
-  mint_authority_option: number
   mint_authority: string
-  supply: bigint
+  supply: BN
   decimals: number
   is_initialized: boolean
-  freeze_authority_option: number
   freeze_authority: string
 }
 
