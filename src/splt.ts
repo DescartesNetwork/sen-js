@@ -11,6 +11,7 @@ import {
 import {
   ASSOCIATED_TOKEN_PROGRAM_ID,
   createAssociatedTokenAccountInstruction,
+  createInitializeMultisigInstruction,
   TOKEN_PROGRAM_ID,
 } from '@solana/spl-token'
 
@@ -389,42 +390,18 @@ class SPLT extends Tx {
     for (let signerAddress of signerAddresses)
       if (!account.isAddress(signerAddress))
         throw new Error('Invalid signer address')
-    // Get payer
-    const payerAddress = await wallet.getAddress()
-    const payerPublicKey = account.fromAddress(payerAddress)
     // Rent multisig
     const multiSigSpace = new soproxABI.struct(schema.MULTISIG_SCHEMA).space
     await this.rentAccount(wallet, multiSig, multiSigSpace, this.spltProgramId)
     // Build tx
-    let transaction = new Transaction()
-    transaction = await this.addRecentCommitment(transaction)
-    const layout = new soproxABI.struct(
-      [
-        { key: 'code', type: 'u8' },
-        { key: 'm', type: 'u8' },
-      ],
-      { code: 2, m: minimumSig },
+    const spltProgram = await this.getSplProgram(wallet)
+    const instruction = createInitializeMultisigInstruction(
+      multiSig.publicKey,
+      signerAddresses.map((addr) => account.fromAddress(addr)),
+      minimumSig,
     )
-    const instruction = new TransactionInstruction({
-      keys: [
-        { pubkey: multiSig.publicKey, isSigner: false, isWritable: true },
-        { pubkey: SYSVAR_RENT_PUBKEY, isSigner: false, isWritable: false },
-        ...signerAddresses.map((signerAddress) => ({
-          pubkey: account.fromAddress(signerAddress),
-          isSigner: false,
-          isWritable: false,
-        })),
-      ],
-      programId: this.spltProgramId,
-      data: layout.toBuffer(),
-    })
-    transaction.add(instruction)
-    transaction.feePayer = payerPublicKey
-    // Sign tx
-    const payerSig = await wallet.rawSignTransaction(transaction)
-    this.addSignature(transaction, payerSig)
-    // Send tx
-    const txId = await this.sendTransaction(transaction)
+    const transaction = new web3.Transaction().add(instruction)
+    const txId = await spltProgram.provider.send(transaction, [])
     return { txId }
   }
 
