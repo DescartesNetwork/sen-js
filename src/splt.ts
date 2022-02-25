@@ -649,32 +649,15 @@ class SPLT extends Tx {
   ): Promise<{ txId: string }> => {
     if (!account.isAddress(targetAddress))
       throw new Error('Invalid target address')
-    const targetPublicKey = account.fromAddress(targetAddress)
-    // Get payer
-    const payerAddress = await wallet.getAddress()
-    const payerPublicKey = account.fromAddress(payerAddress)
     // Build tx
-    let transaction = new Transaction()
-    transaction = await this.addRecentCommitment(transaction)
-    const layout = new soproxABI.struct([{ key: 'code', type: 'u8' }], {
-      code: 9,
+    const splProgram = await this.getSplProgram(wallet)
+    const txId = await splProgram.rpc.closeAccount({
+      accounts: {
+        account: targetAddress,
+        destination: splProgram.provider.wallet.publicKey,
+        authority: splProgram.provider.wallet.publicKey,
+      },
     })
-    const instruction = new TransactionInstruction({
-      keys: [
-        { pubkey: targetPublicKey, isSigner: false, isWritable: true },
-        { pubkey: payerPublicKey, isSigner: false, isWritable: true },
-        { pubkey: payerPublicKey, isSigner: true, isWritable: false },
-      ],
-      programId: this.spltProgramId,
-      data: layout.toBuffer(),
-    })
-    transaction.add(instruction)
-    transaction.feePayer = payerPublicKey
-    // Sign tx
-    const payerSig = await wallet.rawSignTransaction(transaction)
-    this.addSignature(transaction, payerSig)
-    // Send tx
-    const txId = await this.sendTransaction(transaction)
     return { txId }
   }
 
@@ -699,27 +682,14 @@ class SPLT extends Tx {
     const payerAddress = await wallet.getAddress()
     const payerPublicKey = account.fromAddress(payerAddress)
     // Build tx
-    let transaction = new Transaction()
-    transaction = await this.addRecentCommitment(transaction)
-    const layout = new soproxABI.struct([{ key: 'code', type: 'u8' }], {
-      code: 10,
+    const splProgram = await this.getSplProgram(wallet)
+    const txId = await splProgram.rpc.freezeAccount({
+      accounts: {
+        account: targetPublicKey,
+        mint: mintPublicKey,
+        authority: payerPublicKey,
+      },
     })
-    const instruction = new TransactionInstruction({
-      keys: [
-        { pubkey: targetPublicKey, isSigner: false, isWritable: true },
-        { pubkey: mintPublicKey, isSigner: false, isWritable: false },
-        { pubkey: payerPublicKey, isSigner: true, isWritable: false },
-      ],
-      programId: this.spltProgramId,
-      data: layout.toBuffer(),
-    })
-    transaction.add(instruction)
-    transaction.feePayer = payerPublicKey
-    // Sign tx
-    const payerSig = await wallet.rawSignTransaction(transaction)
-    this.addSignature(transaction, payerSig)
-    // Send tx
-    const txId = await this.sendTransaction(transaction)
     return { txId }
   }
 
@@ -744,27 +714,14 @@ class SPLT extends Tx {
     const payerAddress = await wallet.getAddress()
     const payerPublicKey = account.fromAddress(payerAddress)
     // Build tx
-    let transaction = new Transaction()
-    transaction = await this.addRecentCommitment(transaction)
-    const layout = new soproxABI.struct([{ key: 'code', type: 'u8' }], {
-      code: 11,
+    const splProgram = await this.getSplProgram(wallet)
+    const txId = await splProgram.rpc.thawAccount({
+      accounts: {
+        account: targetPublicKey,
+        mint: mintPublicKey,
+        authority: payerPublicKey,
+      },
     })
-    const instruction = new TransactionInstruction({
-      keys: [
-        { pubkey: targetPublicKey, isSigner: false, isWritable: true },
-        { pubkey: mintPublicKey, isSigner: false, isWritable: false },
-        { pubkey: payerPublicKey, isSigner: true, isWritable: false },
-      ],
-      programId: this.spltProgramId,
-      data: layout.toBuffer(),
-    })
-    transaction.add(instruction)
-    transaction.feePayer = payerPublicKey
-    // Sign tx
-    const payerSig = await wallet.rawSignTransaction(transaction)
-    this.addSignature(transaction, payerSig)
-    // Send tx
-    const txId = await this.sendTransaction(transaction)
     return { txId }
   }
 
