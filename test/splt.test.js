@@ -172,7 +172,7 @@ describe('SPLT library', function () {
 
     it('Should transfer (from owner)', async function () {
       const splt = new SPLT()
-      const amount = 10000000000n
+      const amount = new BN(10000000000)
       await splt.transfer(amount, SRC_ADDRESS, DST_ADDRESS, primary)
       await splt.getAccountData(SRC_ADDRESS)
       await splt.getAccountData(DST_ADDRESS)
@@ -180,7 +180,7 @@ describe('SPLT library', function () {
 
     it('Should approve', async function () {
       const splt = new SPLT()
-      const amount = 10000000000n
+      const amount = new BN(10000000000)
       const secondaryAddress = await secondary.getAddress()
       await splt.approve(amount, SRC_ADDRESS, secondaryAddress, primary)
       await splt.getAccountData(SRC_ADDRESS)
@@ -188,7 +188,7 @@ describe('SPLT library', function () {
 
     it('Should transfer (from delegate)', async function () {
       const splt = new SPLT()
-      const amount = 5000000000n
+      const amount = new BN(5000000000)
       await splt.transfer(amount, SRC_ADDRESS, DST_ADDRESS, secondary)
       await splt.getAccountData(SRC_ADDRESS)
       await splt.getAccountData(DST_ADDRESS)
