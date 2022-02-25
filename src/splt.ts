@@ -230,7 +230,7 @@ class SPLT extends Tx {
     if (!account.isAddress(mintAddress)) throw new Error('Invalid mint address')
     const mintPublicKey = account.fromAddress(mintAddress)
     const sptProgram = this.getRawSplProgram()
-    const mintData = await sptProgram.account.Mint.fetch(mintPublicKey)
+    const mintData = await (sptProgram.account as any).mint.fetch(mintPublicKey)
     return this.convertMintData(mintData)
   }
 
