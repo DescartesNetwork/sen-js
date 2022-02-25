@@ -2,6 +2,7 @@ const { Keypair } = require('@solana/web3.js')
 
 const { SPLT, Lamports, RawWallet } = require('../dist')
 const { payer, delegate } = require('./config')
+const { BN } = require('@project-serum/anchor')
 
 const primary = new RawWallet(payer.secretKey)
 const secondary = new RawWallet(delegate.secretKey)
@@ -34,7 +35,12 @@ describe('SPLT library', function () {
     )
     DST_ADDRESS = dstAddress
     // Mint token
-    await splt.mintTo(5000000000000000000n, MINT_ADDRESS, SRC_ADDRESS, primary)
+    await splt.mintTo(
+      new BN(5000000000000000000),
+      MINT_ADDRESS,
+      SRC_ADDRESS,
+      primary,
+    )
   })
 
   describe('Test constructor', function () {
@@ -87,14 +93,14 @@ describe('SPLT library', function () {
 
     it('Should mint', async function () {
       const splt = new SPLT()
-      const amount = 10000000000000n
+      const amount = new BN(10000000000000)
       await splt.mintTo(amount, MINT_ADDRESS, SRC_ADDRESS, primary)
       await splt.getAccountData(SRC_ADDRESS)
     })
 
     it('Should burn', async function () {
       const splt = new SPLT()
-      const amount = 5000000000000n
+      const amount = new BN(5000000000000)
       await splt.burn(amount, SRC_ADDRESS, MINT_ADDRESS, primary)
       await splt.getAccountData(SRC_ADDRESS)
     })
