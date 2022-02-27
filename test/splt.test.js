@@ -36,7 +36,7 @@ describe('SPLT library', function () {
     DST_ADDRESS = dstAddress
     // Mint token
     await splt.mintTo(
-      new BN(5000000000000000000),
+      new BN('5000000000000000000'),
       MINT_ADDRESS,
       SRC_ADDRESS,
       primary,
