@@ -1,16 +1,12 @@
-import {
-  Program,
-  Provider,
-  SplToken,
-  SplTokenCoder,
-} from '@project-serum/anchor'
+import { Program, Provider } from '@project-serum/anchor'
 import { PublicKey } from '@solana/web3.js'
+import { SplTokenCoder } from '../coder/splt'
 
 const TOKEN_PROGRAM_ID = new PublicKey(
   'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
 )
 
-export function program(provider?: Provider): Program<SplToken> {
+export function program(provider?: Provider): Program<SplProgram> {
   return new Program<SplProgram>(SplIDL, TOKEN_PROGRAM_ID, provider, coder())
 }
 
