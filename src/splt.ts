@@ -39,6 +39,7 @@ import {
   getRawAnchorProvider,
 } from './anchor/sentre/anchorProvider'
 import { web3, BN } from '@project-serum/anchor'
+import { rpc } from '@project-serum/anchor/dist/cjs/utils'
 
 const AuthorityType = {
   get MintTokens() {
@@ -374,22 +375,22 @@ class SPLT extends Tx {
       throw new Error('Invalid mint authority address')
     if (!account.isAddress(freezeAuthorityAddress))
       throw new Error('Invalid freeze authority address')
-    // Get payer
-    const payerAddress = await wallet.getAddress()
-    const payerPublicKey = account.fromAddress(payerAddress)
     // Rent mint
     await this.rentAccount(wallet, mint, MINT_SIZE, this.spltProgramId)
     // Build tx
     const spltProgram = await this.getSplProgram(wallet)
-    const instruction = createInitializeMintInstruction(
-      mint.publicKey,
+    const txId = await spltProgram.rpc.initializeMint(
       decimals,
-      account.fromAddress(mintAuthorityAddress),
+      spltProgram.provider.wallet.publicKey,
       account.fromAddress(freezeAuthorityAddress),
+      {
+        accounts: {
+          mint: mint.publicKey,
+          rent: web3.SYSVAR_RENT_PUBKEY,
+        },
+        signers: [],
+      },
     )
-    const transaction = new web3.Transaction().add(instruction)
-    const txId = await spltProgram.provider.send(transaction, [])
-
     return { txId }
   }
 
@@ -428,6 +429,7 @@ class SPLT extends Tx {
     )
     let transaction = new web3.Transaction().add(instruction)
     const txId = await splProgram.provider.send(transaction)
+
     return { accountAddress, txId }
   }
 
