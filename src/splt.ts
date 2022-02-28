@@ -1,8 +1,5 @@
 import { TypeDef } from '@project-serum/anchor/dist/cjs/program/namespace/types'
 import {
-  Transaction,
-  TransactionInstruction,
-  SYSVAR_RENT_PUBKEY,
   PublicKey,
   KeyedAccountInfo,
   GetProgramAccountsFilter,
@@ -19,11 +16,12 @@ import {
   MintLayout,
   AccountLayout,
   MultisigLayout,
+  createInitializeMintInstruction,
 } from '@solana/spl-token'
 
 import Tx from './core/tx'
 import account from './account'
-import schema, { AccountData, MintData, MultisigData } from './schema'
+import { AccountData, MintData, MultisigData } from './schema'
 import Lamports from './lamports'
 import {
   DEFAULT_SPLT_PROGRAM_ADDRESS,
@@ -41,8 +39,6 @@ import {
   getRawAnchorProvider,
 } from './anchor/sentre/anchorProvider'
 import { web3, BN } from '@project-serum/anchor'
-
-const soproxABI = require('soprox-abi')
 
 const AuthorityType = {
   get MintTokens() {
@@ -384,40 +380,16 @@ class SPLT extends Tx {
     // Rent mint
     await this.rentAccount(wallet, mint, MINT_SIZE, this.spltProgramId)
     // Build tx
-    let transaction = new Transaction()
-    transaction = await this.addRecentCommitment(transaction)
-    const layout = new soproxABI.struct(
-      [
-        { key: 'code', type: 'u8' },
-        { key: 'decimals', type: 'u8' },
-        { key: 'mint_authority', type: 'pub' },
-        { key: 'freeze_authority_option', type: 'u8' },
-        { key: 'freeze_authority', type: 'pub' },
-      ],
-      {
-        code: 0,
-        decimals,
-        mint_authority: mintAuthorityAddress,
-        freeze_authority_option:
-          freezeAuthorityAddress === DEFAULT_EMPTY_ADDRESS ? 0 : 1,
-        freeze_authority: freezeAuthorityAddress,
-      },
+    const spltProgram = await this.getSplProgram(wallet)
+    const instruction = createInitializeMintInstruction(
+      mint.publicKey,
+      decimals,
+      account.fromAddress(mintAuthorityAddress),
+      account.fromAddress(freezeAuthorityAddress),
     )
-    const instruction = new TransactionInstruction({
-      keys: [
-        { pubkey: mint.publicKey, isSigner: false, isWritable: true },
-        { pubkey: SYSVAR_RENT_PUBKEY, isSigner: false, isWritable: false },
-      ],
-      programId: this.spltProgramId,
-      data: layout.toBuffer(),
-    })
-    transaction.add(instruction)
-    transaction.feePayer = payerPublicKey
-    // Sign tx
-    const payerSig = await wallet.rawSignTransaction(transaction)
-    this.addSignature(transaction, payerSig)
-    // Send tx
-    const txId = await this.sendTransaction(transaction)
+    const transaction = new web3.Transaction().add(instruction)
+    const txId = await spltProgram.provider.send(transaction, [])
+
     return { txId }
   }
 
