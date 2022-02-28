@@ -13,6 +13,12 @@ import {
   createAssociatedTokenAccountInstruction,
   createInitializeMultisigInstruction,
   TOKEN_PROGRAM_ID,
+  MULTISIG_SIZE,
+  ACCOUNT_SIZE,
+  MINT_SIZE,
+  MintLayout,
+  AccountLayout,
+  MultisigLayout,
 } from '@solana/spl-token'
 
 import Tx from './core/tx'
@@ -156,20 +162,17 @@ class SPLT extends Tx {
       accountInfo: { data: buf },
     }: KeyedAccountInfo) => {
       const address = accountId.toBase58()
-      const accountSpace = new soproxABI.struct(schema.ACCOUNT_SCHEMA).space
-      const mintSpace = new soproxABI.struct(schema.MINT_SCHEMA).space
-      const multisigSpace = new soproxABI.struct(schema.MULTISIG_SCHEMA).space
       let type = null
       let data = {}
-      if (buf.length === accountSpace) {
+      if (buf.length === ACCOUNT_SIZE) {
         type = 'account'
         data = this.parseAccountData(buf)
       }
-      if (buf.length === mintSpace) {
+      if (buf.length === MINT_SIZE) {
         type = 'mint'
         data = this.parseMintData(buf)
       }
-      if (buf.length === multisigSpace) {
+      if (buf.length === MULTISIG_SIZE) {
         type = 'multisig'
         data = this.parseMultiSigData(buf)
       }
@@ -205,10 +208,16 @@ class SPLT extends Tx {
    * @returns
    */
   parseMintData = (data: Buffer): MintData => {
-    const layout = new soproxABI.struct(schema.MINT_SCHEMA)
-    if (data.length !== layout.space) throw new Error('Unmatched buffer length')
-    layout.fromBuffer(data)
-    return layout.value
+    if (data.length !== MINT_SIZE) throw new Error('Unmatched buffer length')
+    const { mintAuthority, supply, decimals, isInitialized, freezeAuthority } =
+      MintLayout.decode(data)
+    return {
+      mint_authority: mintAuthority.toBase58(),
+      supply: new BN(supply.toString()),
+      decimals: decimals,
+      is_initialized: isInitialized,
+      freeze_authority: freezeAuthority.toBase58(),
+    }
   }
 
   convertMintData = (
@@ -234,7 +243,6 @@ class SPLT extends Tx {
     const mintPublicKey = account.fromAddress(mintAddress)
     const sptProgram = this.getRawSplProgram()
     const mintData = await (sptProgram.account as any).mint.fetch(mintPublicKey)
-    console.log('mintData', mintData)
     return this.convertMintData(mintData)
   }
 
@@ -244,10 +252,34 @@ class SPLT extends Tx {
    * @returns
    */
   parseAccountData = (data: Buffer): AccountData => {
-    const layout = new soproxABI.struct(schema.ACCOUNT_SCHEMA)
-    if (data.length !== layout.space) throw new Error('Unmatched buffer length')
-    layout.fromBuffer(data)
-    return layout.value
+    if (data.length !== ACCOUNT_SIZE) throw new Error('Unmatched buffer length')
+    const {
+      mint,
+      owner,
+      amount,
+      delegateOption,
+      delegate,
+      state,
+      isNativeOption,
+      isNative,
+      delegatedAmount,
+      closeAuthorityOption,
+      closeAuthority,
+    } = AccountLayout.decode(data)
+
+    return {
+      mint: mint.toBase58(),
+      owner: owner.toBase58(),
+      amount: amount,
+      delegate_option: delegateOption,
+      delegate: delegate.toBase58(),
+      state: state,
+      is_native_option: isNativeOption,
+      is_native: isNative,
+      delegated_amount: delegatedAmount,
+      close_authority_option: closeAuthorityOption,
+      close_authority: closeAuthority.toBase58(),
+    }
   }
 
   /**
@@ -271,10 +303,42 @@ class SPLT extends Tx {
    * @returns
    */
   parseMultiSigData = (data: Buffer): MultisigData => {
-    const layout = new soproxABI.struct(schema.MULTISIG_SCHEMA)
-    if (data.length !== layout.space) throw new Error('Unmatched buffer length')
-    layout.fromBuffer(data)
-    return layout.value
+    if (data.length !== MULTISIG_SIZE)
+      throw new Error('Unmatched buffer length')
+    const {
+      m,
+      n,
+      isInitialized,
+      signer1,
+      signer2,
+      signer3,
+      signer4,
+      signer5,
+      signer6,
+      signer7,
+      signer9,
+      signer8,
+      signer10,
+      signer11,
+    } = MultisigLayout.decode(data)
+    return {
+      m,
+      n,
+      is_initialized: isInitialized,
+      signers: [
+        signer1.toBase58(),
+        signer2.toBase58(),
+        signer3.toBase58(),
+        signer4.toBase58(),
+        signer5.toBase58(),
+        signer6.toBase58(),
+        signer7.toBase58(),
+        signer8.toBase58(),
+        signer9.toBase58(),
+        signer10.toBase58(),
+        signer11.toBase58(),
+      ],
+    }
   }
 
   /**
@@ -318,8 +382,7 @@ class SPLT extends Tx {
     const payerAddress = await wallet.getAddress()
     const payerPublicKey = account.fromAddress(payerAddress)
     // Rent mint
-    const mintSpace = new soproxABI.struct(schema.MINT_SCHEMA).space
-    await this.rentAccount(wallet, mint, mintSpace, this.spltProgramId)
+    await this.rentAccount(wallet, mint, MINT_SIZE, this.spltProgramId)
     // Build tx
     let transaction = new Transaction()
     transaction = await this.addRecentCommitment(transaction)
@@ -416,8 +479,7 @@ class SPLT extends Tx {
       if (!account.isAddress(signerAddress))
         throw new Error('Invalid signer address')
     // Rent multisig
-    const multiSigSpace = new soproxABI.struct(schema.MULTISIG_SCHEMA).space
-    await this.rentAccount(wallet, multiSig, multiSigSpace, this.spltProgramId)
+    await this.rentAccount(wallet, multiSig, MULTISIG_SIZE, this.spltProgramId)
     // Build tx
     const spltProgram = await this.getSplProgram(wallet)
     const instruction = createInitializeMultisigInstruction(
@@ -730,9 +792,8 @@ class SPLT extends Tx {
       DEFAULT_WSOL,
     )
     // Validate space
-    const accountSpace = new soproxABI.struct(schema.ACCOUNT_SCHEMA).space
     const requiredLamports =
-      await this.connection.getMinimumBalanceForRentExemption(accountSpace)
+      await this.connection.getMinimumBalanceForRentExemption(ACCOUNT_SIZE)
     if (requiredLamports > Number(lamports))
       throw new Error(`At least ${requiredLamports} is required`)
     // Call wrap
