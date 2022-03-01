@@ -23,7 +23,6 @@ export const getAnchorProvider = async (
       signAllTransactions,
     },
     {
-      skipPreflight: true,
       commitment: 'confirmed',
     },
   )
@@ -37,6 +36,8 @@ export const getRawAnchorProvider = (connection: Connection): Provider => {
       signTransaction: (): any => {},
       signAllTransactions: (): any => {},
     },
-    {},
+    {
+      commitment: 'confirmed',
+    },
   )
 }
