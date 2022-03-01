@@ -1,6 +1,6 @@
 import { Program, Provider } from '@project-serum/anchor'
 import { PublicKey } from '@solana/web3.js'
-import { SplTokenCoder } from '../coder/splt'
+import { SplTokenCoder } from './coder/splt'
 
 const TOKEN_PROGRAM_ID = new PublicKey(
   'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',

@@ -2,7 +2,7 @@ import { Idl } from '@project-serum/anchor'
 import { SplTokenAccountsCoder } from '@project-serum/anchor/dist/cjs/coder/spl-token/accounts'
 import { SplTokenEventsCoder } from '@project-serum/anchor/dist/cjs/coder/spl-token/events'
 import { SplTokenStateCoder } from '@project-serum/anchor/dist/cjs/coder/spl-token/state'
-import { Coder } from '../index.js'
+import { Coder } from '../../../swap/coder/index.js'
 import { SplTokenInstructionCoder } from './instruction'
 
 /**

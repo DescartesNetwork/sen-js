@@ -1,5 +1,4 @@
-import { SwapProgram } from './../anchor/sentre/swapProgram'
-import { SentreProgram } from './../anchor/sentre/index'
+import { SwapProgram, program } from './swapProgram'
 import {
   PublicKey,
   Transaction,
@@ -26,10 +25,7 @@ import {
 import { WalletInterface } from '../rawWallet'
 import oracle from './oracle'
 import { InstructionCode } from './constant'
-import {
-  getAnchorProvider,
-  getRawAnchorProvider,
-} from '../anchor/sentre/anchorProvider'
+import { getAnchorProvider, getRawAnchorProvider } from '../anchorProvider'
 
 const xor = require('buffer-xor')
 
@@ -91,13 +87,13 @@ class Swap extends Tx {
       this._splt.connection,
       wallet,
     )
-    const swapProgram: Program<SwapProgram> = SentreProgram.swap(anchorProvider)
+    const swapProgram: Program<SwapProgram> = program(anchorProvider)
     return swapProgram
   }
 
   getRawSwapProgram() {
     const anchorProvider = getRawAnchorProvider(this._splt.connection)
-    const swapProgram: Program<SwapProgram> = SentreProgram.swap(anchorProvider)
+    const swapProgram: Program<SwapProgram> = program(anchorProvider)
     return swapProgram
   }
 

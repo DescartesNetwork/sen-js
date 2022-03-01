@@ -16,30 +16,22 @@ import {
   MintLayout,
   AccountLayout,
   MultisigLayout,
-  createInitializeMintInstruction,
 } from '@solana/spl-token'
 
-import Tx from './core/tx'
-import account from './account'
-import { AccountData, MintData, MultisigData } from './schema'
-import Lamports from './lamports'
+import Tx from '../core/tx'
+import account from '../account'
+import { AccountData, MintData, MultisigData } from '../schema'
+import Lamports from '../lamports'
 import {
   DEFAULT_SPLT_PROGRAM_ADDRESS,
   DEFAULT_SPLATA_PROGRAM_ADDRESS,
   DEFAULT_EMPTY_ADDRESS,
   DEFAULT_WSOL,
-} from './default'
-import { WalletInterface } from './rawWallet'
-import {
-  program as splTokenProgram,
-  SplProgram,
-} from './anchor/sentre/splProgram'
-import {
-  getAnchorProvider,
-  getRawAnchorProvider,
-} from './anchor/sentre/anchorProvider'
+} from '../default'
+import { WalletInterface } from '../rawWallet'
+import { program as splTokenProgram, SplProgram } from './splProgram'
+import { getAnchorProvider, getRawAnchorProvider } from '../anchorProvider'
 import { web3, BN } from '@project-serum/anchor'
-import { rpc } from '@project-serum/anchor/dist/cjs/utils'
 
 const AuthorityType = {
   get MintTokens() {

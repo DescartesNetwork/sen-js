@@ -1,4 +1,4 @@
-import { InstructionCode } from './../../../swap/constant'
+import { InstructionCode } from '../../constant'
 import { Idl } from '@project-serum/anchor'
 import * as BufferLayout from 'buffer-layout'
 import camelCase from 'camelcase'

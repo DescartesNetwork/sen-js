@@ -1,7 +1,6 @@
-import { SwapCoder } from '../coder/swap/index'
+import { SwapCoder } from './coder/swap/index'
 import { Program, Provider } from '@project-serum/anchor'
 import { PublicKey } from '@solana/web3.js'
-
 const SWAP_PROGRAM_ID = new PublicKey(
   '4erFSLP7oBFSVC1t35jdxmbfxEhYCKfoM6XdG2BLR3UF',
 )

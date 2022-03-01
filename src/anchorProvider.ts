@@ -1,6 +1,6 @@
 import { Provider } from '@project-serum/anchor'
 import { Connection, PublicKey, Transaction } from '@solana/web3.js'
-import { WalletInterface } from '../../rawWallet'
+import { WalletInterface } from './rawWallet'
 
 export const getAnchorProvider = async (
   connection: Connection,

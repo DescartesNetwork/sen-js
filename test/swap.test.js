@@ -227,7 +227,6 @@ describe('Swap library', function () {
         ],
         wallet,
       )
-      console.log('txId', txId)
     })
 
     it('Should be failed routing because of treasury account not matched', async function () {
@@ -288,7 +287,6 @@ describe('Swap library', function () {
           wallet,
         )
       } catch (er) {
-        console.log('er.message', er.message)
         assert.deepStrictEqual(er.message, 'Cannot input a zero amount')
       }
     })
@@ -315,7 +313,6 @@ describe('Swap library', function () {
           ],
           wallet,
         )
-        console.log(result)
       } catch (er) {
         assert.deepStrictEqual(er.message, 'Exceed limit')
       }

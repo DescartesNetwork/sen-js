@@ -1,7 +1,7 @@
 import * as BufferLayout from 'buffer-layout'
 import camelCase from 'camelcase'
 import { PublicKey } from '@solana/web3.js'
-import { InstructionCoder } from '../index.js'
+import { InstructionCoder } from '../../../swap/coder/index.js'
 import { Idl } from '@project-serum/anchor'
 
 export class SplTokenInstructionCoder implements InstructionCoder {
