@@ -1,27 +1,37 @@
+import { TypeDef } from '@project-serum/anchor/dist/cjs/program/namespace/types'
 import {
-  Transaction,
-  SystemProgram,
-  TransactionInstruction,
-  SYSVAR_RENT_PUBKEY,
   PublicKey,
   KeyedAccountInfo,
   GetProgramAccountsFilter,
   Keypair,
 } from '@solana/web3.js'
+import {
+  ASSOCIATED_TOKEN_PROGRAM_ID,
+  createAssociatedTokenAccountInstruction,
+  createInitializeMultisigInstruction,
+  TOKEN_PROGRAM_ID,
+  MULTISIG_SIZE,
+  ACCOUNT_SIZE,
+  MINT_SIZE,
+  MintLayout,
+  AccountLayout,
+  MultisigLayout,
+} from '@solana/spl-token'
 
-import Tx from './core/tx'
-import account from './account'
-import schema, { AccountData, MintData, MultisigData } from './schema'
-import Lamports from './lamports'
+import Tx from '../core/tx'
+import account from '../account'
+import { AccountData, MintData, MultisigData } from '../schema'
+import Lamports from '../lamports'
 import {
   DEFAULT_SPLT_PROGRAM_ADDRESS,
   DEFAULT_SPLATA_PROGRAM_ADDRESS,
   DEFAULT_EMPTY_ADDRESS,
   DEFAULT_WSOL,
-} from './default'
-import { WalletInterface } from './rawWallet'
-
-const soproxABI = require('soprox-abi')
+} from '../default'
+import { WalletInterface } from '../rawWallet'
+import { program as splTokenProgram, SplProgram } from './splProgram'
+import { getAnchorProvider, getRawAnchorProvider } from '../anchorProvider'
+import { web3, BN } from '@project-serum/anchor'
 
 const AuthorityType = {
   get MintTokens() {
@@ -68,6 +78,7 @@ const ErrorMapping = [
   'Instruction does not support non-native tokens',
 ]
 
+// const splProgram = Spl.token()
 class SPLT extends Tx {
   spltProgramId: PublicKey
   splataProgramId: PublicKey
@@ -80,7 +91,6 @@ class SPLT extends Tx {
     nodeUrl: string,
   ) {
     super(nodeUrl, ErrorMapping)
-
     if (!account.isAddress(spltProgramAddress))
       throw new Error('Invalid SPL token program address')
     if (!account.isAddress(splataProgramAddress))
@@ -109,6 +119,16 @@ class SPLT extends Tx {
     )
   }
 
+  async getSplProgram(wallet: WalletInterface) {
+    const anchorProvider = await getAnchorProvider(this.connection, wallet)
+    return splTokenProgram(anchorProvider)
+  }
+
+  getRawSplProgram() {
+    const anchorProvider = getRawAnchorProvider(this.connection)
+    return splTokenProgram(anchorProvider)
+  }
+
   /**
    * Watch account changes
    * @param callback
@@ -131,20 +151,17 @@ class SPLT extends Tx {
       accountInfo: { data: buf },
     }: KeyedAccountInfo) => {
       const address = accountId.toBase58()
-      const accountSpace = new soproxABI.struct(schema.ACCOUNT_SCHEMA).space
-      const mintSpace = new soproxABI.struct(schema.MINT_SCHEMA).space
-      const multisigSpace = new soproxABI.struct(schema.MULTISIG_SCHEMA).space
       let type = null
       let data = {}
-      if (buf.length === accountSpace) {
+      if (buf.length === ACCOUNT_SIZE) {
         type = 'account'
         data = this.parseAccountData(buf)
       }
-      if (buf.length === mintSpace) {
+      if (buf.length === MINT_SIZE) {
         type = 'mint'
         data = this.parseMintData(buf)
       }
-      if (buf.length === multisigSpace) {
+      if (buf.length === MULTISIG_SIZE) {
         type = 'multisig'
         data = this.parseMultiSigData(buf)
       }
@@ -155,6 +172,7 @@ class SPLT extends Tx {
         data: data as AccountData | MintData | MultisigData,
       })
     }
+
     return this.connection.onProgramAccountChange(
       this.spltProgramId,
       cb,
@@ -179,12 +197,31 @@ class SPLT extends Tx {
    * @returns
    */
   parseMintData = (data: Buffer): MintData => {
-    const layout = new soproxABI.struct(schema.MINT_SCHEMA)
-    if (data.length !== layout.space) throw new Error('Unmatched buffer length')
-    layout.fromBuffer(data)
-    return layout.value
+    if (data.length !== MINT_SIZE) throw new Error('Unmatched buffer length')
+    const { mintAuthority, supply, decimals, isInitialized, freezeAuthority } =
+      MintLayout.decode(data)
+    return {
+      mint_authority: mintAuthority.toBase58(),
+      supply: new BN(supply.toString()),
+      decimals: decimals,
+      is_initialized: isInitialized,
+      freeze_authority: freezeAuthority.toBase58(),
+    }
   }
 
+  convertMintData = (
+    mintData: TypeDef<SplProgram['accounts']['0'], SplProgram>,
+  ): MintData => {
+    const { mintAuthority, decimals, freezeAuthority, isInitialized, supply } =
+      mintData
+    return {
+      mint_authority: (mintAuthority as PublicKey)?.toBase58(),
+      supply,
+      decimals,
+      is_initialized: isInitialized,
+      freeze_authority: (freezeAuthority as PublicKey)?.toBase58(),
+    }
+  }
   /**
    * Get mint data
    * @param mintAddress
@@ -193,9 +230,9 @@ class SPLT extends Tx {
   getMintData = async (mintAddress: string): Promise<MintData> => {
     if (!account.isAddress(mintAddress)) throw new Error('Invalid mint address')
     const mintPublicKey = account.fromAddress(mintAddress)
-    const { data } = (await this.connection.getAccountInfo(mintPublicKey)) || {}
-    if (!data) throw new Error(`Cannot read data of ${mintAddress}`)
-    return this.parseMintData(data)
+    const sptProgram = this.getRawSplProgram()
+    const mintData = await (sptProgram.account as any).mint.fetch(mintPublicKey)
+    return this.convertMintData(mintData)
   }
 
   /**
@@ -204,10 +241,34 @@ class SPLT extends Tx {
    * @returns
    */
   parseAccountData = (data: Buffer): AccountData => {
-    const layout = new soproxABI.struct(schema.ACCOUNT_SCHEMA)
-    if (data.length !== layout.space) throw new Error('Unmatched buffer length')
-    layout.fromBuffer(data)
-    return layout.value
+    if (data.length !== ACCOUNT_SIZE) throw new Error('Unmatched buffer length')
+    const {
+      mint,
+      owner,
+      amount,
+      delegateOption,
+      delegate,
+      state,
+      isNativeOption,
+      isNative,
+      delegatedAmount,
+      closeAuthorityOption,
+      closeAuthority,
+    } = AccountLayout.decode(data)
+
+    return {
+      mint: mint.toBase58(),
+      owner: owner.toBase58(),
+      amount: amount,
+      delegate_option: delegateOption,
+      delegate: delegate.toBase58(),
+      state: state,
+      is_native_option: isNativeOption,
+      is_native: isNative,
+      delegated_amount: delegatedAmount,
+      close_authority_option: closeAuthorityOption,
+      close_authority: closeAuthority.toBase58(),
+    }
   }
 
   /**
@@ -231,10 +292,42 @@ class SPLT extends Tx {
    * @returns
    */
   parseMultiSigData = (data: Buffer): MultisigData => {
-    const layout = new soproxABI.struct(schema.MULTISIG_SCHEMA)
-    if (data.length !== layout.space) throw new Error('Unmatched buffer length')
-    layout.fromBuffer(data)
-    return layout.value
+    if (data.length !== MULTISIG_SIZE)
+      throw new Error('Unmatched buffer length')
+    const {
+      m,
+      n,
+      isInitialized,
+      signer1,
+      signer2,
+      signer3,
+      signer4,
+      signer5,
+      signer6,
+      signer7,
+      signer9,
+      signer8,
+      signer10,
+      signer11,
+    } = MultisigLayout.decode(data)
+    return {
+      m,
+      n,
+      is_initialized: isInitialized,
+      signers: [
+        signer1.toBase58(),
+        signer2.toBase58(),
+        signer3.toBase58(),
+        signer4.toBase58(),
+        signer5.toBase58(),
+        signer6.toBase58(),
+        signer7.toBase58(),
+        signer8.toBase58(),
+        signer9.toBase58(),
+        signer10.toBase58(),
+        signer11.toBase58(),
+      ],
+    }
   }
 
   /**
@@ -274,47 +367,22 @@ class SPLT extends Tx {
       throw new Error('Invalid mint authority address')
     if (!account.isAddress(freezeAuthorityAddress))
       throw new Error('Invalid freeze authority address')
-    // Get payer
-    const payerAddress = await wallet.getAddress()
-    const payerPublicKey = account.fromAddress(payerAddress)
     // Rent mint
-    const mintSpace = new soproxABI.struct(schema.MINT_SCHEMA).space
-    await this.rentAccount(wallet, mint, mintSpace, this.spltProgramId)
+    await this.rentAccount(wallet, mint, MINT_SIZE, this.spltProgramId)
     // Build tx
-    let transaction = new Transaction()
-    transaction = await this.addRecentCommitment(transaction)
-    const layout = new soproxABI.struct(
-      [
-        { key: 'code', type: 'u8' },
-        { key: 'decimals', type: 'u8' },
-        { key: 'mint_authority', type: 'pub' },
-        { key: 'freeze_authority_option', type: 'u8' },
-        { key: 'freeze_authority', type: 'pub' },
-      ],
+    const spltProgram = await this.getSplProgram(wallet)
+    const txId = await spltProgram.rpc.initializeMint(
+      decimals,
+      spltProgram.provider.wallet.publicKey,
+      account.fromAddress(freezeAuthorityAddress),
       {
-        code: 0,
-        decimals,
-        mint_authority: mintAuthorityAddress,
-        freeze_authority_option:
-          freezeAuthorityAddress === DEFAULT_EMPTY_ADDRESS ? 0 : 1,
-        freeze_authority: freezeAuthorityAddress,
+        accounts: {
+          mint: mint.publicKey,
+          rent: web3.SYSVAR_RENT_PUBKEY,
+        },
+        signers: [],
       },
     )
-    const instruction = new TransactionInstruction({
-      keys: [
-        { pubkey: mint.publicKey, isSigner: false, isWritable: true },
-        { pubkey: SYSVAR_RENT_PUBKEY, isSigner: false, isWritable: false },
-      ],
-      programId: this.spltProgramId,
-      data: layout.toBuffer(),
-    })
-    transaction.add(instruction)
-    transaction.feePayer = payerPublicKey
-    // Sign tx
-    const payerSig = await wallet.rawSignTransaction(transaction)
-    this.addSignature(transaction, payerSig)
-    // Send tx
-    const txId = await this.sendTransaction(transaction)
     return { txId }
   }
 
@@ -335,9 +403,6 @@ class SPLT extends Tx {
       throw new Error('Invalid owner address')
     const mintPublicKey = account.fromAddress(mintAddress)
     const ownerPublicKey = account.fromAddress(ownerAddress)
-    // Get payer
-    const payerAddress = await wallet.getAddress()
-    const payerPublicKey = account.fromAddress(payerAddress)
     // Generate the associated account address
     const accountAddress = await this.deriveAssociatedAddress(
       ownerAddress,
@@ -345,28 +410,18 @@ class SPLT extends Tx {
     )
     const accountPublicKey = account.fromAddress(accountAddress)
     // Build tx
-    let transaction = new Transaction()
-    transaction = await this.addRecentCommitment(transaction)
-    const instruction = new TransactionInstruction({
-      keys: [
-        { pubkey: payerPublicKey, isSigner: true, isWritable: true },
-        { pubkey: accountPublicKey, isSigner: false, isWritable: true },
-        { pubkey: ownerPublicKey, isSigner: false, isWritable: false },
-        { pubkey: mintPublicKey, isSigner: false, isWritable: false },
-        { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
-        { pubkey: this.spltProgramId, isSigner: false, isWritable: false },
-        { pubkey: SYSVAR_RENT_PUBKEY, isSigner: false, isWritable: false },
-      ],
-      programId: this.splataProgramId,
-      data: Buffer.from([]),
-    })
-    transaction.add(instruction)
-    transaction.feePayer = payerPublicKey
-    // Sign tx
-    const payerSig = await wallet.rawSignTransaction(transaction)
-    this.addSignature(transaction, payerSig)
-    // Send tx
-    const txId = await this.sendTransaction(transaction)
+    const splProgram = await this.getSplProgram(wallet)
+    const instruction = createAssociatedTokenAccountInstruction(
+      splProgram.provider.wallet.publicKey,
+      accountPublicKey,
+      ownerPublicKey,
+      mintPublicKey,
+      TOKEN_PROGRAM_ID,
+      ASSOCIATED_TOKEN_PROGRAM_ID,
+    )
+    let transaction = new web3.Transaction().add(instruction)
+    const txId = await splProgram.provider.send(transaction)
+
     return { accountAddress, txId }
   }
 
@@ -389,42 +444,17 @@ class SPLT extends Tx {
     for (let signerAddress of signerAddresses)
       if (!account.isAddress(signerAddress))
         throw new Error('Invalid signer address')
-    // Get payer
-    const payerAddress = await wallet.getAddress()
-    const payerPublicKey = account.fromAddress(payerAddress)
     // Rent multisig
-    const multiSigSpace = new soproxABI.struct(schema.MULTISIG_SCHEMA).space
-    await this.rentAccount(wallet, multiSig, multiSigSpace, this.spltProgramId)
+    await this.rentAccount(wallet, multiSig, MULTISIG_SIZE, this.spltProgramId)
     // Build tx
-    let transaction = new Transaction()
-    transaction = await this.addRecentCommitment(transaction)
-    const layout = new soproxABI.struct(
-      [
-        { key: 'code', type: 'u8' },
-        { key: 'm', type: 'u8' },
-      ],
-      { code: 2, m: minimumSig },
+    const spltProgram = await this.getSplProgram(wallet)
+    const instruction = createInitializeMultisigInstruction(
+      multiSig.publicKey,
+      signerAddresses.map((addr) => account.fromAddress(addr)),
+      minimumSig,
     )
-    const instruction = new TransactionInstruction({
-      keys: [
-        { pubkey: multiSig.publicKey, isSigner: false, isWritable: true },
-        { pubkey: SYSVAR_RENT_PUBKEY, isSigner: false, isWritable: false },
-        ...signerAddresses.map((signerAddress) => ({
-          pubkey: account.fromAddress(signerAddress),
-          isSigner: false,
-          isWritable: false,
-        })),
-      ],
-      programId: this.spltProgramId,
-      data: layout.toBuffer(),
-    })
-    transaction.add(instruction)
-    transaction.feePayer = payerPublicKey
-    // Sign tx
-    const payerSig = await wallet.rawSignTransaction(transaction)
-    this.addSignature(transaction, payerSig)
-    // Send tx
-    const txId = await this.sendTransaction(transaction)
+    const transaction = new web3.Transaction().add(instruction)
+    const txId = await spltProgram.provider.send(transaction, [])
     return { txId }
   }
 
@@ -437,7 +467,7 @@ class SPLT extends Tx {
    * @returns Transaction id
    */
   transfer = async (
-    amount: bigint,
+    amount: BN,
     srcAddress: string,
     dstAddress: string,
     wallet: WalletInterface,
@@ -446,37 +476,15 @@ class SPLT extends Tx {
       throw new Error('Invalid source address')
     if (!account.isAddress(dstAddress))
       throw new Error('Invalid destination address')
-    const srcPublicKey = account.fromAddress(srcAddress)
-    const dstPublicKey = account.fromAddress(dstAddress)
-    // Get payer
-    const payerAddress = await wallet.getAddress()
-    const payerPublicKey = account.fromAddress(payerAddress)
     // Build tx
-    let transaction = new Transaction()
-    transaction = await this.addRecentCommitment(transaction)
-    const layout = new soproxABI.struct(
-      [
-        { key: 'code', type: 'u8' },
-        { key: 'amount', type: 'u64' },
-      ],
-      { code: 3, amount },
-    )
-    const instruction = new TransactionInstruction({
-      keys: [
-        { pubkey: srcPublicKey, isSigner: false, isWritable: true },
-        { pubkey: dstPublicKey, isSigner: false, isWritable: true },
-        { pubkey: payerPublicKey, isSigner: true, isWritable: false },
-      ],
-      programId: this.spltProgramId,
-      data: layout.toBuffer(),
+    const spltProgram = await this.getSplProgram(wallet)
+    const txId = await spltProgram.rpc.transfer(amount, {
+      accounts: {
+        authority: spltProgram.provider.wallet.publicKey,
+        source: srcAddress,
+        destination: dstAddress,
+      },
     })
-    transaction.add(instruction)
-    transaction.feePayer = payerPublicKey
-    // Sign tx
-    const payerSig = await wallet.rawSignTransaction(transaction)
-    this.addSignature(transaction, payerSig)
-    // Send tx
-    const txId = await this.sendTransaction(transaction)
     return { txId }
   }
 
@@ -489,7 +497,7 @@ class SPLT extends Tx {
    * @returns
    */
   approve = async (
-    amount: bigint,
+    amount: BN,
     srcAddress: string,
     delegateAddress: string,
     wallet: WalletInterface,
@@ -498,37 +506,15 @@ class SPLT extends Tx {
       throw new Error('Invalid source address')
     if (!account.isAddress(delegateAddress))
       throw new Error('Invalid delegate address')
-    const srcPublicKey = account.fromAddress(srcAddress)
-    const delegatePublicKey = account.fromAddress(delegateAddress)
-    // Get payer
-    const payerAddress = await wallet.getAddress()
-    const payerPublicKey = account.fromAddress(payerAddress)
     // Build tx
-    let transaction = new Transaction()
-    transaction = await this.addRecentCommitment(transaction)
-    const layout = new soproxABI.struct(
-      [
-        { key: 'code', type: 'u8' },
-        { key: 'amount', type: 'u64' },
-      ],
-      { code: 4, amount },
-    )
-    const instruction = new TransactionInstruction({
-      keys: [
-        { pubkey: srcPublicKey, isSigner: false, isWritable: true },
-        { pubkey: delegatePublicKey, isSigner: false, isWritable: true },
-        { pubkey: payerPublicKey, isSigner: true, isWritable: false },
-      ],
-      programId: this.spltProgramId,
-      data: layout.toBuffer(),
+    const spltProgram = await this.getSplProgram(wallet)
+    const txId = await spltProgram.rpc.approve(amount, {
+      accounts: {
+        authority: spltProgram.provider.wallet.publicKey,
+        source: srcAddress,
+        delegate: delegateAddress,
+      },
     })
-    transaction.add(instruction)
-    transaction.feePayer = payerPublicKey
-    // Sign tx
-    const payerSig = await wallet.rawSignTransaction(transaction)
-    this.addSignature(transaction, payerSig)
-    // Send tx
-    const txId = await this.sendTransaction(transaction)
     return { txId }
   }
 
@@ -544,31 +530,14 @@ class SPLT extends Tx {
   ): Promise<{ txId: string }> => {
     if (!account.isAddress(srcAddress))
       throw new Error('Invalid source address')
-    const srcPublicKey = account.fromAddress(srcAddress)
-    // Get payer
-    const payerAddress = await wallet.getAddress()
-    const payerPublicKey = account.fromAddress(payerAddress)
     // Build tx
-    let transaction = new Transaction()
-    transaction = await this.addRecentCommitment(transaction)
-    const layout = new soproxABI.struct([{ key: 'code', type: 'u8' }], {
-      code: 5,
+    const spltProgram = await this.getSplProgram(wallet)
+    const txId = await spltProgram.rpc.revoke({
+      accounts: {
+        authority: spltProgram.provider.wallet.publicKey,
+        source: srcAddress,
+      },
     })
-    const instruction = new TransactionInstruction({
-      keys: [
-        { pubkey: srcPublicKey, isSigner: false, isWritable: true },
-        { pubkey: payerPublicKey, isSigner: true, isWritable: false },
-      ],
-      programId: this.spltProgramId,
-      data: layout.toBuffer(),
-    })
-    transaction.add(instruction)
-    transaction.feePayer = payerPublicKey
-    // Sign tx
-    const payerSig = await wallet.rawSignTransaction(transaction)
-    this.addSignature(transaction, payerSig)
-    // Send tx
-    const txId = await this.sendTransaction(transaction)
     return { txId }
   }
 
@@ -596,38 +565,21 @@ class SPLT extends Tx {
     const payerAddress = await wallet.getAddress()
     const payerPublicKey = account.fromAddress(payerAddress)
     // Build tx
-    let transaction = new Transaction()
-    transaction = await this.addRecentCommitment(transaction)
-    const layout = new soproxABI.struct(
-      [
-        { key: 'code', type: 'u8' },
-        { key: 'authority_type', type: 'u8' },
-        { key: 'new_authority_option', type: 'u8' },
-        { key: 'new_authority', type: 'pub' },
-      ],
+    const splProgram = await this.getSplProgram(wallet)
+    const newAuthorityOption =
+      newAuthorityAddress === DEFAULT_EMPTY_ADDRESS ? 0 : 1
+
+    const txId = await splProgram.rpc.setAuthority(
+      authorityType,
+      newAuthorityOption,
+      account.fromAddress(newAuthorityAddress).toBuffer(),
       {
-        code: 6,
-        authority_type: authorityType,
-        new_authority_option:
-          newAuthorityAddress === DEFAULT_EMPTY_ADDRESS ? 0 : 1,
-        new_authority: newAuthorityAddress,
+        accounts: {
+          mint: targetPublicKey,
+          authority: payerPublicKey,
+        },
       },
     )
-    const instruction = new TransactionInstruction({
-      keys: [
-        { pubkey: targetPublicKey, isSigner: false, isWritable: true },
-        { pubkey: payerPublicKey, isSigner: true, isWritable: false },
-      ],
-      programId: this.spltProgramId,
-      data: layout.toBuffer(),
-    })
-    transaction.add(instruction)
-    transaction.feePayer = payerPublicKey
-    // Sign tx
-    const payerSig = await wallet.rawSignTransaction(transaction)
-    this.addSignature(transaction, payerSig)
-    // Send tx
-    const txId = await this.sendTransaction(transaction)
     return { txId }
   }
 
@@ -640,7 +592,7 @@ class SPLT extends Tx {
    * @returns
    */
   mintTo = async (
-    amount: bigint,
+    amount: BN,
     mintAddress: string,
     dstAddress: string,
     wallet: WalletInterface,
@@ -650,35 +602,18 @@ class SPLT extends Tx {
       throw new Error('Invalid destination address')
     const mintPublicKey = account.fromAddress(mintAddress)
     const dstPublicKey = account.fromAddress(dstAddress)
-    // Get payer
-    const payerAddress = await wallet.getAddress()
-    const payerPublicKey = account.fromAddress(payerAddress)
+
     // Build tx
-    let transaction = new Transaction()
-    transaction = await this.addRecentCommitment(transaction)
-    const layout = new soproxABI.struct(
-      [
-        { key: 'code', type: 'u8' },
-        { key: 'amount', type: 'u64' },
-      ],
-      { code: 7, amount },
-    )
-    const instruction = new TransactionInstruction({
-      keys: [
-        { pubkey: mintPublicKey, isSigner: false, isWritable: true },
-        { pubkey: dstPublicKey, isSigner: false, isWritable: true },
-        { pubkey: payerPublicKey, isSigner: true, isWritable: false },
-      ],
-      programId: this.spltProgramId,
-      data: layout.toBuffer(),
+    const splProgram = await this.getSplProgram(wallet)
+    const txId = await splProgram.rpc.mintTo(amount, {
+      accounts: {
+        mint: mintPublicKey,
+        to: dstPublicKey,
+        authority: splProgram.provider.wallet.publicKey,
+      },
+      signers: [],
     })
-    transaction.add(instruction)
-    transaction.feePayer = payerPublicKey
-    // Sign tx
-    const payerSig = await wallet.rawSignTransaction(transaction)
-    this.addSignature(transaction, payerSig)
-    // Send tx
-    const txId = await this.sendTransaction(transaction)
+
     return { txId }
   }
 
@@ -691,7 +626,7 @@ class SPLT extends Tx {
    * @returns
    */
   burn = async (
-    amount: bigint,
+    amount: BN,
     srcAddress: string,
     mintAddress: string,
     wallet: WalletInterface,
@@ -701,35 +636,17 @@ class SPLT extends Tx {
     if (!account.isAddress(mintAddress)) throw new Error('Invalid mint address')
     const srcPublicKey = account.fromAddress(srcAddress)
     const mintPublicKey = account.fromAddress(mintAddress)
-    // Get payer
-    const payerAddress = await wallet.getAddress()
-    const payerPublicKey = account.fromAddress(payerAddress)
     // Build tx
-    let transaction = new Transaction()
-    transaction = await this.addRecentCommitment(transaction)
-    const layout = new soproxABI.struct(
-      [
-        { key: 'code', type: 'u8' },
-        { key: 'amount', type: 'u64' },
-      ],
-      { code: 8, amount },
-    )
-    const instruction = new TransactionInstruction({
-      keys: [
-        { pubkey: srcPublicKey, isSigner: false, isWritable: true },
-        { pubkey: mintPublicKey, isSigner: false, isWritable: true },
-        { pubkey: payerPublicKey, isSigner: true, isWritable: false },
-      ],
-      programId: this.spltProgramId,
-      data: layout.toBuffer(),
+    const splProgram = await this.getSplProgram(wallet)
+    const txId = await splProgram.rpc.burn(amount, {
+      accounts: {
+        source: srcPublicKey,
+        mint: mintPublicKey,
+        authority: splProgram.provider.wallet.publicKey,
+      },
+      signers: [],
     })
-    transaction.add(instruction)
-    transaction.feePayer = payerPublicKey
-    // Sign tx
-    const payerSig = await wallet.rawSignTransaction(transaction)
-    this.addSignature(transaction, payerSig)
-    // Send tx
-    const txId = await this.sendTransaction(transaction)
+
     return { txId }
   }
 
@@ -745,32 +662,15 @@ class SPLT extends Tx {
   ): Promise<{ txId: string }> => {
     if (!account.isAddress(targetAddress))
       throw new Error('Invalid target address')
-    const targetPublicKey = account.fromAddress(targetAddress)
-    // Get payer
-    const payerAddress = await wallet.getAddress()
-    const payerPublicKey = account.fromAddress(payerAddress)
     // Build tx
-    let transaction = new Transaction()
-    transaction = await this.addRecentCommitment(transaction)
-    const layout = new soproxABI.struct([{ key: 'code', type: 'u8' }], {
-      code: 9,
+    const splProgram = await this.getSplProgram(wallet)
+    const txId = await splProgram.rpc.closeAccount({
+      accounts: {
+        account: targetAddress,
+        destination: splProgram.provider.wallet.publicKey,
+        authority: splProgram.provider.wallet.publicKey,
+      },
     })
-    const instruction = new TransactionInstruction({
-      keys: [
-        { pubkey: targetPublicKey, isSigner: false, isWritable: true },
-        { pubkey: payerPublicKey, isSigner: false, isWritable: true },
-        { pubkey: payerPublicKey, isSigner: true, isWritable: false },
-      ],
-      programId: this.spltProgramId,
-      data: layout.toBuffer(),
-    })
-    transaction.add(instruction)
-    transaction.feePayer = payerPublicKey
-    // Sign tx
-    const payerSig = await wallet.rawSignTransaction(transaction)
-    this.addSignature(transaction, payerSig)
-    // Send tx
-    const txId = await this.sendTransaction(transaction)
     return { txId }
   }
 
@@ -795,27 +695,14 @@ class SPLT extends Tx {
     const payerAddress = await wallet.getAddress()
     const payerPublicKey = account.fromAddress(payerAddress)
     // Build tx
-    let transaction = new Transaction()
-    transaction = await this.addRecentCommitment(transaction)
-    const layout = new soproxABI.struct([{ key: 'code', type: 'u8' }], {
-      code: 10,
+    const splProgram = await this.getSplProgram(wallet)
+    const txId = await splProgram.rpc.freezeAccount({
+      accounts: {
+        account: targetPublicKey,
+        mint: mintPublicKey,
+        authority: payerPublicKey,
+      },
     })
-    const instruction = new TransactionInstruction({
-      keys: [
-        { pubkey: targetPublicKey, isSigner: false, isWritable: true },
-        { pubkey: mintPublicKey, isSigner: false, isWritable: false },
-        { pubkey: payerPublicKey, isSigner: true, isWritable: false },
-      ],
-      programId: this.spltProgramId,
-      data: layout.toBuffer(),
-    })
-    transaction.add(instruction)
-    transaction.feePayer = payerPublicKey
-    // Sign tx
-    const payerSig = await wallet.rawSignTransaction(transaction)
-    this.addSignature(transaction, payerSig)
-    // Send tx
-    const txId = await this.sendTransaction(transaction)
     return { txId }
   }
 
@@ -840,27 +727,14 @@ class SPLT extends Tx {
     const payerAddress = await wallet.getAddress()
     const payerPublicKey = account.fromAddress(payerAddress)
     // Build tx
-    let transaction = new Transaction()
-    transaction = await this.addRecentCommitment(transaction)
-    const layout = new soproxABI.struct([{ key: 'code', type: 'u8' }], {
-      code: 11,
+    const splProgram = await this.getSplProgram(wallet)
+    const txId = await splProgram.rpc.thawAccount({
+      accounts: {
+        account: targetPublicKey,
+        mint: mintPublicKey,
+        authority: payerPublicKey,
+      },
     })
-    const instruction = new TransactionInstruction({
-      keys: [
-        { pubkey: targetPublicKey, isSigner: false, isWritable: true },
-        { pubkey: mintPublicKey, isSigner: false, isWritable: false },
-        { pubkey: payerPublicKey, isSigner: true, isWritable: false },
-      ],
-      programId: this.spltProgramId,
-      data: layout.toBuffer(),
-    })
-    transaction.add(instruction)
-    transaction.feePayer = payerPublicKey
-    // Sign tx
-    const payerSig = await wallet.rawSignTransaction(transaction)
-    this.addSignature(transaction, payerSig)
-    // Send tx
-    const txId = await this.sendTransaction(transaction)
     return { txId }
   }
 
@@ -884,9 +758,8 @@ class SPLT extends Tx {
       DEFAULT_WSOL,
     )
     // Validate space
-    const accountSpace = new soproxABI.struct(schema.ACCOUNT_SCHEMA).space
     const requiredLamports =
-      await this.connection.getMinimumBalanceForRentExemption(accountSpace)
+      await this.connection.getMinimumBalanceForRentExemption(ACCOUNT_SIZE)
     if (requiredLamports > Number(lamports))
       throw new Error(`At least ${requiredLamports} is required`)
     // Call wrap

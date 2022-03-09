@@ -1,18 +1,20 @@
+import { SwapProgram, program } from './swapProgram'
 import {
   PublicKey,
   Transaction,
   SYSVAR_RENT_PUBKEY,
-  TransactionInstruction,
   SystemProgram,
   GetProgramAccountsFilter,
   KeyedAccountInfo,
   AccountMeta,
 } from '@solana/web3.js'
+import { TypeDef } from '@project-serum/anchor/dist/cjs/program/namespace/types'
+import { Program, web3, BN } from '@project-serum/anchor'
 
 import Tx from '../core/tx'
 import SPLT from '../splt'
 import account from '../account'
-import schema, { AccountData, PoolData } from '../schema'
+import { AccountData, PoolData } from '../schema'
 import {
   DEFAULT_SWAP_PROGRAM_ADDRESS,
   DEFAULT_SPLT_PROGRAM_ADDRESS,
@@ -21,9 +23,8 @@ import {
 } from '../default'
 import { WalletInterface } from '../rawWallet'
 import oracle from './oracle'
-import { InstructionCode } from './constant'
+import { getAnchorProvider, getRawAnchorProvider } from '../anchorProvider'
 
-const soproxABI = require('soprox-abi')
 const xor = require('buffer-xor')
 
 export type SwapAccountChangeInfo = {
@@ -56,7 +57,6 @@ class Swap extends Tx {
   readonly spltProgramId: PublicKey
   readonly splataProgramId: PublicKey
   private _splt: SPLT
-
   static oracle = oracle
 
   constructor(
@@ -80,6 +80,21 @@ class Swap extends Tx {
     this._splt = new SPLT(spltProgramAddress, splataProgramAddress, nodeUrl)
   }
 
+  async getSwapProgram(wallet: WalletInterface) {
+    const anchorProvider = await getAnchorProvider(
+      this._splt.connection,
+      wallet,
+    )
+    const swapProgram: Program<SwapProgram> = program(anchorProvider)
+    return swapProgram
+  }
+
+  getRawSwapProgram() {
+    const anchorProvider = getRawAnchorProvider(this._splt.connection)
+    const swapProgram: Program<SwapProgram> = program(anchorProvider)
+    return swapProgram
+  }
+
   /**
    * Watch account changes
    * @param callback
@@ -97,8 +112,10 @@ class Swap extends Tx {
       accountId,
       accountInfo: { data: buf },
     }: KeyedAccountInfo) => {
+      const swapProgram = this.getRawSwapProgram()
       const address = accountId.toBase58()
-      const poolSpace = new soproxABI.struct(schema.POOL_SCHEMA).space
+      const poolSpace = swapProgram.account.pool.size
+
       let type = null
       let data = {}
       if (buf.length === poolSpace) {
@@ -281,10 +298,43 @@ class Swap extends Tx {
    * @returns
    */
   parsePoolData = (data: Buffer): PoolData => {
-    const layout = new soproxABI.struct(schema.POOL_SCHEMA)
-    if (data.length !== layout.space) throw new Error('Unmatched buffer length')
-    layout.fromBuffer(data)
-    return layout.value
+    const swapProgram = this.getRawSwapProgram()
+    const poolData = swapProgram.coder.accounts.decode('pool', data)
+    return this.convertPoolData(poolData)
+  }
+
+  convertPoolData = (
+    poolData: TypeDef<SwapProgram['accounts']['0'], SwapProgram>,
+  ): PoolData => {
+    const {
+      fee_ratio,
+      mint_a,
+      mint_b,
+      mint_lpt,
+      owner,
+      reserve_a,
+      reserve_b,
+      state,
+      tax_ratio,
+      taxman,
+      treasury_a,
+      treasury_b,
+    } = poolData
+
+    return {
+      fee_ratio,
+      mint_a: mint_a.toBase58(),
+      mint_b: mint_b.toBase58(),
+      mint_lpt: mint_lpt.toBase58(),
+      owner: owner.toBase58(),
+      reserve_a,
+      reserve_b,
+      state,
+      tax_ratio,
+      taxman: taxman.toBase58(),
+      treasury_a: treasury_a.toBase58(),
+      treasury_b: treasury_b.toBase58(),
+    }
   }
 
   /**
@@ -295,21 +345,30 @@ class Swap extends Tx {
   getPoolData = async (poolAddress: string): Promise<PoolData> => {
     if (!account.isAddress(poolAddress)) throw new Error('Invalid pool address')
     const poolPublicKey = account.fromAddress(poolAddress)
-    const { data } = (await this.connection.getAccountInfo(poolPublicKey)) || {}
-    if (!data) throw new Error(`Cannot read data of ${poolAddress}`)
-    return this.parsePoolData(data)
+    const swapProgram = this.getRawSwapProgram()
+    const data = await swapProgram.account.pool.fetch(poolPublicKey)
+
+    if (!data) throw new Error('Invalid pool address')
+    return this.convertPoolData(data)
   }
 
   /**
-   * Parse lpt buffer data
-   * @param data
-   * @returns
+   * Get all pool data
+   * @param
+   * @returns Record<string:poolAddress, PoolData>
    */
-  parseLPTData = (data: Buffer): AccountData => {
-    const layout = new soproxABI.struct(schema.ACCOUNT_SCHEMA)
-    if (data.length !== layout.space) throw new Error('Unmatched buffer length')
-    layout.fromBuffer(data)
-    return layout.value
+  getAllPoolsData = async (
+    filter: Buffer | GetProgramAccountsFilter[] | undefined,
+  ): Promise<Record<string, PoolData>> => {
+    const swapProgram = this.getRawSwapProgram()
+    const data = await swapProgram.account.pool.all(filter)
+    const allPoolData: Record<string, PoolData> = {}
+    for (const poolData of data) {
+      allPoolData[poolData.publicKey.toBase58()] = this.convertPoolData(
+        poolData.account,
+      )
+    }
+    return allPoolData
   }
 
   /**
@@ -325,7 +384,7 @@ class Swap extends Tx {
     const lptPublicKey = account.fromAddress(lptAddress)
     const { data } = (await this.connection.getAccountInfo(lptPublicKey)) || {}
     if (!data) throw new Error(`Cannot read data of ${lptAddress}`)
-    const lptData = this.parseLPTData(data)
+    const lptData = this._splt.parseAccountData(data)
     const { mint: mintAddress } = lptData
     const { mint_authority, freeze_authority } = await this._splt.getMintData(
       mintAddress,
@@ -373,10 +432,10 @@ class Swap extends Tx {
    * @returns Transaction id, pool address, mint LPT address, lpt address
    */
   initializePool = async (
-    deltaA: bigint,
-    deltaB: bigint,
-    feeRatio: bigint,
-    taxRatio: bigint,
+    deltaA: BN,
+    deltaB: BN,
+    feeRatio: BN,
+    taxRatio: BN,
     ownerAddress: string,
     srcAAddress: string,
     srcBAddress: string,
@@ -397,6 +456,10 @@ class Swap extends Tx {
       throw new Error('Invalid source B address')
     if (!account.isAddress(taxmanAddress))
       throw new Error('Invalid taxman address')
+
+    // Get swapProgram
+    const swapProgram = await this.getSwapProgram(wallet)
+
     // Get payer
     const payerAddress = await wallet.getAddress()
     const payerPublicKey = account.fromAddress(payerAddress)
@@ -433,77 +496,38 @@ class Swap extends Tx {
     // Generate proof
     const proofAddress = await this.genProofAddress(poolAddress)
     const proofPublicKey = account.fromAddress(proofAddress)
-    // Build tx
-    let transaction = new Transaction()
-    transaction = await this.addRecentCommitment(transaction)
-    const layout = new soproxABI.struct(
-      [
-        { key: 'code', type: 'u8' },
-        { key: 'delta_a', type: 'u64' },
-        { key: 'delta_b', type: 'u64' },
-        { key: 'fee_ratio', type: 'u64' },
-        { key: 'tax_ratio', type: 'u64' },
-      ],
+
+    const txId = await swapProgram.rpc.initializePool(
+      deltaA,
+      deltaB,
+      feeRatio,
+      taxRatio,
       {
-        code: InstructionCode.InitializePool.valueOf(),
-        delta_a: deltaA,
-        delta_b: deltaB,
-        fee_ratio: feeRatio,
-        tax_ratio: taxRatio,
+        accounts: {
+          payerPublicKey,
+          ownerPublicKey,
+          poolPublicKey: pool.publicKey,
+          lptPublicKey: lptPublicKey,
+          mintLptPublicKey: mintLPT.publicKey,
+          taxmanPublicKey,
+          proofPublicKey,
+
+          srcAPublicKey,
+          mintAPublicKey,
+          treasuryAPublicKey,
+          srcBPublicKey,
+          mintBPublicKey,
+          treasuryBPublicKey,
+          treasurerPublicKey,
+          //
+          systemProgram: SystemProgram.programId,
+          spltProgramId: new PublicKey(DEFAULT_SPLT_PROGRAM_ADDRESS),
+          rent: web3.SYSVAR_RENT_PUBKEY,
+          splataProgramId: new PublicKey(DEFAULT_SPLATA_PROGRAM_ADDRESS),
+        },
+        signers: [pool, mintLPT],
       },
     )
-    const instruction = new TransactionInstruction({
-      keys: [
-        { pubkey: payerPublicKey, isSigner: true, isWritable: true },
-        { pubkey: ownerPublicKey, isSigner: false, isWritable: false },
-        { pubkey: pool.publicKey, isSigner: true, isWritable: true },
-        { pubkey: lptPublicKey, isSigner: false, isWritable: true },
-        { pubkey: mintLPT.publicKey, isSigner: true, isWritable: true },
-        { pubkey: taxmanPublicKey, isSigner: false, isWritable: false },
-        { pubkey: proofPublicKey, isSigner: false, isWritable: false },
-
-        { pubkey: srcAPublicKey, isSigner: false, isWritable: true },
-        { pubkey: mintAPublicKey, isSigner: false, isWritable: false },
-        { pubkey: treasuryAPublicKey, isSigner: false, isWritable: true },
-
-        { pubkey: srcBPublicKey, isSigner: false, isWritable: true },
-        { pubkey: mintBPublicKey, isSigner: false, isWritable: false },
-        { pubkey: treasuryBPublicKey, isSigner: false, isWritable: true },
-
-        { pubkey: treasurerPublicKey, isSigner: false, isWritable: false },
-        { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
-        { pubkey: this.spltProgramId, isSigner: false, isWritable: false },
-        { pubkey: SYSVAR_RENT_PUBKEY, isSigner: false, isWritable: false },
-        { pubkey: this.splataProgramId, isSigner: false, isWritable: false },
-      ],
-      programId: this.swapProgramId,
-      data: layout.toBuffer(),
-    })
-    transaction.add(instruction)
-    transaction.feePayer = payerPublicKey
-    // Pretest / Rerun if the tx exceeds computation limit
-    const ok = await this.pretestInitializePool(transaction)
-    if (!ok)
-      return await this.initializePool(
-        deltaA,
-        deltaB,
-        feeRatio,
-        taxRatio,
-        ownerAddress,
-        srcAAddress,
-        srcBAddress,
-        taxmanAddress,
-        wallet,
-      )
-    // Sign tx
-    const payerSig = await wallet.rawSignTransaction(transaction)
-    this.addSignature(transaction, payerSig)
-    const poolSig = await this.selfSign(transaction, pool)
-    this.addSignature(transaction, poolSig)
-    const mintLPTSig = await this.selfSign(transaction, mintLPT)
-    this.addSignature(transaction, mintLPTSig)
-    // Send tx
-    const txId = await this.sendTransaction(transaction)
     return { txId, mintLPTAddress, poolAddress, lptAddress }
   }
 
@@ -538,8 +562,8 @@ class Swap extends Tx {
    * @returns Transaction id, LPT address
    */
   addLiquidity = async (
-    deltaA: bigint,
-    deltaB: bigint,
+    deltaA: BN,
+    deltaB: BN,
     poolAddress: string,
     srcAAddress: string,
     srcBAddress: string,
@@ -583,51 +607,31 @@ class Swap extends Tx {
       treasuryBAddress,
     ].map((treasuryAddress) => account.fromAddress(treasuryAddress))
     // Build tx
-    let transaction = new Transaction()
-    transaction = await this.addRecentCommitment(transaction)
-    const layout = new soproxABI.struct(
-      [
-        { key: 'code', type: 'u8' },
-        { key: 'delta_a', type: 'u64' },
-        { key: 'delta_b', type: 'u64' },
-      ],
-      {
-        code: InstructionCode.AddLiquidity.valueOf(),
-        delta_a: deltaA,
-        delta_b: deltaB,
+    // Build tx
+    const swapProgram = await this.getSwapProgram(wallet)
+    const txId = await swapProgram.rpc.addLiquidity(deltaA, deltaB, {
+      accounts: {
+        payerPublicKey,
+        poolPublicKey,
+        lptPublicKey,
+        mintLPTPublicKey,
+
+        srcAPublicKey,
+        mintAPublicKey,
+        treasuryAPublicKey,
+
+        srcBPublicKey,
+        mintBPublicKey,
+        treasuryBPublicKey,
+
+        treasurerPublicKey,
+        systemProgram: SystemProgram.programId,
+        spltProgramId: this.spltProgramId,
+        rent: SYSVAR_RENT_PUBKEY,
+        splataProgramId: this.splataProgramId,
       },
-    )
-    const instruction = new TransactionInstruction({
-      keys: [
-        { pubkey: payerPublicKey, isSigner: true, isWritable: false },
-        { pubkey: poolPublicKey, isSigner: false, isWritable: true },
-        { pubkey: lptPublicKey, isSigner: false, isWritable: true },
-        { pubkey: mintLPTPublicKey, isSigner: false, isWritable: true },
-
-        { pubkey: srcAPublicKey, isSigner: false, isWritable: true },
-        { pubkey: mintAPublicKey, isSigner: false, isWritable: false },
-        { pubkey: treasuryAPublicKey, isSigner: false, isWritable: true },
-
-        { pubkey: srcBPublicKey, isSigner: false, isWritable: true },
-        { pubkey: mintBPublicKey, isSigner: false, isWritable: false },
-        { pubkey: treasuryBPublicKey, isSigner: false, isWritable: true },
-
-        { pubkey: treasurerPublicKey, isSigner: false, isWritable: false },
-        { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
-        { pubkey: this.spltProgramId, isSigner: false, isWritable: false },
-        { pubkey: SYSVAR_RENT_PUBKEY, isSigner: false, isWritable: false },
-        { pubkey: this.splataProgramId, isSigner: false, isWritable: false },
-      ],
-      programId: this.swapProgramId,
-      data: layout.toBuffer(),
     })
-    transaction.add(instruction)
-    transaction.feePayer = payerPublicKey
-    // Sign tx
-    const payerSig = await wallet.rawSignTransaction(transaction)
-    this.addSignature(transaction, payerSig)
-    // Send tx
-    const txId = await this.sendTransaction(transaction)
+
     return { txId, lptAddress }
   }
 
@@ -641,7 +645,7 @@ class Swap extends Tx {
    * @returns Transaction id, LPT address
    */
   removeLiquidity = async (
-    lpt: bigint,
+    lpt: BN,
     poolAddress: string,
     dstAAddress: string,
     dstBAddress: string,
@@ -685,46 +689,30 @@ class Swap extends Tx {
       treasuryBAddress,
     ].map((treasuryAddress) => account.fromAddress(treasuryAddress))
     // Build tx
-    let transaction = new Transaction()
-    transaction = await this.addRecentCommitment(transaction)
-    const layout = new soproxABI.struct(
-      [
-        { key: 'code', type: 'u8' },
-        { key: 'lpt', type: 'u64' },
-      ],
-      { code: InstructionCode.RemoveLiquidity.valueOf(), lpt },
-    )
-    const instruction = new TransactionInstruction({
-      keys: [
-        { pubkey: payerPublicKey, isSigner: true, isWritable: false },
-        { pubkey: poolPublicKey, isSigner: false, isWritable: true },
-        { pubkey: lptPublicKey, isSigner: false, isWritable: true },
-        { pubkey: mintLPTPublicKey, isSigner: false, isWritable: true },
+    const swapProgram = await this.getSwapProgram(wallet)
+    const txId = await swapProgram.rpc.removeLiquidity(lpt, {
+      accounts: {
+        payerPublicKey,
+        poolPublicKey,
+        lptPublicKey,
+        mintLPTPublicKey,
 
-        { pubkey: dstAPublicKey, isSigner: false, isWritable: true },
-        { pubkey: mintAPublicKey, isSigner: false, isWritable: false },
-        { pubkey: treasuryAPublicKey, isSigner: false, isWritable: true },
+        dstAPublicKey,
+        mintAPublicKey,
+        treasuryAPublicKey,
 
-        { pubkey: dstBPublicKey, isSigner: false, isWritable: true },
-        { pubkey: mintBPublicKey, isSigner: false, isWritable: false },
-        { pubkey: treasuryBPublicKey, isSigner: false, isWritable: true },
+        dstBPublicKey,
+        mintBPublicKey,
+        treasuryBPublicKey,
 
-        { pubkey: treasurerPublicKey, isSigner: false, isWritable: false },
-        { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
-        { pubkey: this.spltProgramId, isSigner: false, isWritable: false },
-        { pubkey: SYSVAR_RENT_PUBKEY, isSigner: false, isWritable: false },
-        { pubkey: this.splataProgramId, isSigner: false, isWritable: false },
-      ],
-      programId: this.swapProgramId,
-      data: layout.toBuffer(),
+        treasurerPublicKey,
+        systemProgram: SystemProgram.programId,
+        spltProgramId: this.spltProgramId,
+        rent: SYSVAR_RENT_PUBKEY,
+        splataProgramId: this.splataProgramId,
+      },
     })
-    transaction.add(instruction)
-    transaction.feePayer = payerPublicKey
-    // Sign tx
-    const payerSig = await wallet.rawSignTransaction(transaction)
-    this.addSignature(transaction, payerSig)
-    // Send tx
-    const txId = await this.sendTransaction(transaction)
+
     return { txId, lptAddress }
   }
 
@@ -741,8 +729,8 @@ class Swap extends Tx {
    * @returns
    */
   swap = async (
-    amount: bigint,
-    limit: bigint,
+    amount: BN,
+    limit: BN,
     poolAddress: string,
     srcAddress: string,
     dstAddress: string,
@@ -785,48 +773,30 @@ class Swap extends Tx {
       this.findTreasury(dstMintAddress, poolData),
     ].map((treasuryAddress) => account.fromAddress(treasuryAddress))
     // Build tx
-    let transaction = new Transaction()
-    transaction = await this.addRecentCommitment(transaction)
-    const layout = new soproxABI.struct(
-      [
-        { key: 'code', type: 'u8' },
-        { key: 'amount', type: 'u64' },
-        { key: 'limit', type: 'u64' },
-      ],
-      { code: InstructionCode.Swap.valueOf(), amount, limit },
-    )
-    const instruction = new TransactionInstruction({
-      keys: [
-        { pubkey: payerPublicKey, isSigner: true, isWritable: false },
-        { pubkey: poolPublicKey, isSigner: false, isWritable: true },
+    const swapProgram = await this.getSwapProgram(wallet)
+    const txId = await swapProgram.rpc.swap(amount, limit, {
+      accounts: {
+        payerPublicKey,
+        poolPublicKey,
 
-        { pubkey: srcPublicKey, isSigner: false, isWritable: true },
-        { pubkey: srcMintPublicKey, isSigner: false, isWritable: false },
-        { pubkey: treasuryBidPublicKey, isSigner: false, isWritable: true },
+        srcPublicKey,
+        srcMintPublicKey,
+        treasuryBidPublicKey,
 
-        { pubkey: dstPublicKey, isSigner: false, isWritable: true },
-        { pubkey: dstMintPublicKey, isSigner: false, isWritable: false },
-        { pubkey: treasuryAskPublicKey, isSigner: false, isWritable: true },
+        dstPublicKey,
+        dstMintPublicKey,
+        treasuryAskPublicKey,
 
-        { pubkey: taxmanPublicKey, isSigner: false, isWritable: false },
-        { pubkey: treasuryTaxmanPublicKey, isSigner: false, isWritable: true },
+        taxmanPublicKey,
+        treasuryTaxmanPublicKey,
+        treasurerPublicKey,
 
-        { pubkey: treasurerPublicKey, isSigner: false, isWritable: false },
-        { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
-        { pubkey: this.spltProgramId, isSigner: false, isWritable: false },
-        { pubkey: SYSVAR_RENT_PUBKEY, isSigner: false, isWritable: false },
-        { pubkey: this.splataProgramId, isSigner: false, isWritable: false },
-      ],
-      programId: this.swapProgramId,
-      data: layout.toBuffer(),
+        systemProgram: SystemProgram.programId,
+        spltProgramId: this.spltProgramId,
+        rent: SYSVAR_RENT_PUBKEY,
+        splataProgramId: this.splataProgramId,
+      },
     })
-    transaction.add(instruction)
-    transaction.feePayer = payerPublicKey
-    // Sign tx
-    const payerSig = await wallet.rawSignTransaction(transaction)
-    this.addSignature(transaction, payerSig)
-    // Send tx
-    const txId = await this.sendTransaction(transaction)
     return { txId }
   }
 
@@ -846,26 +816,13 @@ class Swap extends Tx {
     const payerAddress = await wallet.getAddress()
     const payerPublicKey = account.fromAddress(payerAddress)
     // Build tx
-    let transaction = new Transaction()
-    transaction = await this.addRecentCommitment(transaction)
-    const layout = new soproxABI.struct([{ key: 'code', type: 'u8' }], {
-      code: InstructionCode.FreezePool.valueOf(),
+    const swapProgram = await this.getSwapProgram(wallet)
+    const txId = await swapProgram.rpc.freezePool({
+      accounts: {
+        payerPublicKey,
+        poolPublicKey,
+      },
     })
-    const instruction = new TransactionInstruction({
-      keys: [
-        { pubkey: payerPublicKey, isSigner: true, isWritable: false },
-        { pubkey: poolPublicKey, isSigner: false, isWritable: true },
-      ],
-      programId: this.swapProgramId,
-      data: layout.toBuffer(),
-    })
-    transaction.add(instruction)
-    transaction.feePayer = payerPublicKey
-    // Sign tx
-    const payerSig = await wallet.rawSignTransaction(transaction)
-    this.addSignature(transaction, payerSig)
-    // Send tx
-    const txId = await this.sendTransaction(transaction)
     return { txId }
   }
 
@@ -885,26 +842,13 @@ class Swap extends Tx {
     const payerAddress = await wallet.getAddress()
     const payerPublicKey = account.fromAddress(payerAddress)
     // Build tx
-    let transaction = new Transaction()
-    transaction = await this.addRecentCommitment(transaction)
-    const layout = new soproxABI.struct([{ key: 'code', type: 'u8' }], {
-      code: InstructionCode.ThawPool.valueOf(),
+    const swapProgram = await this.getSwapProgram(wallet)
+    const txId = await swapProgram.rpc.thawPool({
+      accounts: {
+        payerPublicKey,
+        poolPublicKey,
+      },
     })
-    const instruction = new TransactionInstruction({
-      keys: [
-        { pubkey: payerPublicKey, isSigner: true, isWritable: false },
-        { pubkey: poolPublicKey, isSigner: false, isWritable: true },
-      ],
-      programId: this.swapProgramId,
-      data: layout.toBuffer(),
-    })
-    transaction.add(instruction)
-    transaction.feePayer = payerPublicKey
-    // Sign tx
-    const payerSig = await wallet.rawSignTransaction(transaction)
-    this.addSignature(transaction, payerSig)
-    // Send tx
-    const txId = await this.sendTransaction(transaction)
     return { txId }
   }
 
@@ -925,31 +869,16 @@ class Swap extends Tx {
       throw new Error('Invalid new taxman address')
     const poolPublicKey = account.fromAddress(poolAddress)
     const newTaxmanPublicKey = account.fromAddress(newTaxmanAddress)
-    // Get payer
-    const payerAddress = await wallet.getAddress()
-    const payerPublicKey = account.fromAddress(payerAddress)
+
     // Build tx
-    let transaction = new Transaction()
-    transaction = await this.addRecentCommitment(transaction)
-    const layout = new soproxABI.struct([{ key: 'code', type: 'u8' }], {
-      code: InstructionCode.TransferTaxman.valueOf(),
+    const swapProgram = await this.getSwapProgram(wallet)
+    const txId = await swapProgram.rpc.transferTaxman({
+      accounts: {
+        newTaxmanPublicKey,
+        payerPublicKey: swapProgram.provider.wallet.publicKey,
+        poolPublicKey,
+      },
     })
-    const instruction = new TransactionInstruction({
-      keys: [
-        { pubkey: payerPublicKey, isSigner: true, isWritable: false },
-        { pubkey: poolPublicKey, isSigner: false, isWritable: true },
-        { pubkey: newTaxmanPublicKey, isSigner: false, isWritable: false },
-      ],
-      programId: this.swapProgramId,
-      data: layout.toBuffer(),
-    })
-    transaction.add(instruction)
-    transaction.feePayer = payerPublicKey
-    // Sign tx
-    const payerSig = await wallet.rawSignTransaction(transaction)
-    this.addSignature(transaction, payerSig)
-    // Send tx
-    const txId = await this.sendTransaction(transaction)
     return { txId }
   }
 
@@ -987,27 +916,15 @@ class Swap extends Tx {
     const payerAddress = await wallet.getAddress()
     const payerPublicKey = account.fromAddress(payerAddress)
     // Build tx
-    let transaction = new Transaction()
-    transaction = await this.addRecentCommitment(transaction)
-    const layout = new soproxABI.struct([{ key: 'code', type: 'u8' }], {
-      code: InstructionCode.TransferOwnership.valueOf(),
+    const swapProgram = await this.getSwapProgram(wallet)
+
+    const txId = await swapProgram.rpc.transferPoolOwnership({
+      accounts: {
+        newOwnerPublicKey,
+        payerPublicKey,
+        poolPublicKey,
+      },
     })
-    const instruction = new TransactionInstruction({
-      keys: [
-        { pubkey: payerPublicKey, isSigner: true, isWritable: false },
-        { pubkey: poolPublicKey, isSigner: false, isWritable: true },
-        { pubkey: newOwnerPublicKey, isSigner: false, isWritable: false },
-      ],
-      programId: this.swapProgramId,
-      data: layout.toBuffer(),
-    })
-    transaction.add(instruction)
-    transaction.feePayer = payerPublicKey
-    // Sign tx
-    const payerSig = await wallet.rawSignTransaction(transaction)
-    this.addSignature(transaction, payerSig)
-    // Send tx
-    const txId = await this.sendTransaction(transaction)
     return { txId }
   }
 
@@ -1019,8 +936,8 @@ class Swap extends Tx {
    * @param wallet
    */
   route = async (
-    amount: bigint,
-    limit: bigint,
+    amount: BN,
+    limit: BN,
     routingAddress: Array<RoutingAddress>,
     wallet: WalletInterface,
   ): Promise<{ txId: string; dst: string }> => {
@@ -1028,28 +945,8 @@ class Swap extends Tx {
     const payerAddress = await wallet.getAddress()
     const payerPublicKey = account.fromAddress(payerAddress)
     // Pre-build system accounts
-    const keys = new Array<AccountMeta>()
-    keys.push({ pubkey: payerPublicKey, isSigner: true, isWritable: false })
-    keys.push({
-      pubkey: SystemProgram.programId,
-      isSigner: false,
-      isWritable: false,
-    })
-    keys.push({
-      pubkey: this.spltProgramId,
-      isSigner: false,
-      isWritable: false,
-    })
-    keys.push({
-      pubkey: SYSVAR_RENT_PUBKEY,
-      isSigner: false,
-      isWritable: false,
-    })
-    keys.push({
-      pubkey: this.splataProgramId,
-      isSigner: false,
-      isWritable: false,
-    })
+    const remainingAccounts = new Array<AccountMeta>()
+
     // Build accounts
     for (const { poolAddress, srcAddress, dstAddress } of routingAddress) {
       if (!account.isAddress(poolAddress))
@@ -1086,68 +983,69 @@ class Swap extends Tx {
         this.findTreasury(dstMintAddress, poolData),
       ].map((treasuryAddress) => account.fromAddress(treasuryAddress))
       // Add keys
-      keys.push({ pubkey: poolPublicKey, isSigner: false, isWritable: true })
-      keys.push({ pubkey: srcPublicKey, isSigner: false, isWritable: true })
-      keys.push({
+      remainingAccounts.push({
+        pubkey: poolPublicKey,
+        isSigner: false,
+        isWritable: true,
+      })
+      remainingAccounts.push({
+        pubkey: srcPublicKey,
+        isSigner: false,
+        isWritable: true,
+      })
+      remainingAccounts.push({
         pubkey: srcMintPublicKey,
         isSigner: false,
         isWritable: false,
       })
-      keys.push({
+      remainingAccounts.push({
         pubkey: treasuryBidPublicKey,
         isSigner: false,
         isWritable: true,
       })
-      keys.push({ pubkey: dstPublicKey, isSigner: false, isWritable: true })
-      keys.push({
+      remainingAccounts.push({
+        pubkey: dstPublicKey,
+        isSigner: false,
+        isWritable: true,
+      })
+      remainingAccounts.push({
         pubkey: dstMintPublicKey,
         isSigner: false,
         isWritable: false,
       })
-      keys.push({
+      remainingAccounts.push({
         pubkey: treasuryAskPublicKey,
         isSigner: false,
         isWritable: true,
       })
-      keys.push({ pubkey: taxmanPublicKey, isSigner: false, isWritable: false })
-      keys.push({
+      remainingAccounts.push({
+        pubkey: taxmanPublicKey,
+        isSigner: false,
+        isWritable: false,
+      })
+      remainingAccounts.push({
         pubkey: treasuryTaxmanPublicKey,
         isSigner: false,
         isWritable: true,
       })
-      keys.push({
+      remainingAccounts.push({
         pubkey: treasurerPublicKey,
         isSigner: false,
         isWritable: false,
       })
     }
     // Build transaction
-    let transaction = new Transaction()
-    transaction = await this.addRecentCommitment(transaction)
-    const layout = new soproxABI.struct(
-      [
-        { key: 'code', type: 'u8' },
-        { key: 'amount', type: 'u64' },
-        { key: 'limit', type: 'u64' },
-      ],
-      {
-        code: InstructionCode.Routing.valueOf(),
-        amount,
-        limit,
+    const swapProgram = await this.getSwapProgram(wallet)
+    const txId = await swapProgram.rpc.route(amount, limit, {
+      accounts: {
+        payerPublicKey,
+        systemProgram: SystemProgram.programId,
+        spltProgramId: this.spltProgramId,
+        rent: SYSVAR_RENT_PUBKEY,
+        splataProgramId: this.splataProgramId,
       },
-    )
-    const instruction = new TransactionInstruction({
-      keys: keys,
-      programId: this.swapProgramId,
-      data: layout.toBuffer(),
+      remainingAccounts,
     })
-    transaction.add(instruction)
-    transaction.feePayer = payerPublicKey
-    // Sign tx
-    const payerSig = await wallet.rawSignTransaction(transaction)
-    this.addSignature(transaction, payerSig)
-    // Send tx
-    const txId = await this.sendTransaction(transaction)
     const dst = routingAddress[routingAddress.length - 1].poolAddress
     return { txId, dst }
   }
@@ -1161,8 +1059,8 @@ class Swap extends Tx {
    * @returns
    */
   updateFee = async (
-    feeRatio: bigint,
-    taxRatio: bigint,
+    feeRatio: BN,
+    taxRatio: BN,
     poolAddress: string,
     wallet: WalletInterface,
   ): Promise<{ txId: string }> => {
@@ -1172,35 +1070,14 @@ class Swap extends Tx {
     const payerAddress = await wallet.getAddress()
     const payerPublicKey = account.fromAddress(payerAddress)
     // Build tx
-    let transaction = new Transaction()
-    transaction = await this.addRecentCommitment(transaction)
-    const layout = new soproxABI.struct(
-      [
-        { key: 'code', type: 'u8' },
-        { key: 'fee_ratio', type: 'u64' },
-        { key: 'tax_ratio', type: 'u64' },
-      ],
-      {
-        code: InstructionCode.UpdateFee.valueOf(),
-        fee_ratio: feeRatio,
-        tax_ratio: taxRatio,
+    const swapProgram = await this.getSwapProgram(wallet)
+    const txId = await swapProgram.rpc.updateFee(feeRatio, taxRatio, {
+      accounts: {
+        payerPublicKey,
+        poolPublicKey,
       },
-    )
-    const instruction = new TransactionInstruction({
-      keys: [
-        { pubkey: payerPublicKey, isSigner: true, isWritable: false },
-        { pubkey: poolPublicKey, isSigner: false, isWritable: true },
-      ],
-      programId: this.swapProgramId,
-      data: layout.toBuffer(),
     })
-    transaction.add(instruction)
-    transaction.feePayer = payerPublicKey
-    // Sign tx
-    const payerSig = await wallet.rawSignTransaction(transaction)
-    this.addSignature(transaction, payerSig)
-    // Send tx
-    const txId = await this.sendTransaction(transaction)
+
     return { txId }
   }
 
@@ -1215,8 +1092,8 @@ class Swap extends Tx {
    * @returns Transaction id, LPT address
    */
   addSidedLiquidity = async (
-    deltaA: bigint,
-    deltaB: bigint,
+    deltaA: BN,
+    deltaB: BN,
     poolAddress: string,
     srcAAddress: string,
     srcBAddress: string,
@@ -1269,55 +1146,34 @@ class Swap extends Tx {
       treasuryBAddress,
     ].map((treasuryAddress) => account.fromAddress(treasuryAddress))
     // Build tx
-    let transaction = new Transaction()
-    transaction = await this.addRecentCommitment(transaction)
-    const layout = new soproxABI.struct(
-      [
-        { key: 'code', type: 'u8' },
-        { key: 'delta_a', type: 'u64' },
-        { key: 'delta_b', type: 'u64' },
-      ],
-      {
-        code: InstructionCode.AddSidedLiquidity.valueOf(),
-        delta_a: deltaA,
-        delta_b: deltaB,
+    const swapProgram = await this.getSwapProgram(wallet)
+    const txId = await swapProgram.rpc.addSidedLiquidity(deltaA, deltaB, {
+      accounts: {
+        payerPublicKey,
+        poolPublicKey,
+        lptPublicKey,
+        mintLPTPublicKey,
+
+        srcAPublicKey,
+        mintAPublicKey,
+        treasuryAPublicKey,
+
+        srcBPublicKey,
+        mintBPublicKey,
+        treasuryBPublicKey,
+
+        taxmanPublicKey,
+        treasuryTaxmanAPublicKey,
+        treasuryTaxmanBPublicKey,
+
+        treasurerPublicKey,
+        systemProgram: SystemProgram.programId,
+        spltProgramId: this.spltProgramId,
+        rent: SYSVAR_RENT_PUBKEY,
+        splataProgramId: this.splataProgramId,
       },
-    )
-    const instruction = new TransactionInstruction({
-      keys: [
-        { pubkey: payerPublicKey, isSigner: true, isWritable: false },
-        { pubkey: poolPublicKey, isSigner: false, isWritable: true },
-        { pubkey: lptPublicKey, isSigner: false, isWritable: true },
-        { pubkey: mintLPTPublicKey, isSigner: false, isWritable: true },
-
-        { pubkey: srcAPublicKey, isSigner: false, isWritable: true },
-        { pubkey: mintAPublicKey, isSigner: false, isWritable: false },
-        { pubkey: treasuryAPublicKey, isSigner: false, isWritable: true },
-
-        { pubkey: srcBPublicKey, isSigner: false, isWritable: true },
-        { pubkey: mintBPublicKey, isSigner: false, isWritable: false },
-        { pubkey: treasuryBPublicKey, isSigner: false, isWritable: true },
-
-        { pubkey: taxmanPublicKey, isSigner: false, isWritable: false },
-        { pubkey: treasuryTaxmanAPublicKey, isSigner: false, isWritable: true },
-        { pubkey: treasuryTaxmanBPublicKey, isSigner: false, isWritable: true },
-
-        { pubkey: treasurerPublicKey, isSigner: false, isWritable: false },
-        { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
-        { pubkey: this.spltProgramId, isSigner: false, isWritable: false },
-        { pubkey: SYSVAR_RENT_PUBKEY, isSigner: false, isWritable: false },
-        { pubkey: this.splataProgramId, isSigner: false, isWritable: false },
-      ],
-      programId: this.swapProgramId,
-      data: layout.toBuffer(),
     })
-    transaction.add(instruction)
-    transaction.feePayer = payerPublicKey
-    // Sign tx
-    const payerSig = await wallet.rawSignTransaction(transaction)
-    this.addSignature(transaction, payerSig)
-    // Send tx
-    const txId = await this.sendTransaction(transaction)
+
     return { txId, lptAddress }
   }
 
@@ -1325,11 +1181,11 @@ class Swap extends Tx {
    * Wrap sol
    */
   wrapSol = async (
-    amount: bigint,
+    amount: BN,
     wallet: WalletInterface,
   ): Promise<{ accountAddress: string; txId: string }> => {
     // Validation
-    if (amount < 0n) throw new Error('Invalid amount')
+    if (amount < new BN(0)) throw new Error('Invalid amount')
     // Get payer & associated account
     const payerAddress = await wallet.getAddress()
     const payerPublicKey = account.fromAddress(payerAddress)
@@ -1340,35 +1196,18 @@ class Swap extends Tx {
     const accountPublicKey = account.fromAddress(accountAddress)
     const mintPublicKey = account.fromAddress(DEFAULT_WSOL)
     // Build tx
-    let transaction = new Transaction()
-    transaction = await this.addRecentCommitment(transaction)
-    const layout = new soproxABI.struct(
-      [
-        { key: 'code', type: 'u8' },
-        { key: 'amount', type: 'u64' },
-      ],
-      { code: InstructionCode.WrapSol.valueOf(), amount },
-    )
-    const instruction = new TransactionInstruction({
-      keys: [
-        { pubkey: payerPublicKey, isSigner: true, isWritable: true },
-        { pubkey: accountPublicKey, isSigner: false, isWritable: true },
-        { pubkey: mintPublicKey, isSigner: false, isWritable: false },
-        { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
-        { pubkey: this.spltProgramId, isSigner: false, isWritable: false },
-        { pubkey: SYSVAR_RENT_PUBKEY, isSigner: false, isWritable: false },
-        { pubkey: this.splataProgramId, isSigner: false, isWritable: false },
-      ],
-      programId: this.swapProgramId,
-      data: layout.toBuffer(),
+    const swapProgram = await this.getSwapProgram(wallet)
+    const txId = await swapProgram.rpc.wrapSol(amount, {
+      accounts: {
+        payerPublicKey,
+        accountPublicKey,
+        mintPublicKey,
+        systemProgram: SystemProgram.programId,
+        spltProgramId: this.spltProgramId,
+        rent: SYSVAR_RENT_PUBKEY,
+        splataProgramId: this.splataProgramId,
+      },
     })
-    transaction.add(instruction)
-    transaction.feePayer = payerPublicKey
-    // Sign tx
-    const payerSig = await wallet.rawSignTransaction(transaction)
-    this.addSignature(transaction, payerSig)
-    // Send tx
-    const txId = await this.sendTransaction(transaction)
     return { accountAddress, txId }
   }
 }

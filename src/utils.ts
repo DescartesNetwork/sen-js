@@ -1,5 +1,5 @@
 import axios from 'axios'
-import * as BN from 'bn.js'
+import { BN } from '@project-serum/anchor'
 import * as nacl from 'tweetnacl'
 import {
   AccountInfo,
@@ -168,7 +168,7 @@ const util = {
         commitment,
       )
       if (!re) continue
-      data = data.concat(re)
+      data = data.concat(re as any)
     }
     return data
   },

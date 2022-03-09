@@ -1,46 +1,42 @@
-declare global {
-  interface BigInt {
-    sqrt(): bigint
-  }
-}
+import { BN } from '@project-serum/anchor'
 
-BigInt.prototype.sqrt = function () {
-  const self = this.valueOf()
-  const one = BigInt(1)
-  const two = BigInt(2)
-  if (self < two) return self
-  let bits = BigInt(this.toString(2).length + 1) / two
-  let start = one << (bits - one)
-  let end = one << (bits + one)
-  while (start < end) {
-    end = (start + end) / two
-    start = self / end
+function sqrtBN(self: BN) {
+  const one = new BN(1)
+  const two = new BN(2)
+  if (two.gt(self)) return self
+  let bits = new BN(self.toString(2).length + 1).div(two)
+  let start = one.shln(bits.sub(one).toNumber())
+  let end = one.shln(bits.add(one).toNumber())
+  while (end.gt(start)) {
+    end = new BN(start.add(end)).div(two)
+    start = new BN(self.div(end))
   }
   return end
 }
 
-const PRECISION = BigInt(1000000000) // 10^9
+const PRECISION = new BN(1000_000_000) // 10^9
 
 const oracle = {
-  extract: (a: bigint, b: bigint, reserveA: bigint, reserveB: bigint) => {
-    if (!reserveA || !reserveB) throw new Error('Invalid deposit/reserves')
-    if (!a || !b) return [0n, 0n]
-    const l = a * reserveB
-    const r = b * reserveA
-    if (l > r) return [r / reserveB, b]
-    if (l < r) return [a, l / reserveA]
+  extract: (a: BN, b: BN, reserveA: BN, reserveB: BN) => {
+    if (reserveA.isZero() || reserveB.isZero())
+      throw new Error('Invalid deposit/reserves')
+    if (a.isZero() || b.isZero()) return [new BN(0), new BN(0)]
+    const l = a.mul(reserveB)
+    const r = b.mul(reserveA)
+    if (l.gt(r)) return [r.div(reserveB), b]
+    if (r.gt(l)) return [a, l.div(reserveA)]
     return [a, b]
   },
 
   rake: (
-    amount: bigint,
-    bidReserve: bigint,
-    askReserve: bigint,
-    feeRatio: bigint,
-    taxRatio: bigint,
+    amount: BN,
+    bidReserve: BN,
+    askReserve: BN,
+    feeRatio: BN,
+    taxRatio: BN,
   ) => {
     let delta = amount
-    let bidAmount = amount / 2n
+    let bidAmount = amount.div(new BN(2))
     while (true) {
       const { askAmount, newReserveBid, newReserveAsk } = oracle.swap(
         bidAmount,
@@ -49,32 +45,32 @@ const oracle = {
         feeRatio,
         taxRatio,
       )
-      const remainer = amount - bidAmount
-      const expectedRemainer = (askAmount * newReserveBid) / newReserveAsk
-      const nextDelta =
-        remainer > expectedRemainer
-          ? (remainer - expectedRemainer) / 2n
-          : (expectedRemainer - remainer) / 2n
-      if (delta > nextDelta) {
+      const remainer = amount.sub(bidAmount)
+      const expectedRemainer = askAmount.mul(newReserveBid).div(newReserveAsk)
+      const nextDelta = remainer.gt(expectedRemainer)
+        ? remainer.sub(expectedRemainer).div(new BN(2))
+        : expectedRemainer.sub(remainer).div(new BN(2))
+      if (delta.gt(nextDelta)) {
         delta = nextDelta
       } else {
         break
       }
-      bidAmount =
-        remainer > expectedRemainer ? bidAmount + delta : bidAmount - delta
+      bidAmount = remainer.gt(expectedRemainer)
+        ? bidAmount.add(delta)
+        : bidAmount.sub(delta)
     }
     return bidAmount
   },
 
   deposit: (
-    deltaA: bigint,
-    deltaB: bigint,
-    reserveA: bigint,
-    reserveB: bigint,
-    liquidity: bigint,
+    deltaA: BN,
+    deltaB: BN,
+    reserveA: BN,
+    reserveB: BN,
+    liquidity: BN,
   ) => {
-    if (!reserveA && !reserveB) {
-      const lpt = (deltaA * deltaB).sqrt()
+    if (reserveA.isZero() && reserveB.isZero()) {
+      const lpt = sqrtBN(deltaA.mul(deltaB))
       return {
         deltaA,
         deltaB,
@@ -85,21 +81,21 @@ const oracle = {
       }
     }
     const [a, b] = oracle.extract(deltaA, deltaB, reserveA, reserveB)
-    const lpt = (a * liquidity) / reserveA
-    const newReserveA = a + reserveA
-    const newReserveB = b + reserveB
-    const newLiquidity = liquidity + lpt
+    const lpt = a.mul(liquidity).div(reserveA)
+    const newReserveA = a.add(reserveA)
+    const newReserveB = b.add(reserveB)
+    const newLiquidity = liquidity.add(lpt)
     return { deltaA: a, deltaB: b, lpt, newReserveA, newReserveB, newLiquidity }
   },
 
   sided_deposit: (
-    deltaA: bigint,
-    deltaB: bigint,
-    reserveA: bigint,
-    reserveB: bigint,
-    liquidity: bigint,
-    feeRatio: bigint,
-    taxRatio: bigint,
+    deltaA: BN,
+    deltaB: BN,
+    reserveA: BN,
+    reserveB: BN,
+    liquidity: BN,
+    feeRatio: BN,
+    taxRatio: BN,
   ) => {
     const {
       deltaA: unrakedAStar,
@@ -109,9 +105,10 @@ const oracle = {
       lpt: unrakedLpt,
       newLiquidity: unrakedLiquidity,
     } = oracle.deposit(deltaA, deltaB, reserveA, reserveB, liquidity)
-    const aRemainer = deltaA - unrakedAStar
-    const bRemainer = deltaB - unrakedBStar
-    if (aRemainer > 0n) {
+    const aRemainer = deltaA.sub(unrakedAStar)
+    const bRemainer = deltaB.sub(unrakedBStar)
+
+    if (aRemainer.gt(new BN(0))) {
       const bidAmount = oracle.rake(
         aRemainer,
         unrakedReserveA,
@@ -134,23 +131,23 @@ const oracle = {
         newReserveB,
         newLiquidity,
       } = oracle.deposit(
-        aRemainer - bidAmount,
+        aRemainer.sub(bidAmount),
         askAmount,
         newReserveBid,
         newReserveAsk,
         unrakedLiquidity,
       )
       return {
-        deltaA: unrakedAStar + bidAmount + rakedAStar,
-        deltaB: unrakedBStar + rakedBStar - askAmount,
-        lpt: unrakedLpt + rakedLpt,
+        deltaA: unrakedAStar.add(bidAmount).add(rakedAStar),
+        deltaB: unrakedBStar.add(rakedBStar).sub(askAmount),
+        lpt: unrakedLpt.add(rakedLpt),
         newReserveA,
         newReserveB,
         newLiquidity,
       }
     }
 
-    if (bRemainer > 0n) {
+    if (bRemainer.gt(new BN(0))) {
       const bidAmount = oracle.rake(
         bRemainer,
         unrakedReserveB,
@@ -174,15 +171,16 @@ const oracle = {
         newLiquidity,
       } = oracle.deposit(
         askAmount,
-        bRemainer - bidAmount,
+        bRemainer.sub(bidAmount),
         newReserveAsk,
         newReserveBid,
         unrakedLiquidity,
       )
+
       return {
-        deltaA: unrakedAStar + rakedAStar - askAmount,
-        deltaB: unrakedBStar + bidAmount + rakedBStar,
-        lpt: unrakedLpt + rakedLpt,
+        deltaA: unrakedAStar.add(rakedAStar).sub(askAmount),
+        deltaB: unrakedBStar.add(bidAmount).add(rakedBStar),
+        lpt: unrakedLpt.add(rakedLpt),
         newReserveA,
         newReserveB,
         newLiquidity,
@@ -199,60 +197,55 @@ const oracle = {
     }
   },
 
-  withdraw: (
-    lpt: bigint,
-    liquidity: bigint,
-    reserveA: bigint,
-    reserveB: bigint,
-  ) => {
-    const deltaA = (reserveA * lpt) / liquidity
-    const deltaB = (reserveB * lpt) / liquidity
-    const newReserveA = reserveA - deltaA
-    const newReserveB = reserveB - deltaB
+  withdraw: (lpt: BN, liquidity: BN, reserveA: BN, reserveB: BN) => {
+    const deltaA = reserveA.mul(lpt).div(liquidity)
+    const deltaB = reserveB.mul(lpt).div(liquidity)
+    const newReserveA = reserveA.sub(deltaA)
+    const newReserveB = reserveB.sub(deltaB)
     return { deltaA, deltaB, newReserveA, newReserveB }
   },
 
-  fee: (askAmount: bigint, feeRatio: bigint, taxRatio: bigint) => {
-    const fee = (askAmount * feeRatio) / PRECISION
-    const tempAmount = askAmount - fee
-    const tax = (tempAmount * taxRatio) / PRECISION
-    const amount = tempAmount - tax
+  fee: (askAmount: BN, feeRatio: BN, taxRatio: BN) => {
+    const fee = askAmount.mul(feeRatio).div(PRECISION)
+    const tempAmount = askAmount.sub(fee)
+    const tax = tempAmount.mul(taxRatio).div(PRECISION)
+    const amount = tempAmount.sub(tax)
     return { askAmount: amount, fee, tax }
   },
 
   swap: (
-    bidAmount: bigint,
-    reserveBid: bigint,
-    reserveAsk: bigint,
-    feeRatio: bigint,
-    taxRatio: bigint,
+    bidAmount: BN,
+    reserveBid: BN,
+    reserveAsk: BN,
+    feeRatio: BN,
+    taxRatio: BN,
   ) => {
-    const newReserveBid = reserveBid + bidAmount
-    const tempReserveAsk = (reserveBid * reserveAsk) / newReserveBid
-    const tempAskAmount = reserveAsk - tempReserveAsk
+    const newReserveBid = reserveBid.add(bidAmount)
+    const tempReserveAsk = reserveBid.mul(reserveAsk).div(newReserveBid)
+    const tempAskAmount = reserveAsk.sub(tempReserveAsk)
     const { askAmount, fee, tax } = oracle.fee(
       tempAskAmount,
       feeRatio,
       taxRatio,
     )
-    const newReserveAsk = tempReserveAsk + fee
+    const newReserveAsk = tempReserveAsk.add(fee)
     return { askAmount, tax, newReserveBid, newReserveAsk }
   },
 
   inverseSwap: (
-    askAmount: bigint,
-    reserveBid: bigint,
-    reserveAsk: bigint,
-    feeRatio: bigint,
-    taxRatio: bigint,
+    askAmount: BN,
+    reserveBid: BN,
+    reserveAsk: BN,
+    feeRatio: BN,
+    taxRatio: BN,
   ) => {
-    const tempAskAmount =
-      (askAmount * PRECISION ** 2n) /
-      (PRECISION - taxRatio) /
-      (PRECISION - feeRatio)
-    const tempReserveAsk = reserveAsk - tempAskAmount
-    const tempReserveBid = (reserveBid * reserveAsk) / tempReserveAsk
-    return tempReserveBid - reserveBid
+    const tempAskAmount = askAmount
+      .mul(PRECISION.pow(new BN(2)))
+      .div(PRECISION.sub(taxRatio))
+      .div(PRECISION.sub(feeRatio))
+    const tempReserveAsk = reserveAsk.sub(tempAskAmount)
+    const tempReserveBid = reserveBid.mul(reserveAsk).div(tempReserveAsk)
+    return tempReserveBid.sub(reserveBid)
   },
 
   /**
@@ -264,11 +257,11 @@ const oracle = {
    * @returns
    */
   slippage: (
-    bidAmount: bigint,
-    reserveBid: bigint,
-    reserveAsk: bigint,
-    feeRatio: bigint,
-    taxRatio: bigint,
+    bidAmount: BN,
+    reserveBid: BN,
+    reserveAsk: BN,
+    feeRatio: BN,
+    taxRatio: BN,
   ) => {
     const { newReserveBid, newReserveAsk } = oracle.swap(
       bidAmount,
@@ -277,13 +270,15 @@ const oracle = {
       feeRatio,
       taxRatio,
     )
-    const prevPrice = (reserveAsk * PRECISION) / reserveBid
-    const nextPrice = (newReserveAsk * PRECISION) / newReserveBid
+    const prevPrice = reserveAsk.mul(PRECISION).div(reserveBid)
+    const nextPrice = newReserveAsk.mul(PRECISION).div(newReserveBid)
     return (
-      ((nextPrice > prevPrice ? nextPrice - prevPrice : prevPrice - nextPrice) *
-        PRECISION) /
-      prevPrice
+      nextPrice > prevPrice
+        ? nextPrice.sub(prevPrice)
+        : prevPrice.sub(nextPrice)
     )
+      .mul(PRECISION)
+      .div(prevPrice)
   },
 }
 
