@@ -460,6 +460,30 @@ export type SwapProgram = {
       ]
     },
     {
+      name: 'route'
+      accounts: [
+        {
+          name: 'payerPublicKey'
+          isMut: false
+          isSigner: true
+        },
+        { name: 'systemProgram'; isMut: false; isSigner: false },
+        { name: 'spltProgramId'; isMut: false; isSigner: false },
+        { name: 'rent'; isMut: false; isSigner: false },
+        { name: 'splataProgramId'; isMut: false; isSigner: false },
+      ]
+      args: [
+        {
+          name: 'amount'
+          type: 'u64'
+        },
+        {
+          name: 'limit'
+          type: 'u64'
+        },
+      ]
+    },
+    {
       name: 'updateFee'
       accounts: [
         {
@@ -1013,6 +1037,30 @@ export const SwapIDL: SwapProgram = {
           isSigner: false,
         },
 
+        { name: 'systemProgram', isMut: false, isSigner: false },
+        { name: 'spltProgramId', isMut: false, isSigner: false },
+        { name: 'rent', isMut: false, isSigner: false },
+        { name: 'splataProgramId', isMut: false, isSigner: false },
+      ],
+      args: [
+        {
+          name: 'amount',
+          type: 'u64',
+        },
+        {
+          name: 'limit',
+          type: 'u64',
+        },
+      ],
+    },
+    {
+      name: 'route',
+      accounts: [
+        {
+          name: 'payerPublicKey',
+          isMut: false,
+          isSigner: true,
+        },
         { name: 'systemProgram', isMut: false, isSigner: false },
         { name: 'spltProgramId', isMut: false, isSigner: false },
         { name: 'rent', isMut: false, isSigner: false },
