@@ -3,7 +3,6 @@ import {
   PublicKey,
   Transaction,
   SYSVAR_RENT_PUBKEY,
-  TransactionInstruction,
   SystemProgram,
   GetProgramAccountsFilter,
   KeyedAccountInfo,
@@ -24,7 +23,6 @@ import {
 } from '../default'
 import { WalletInterface } from '../rawWallet'
 import oracle from './oracle'
-import { InstructionCode } from './constant'
 import { getAnchorProvider, getRawAnchorProvider } from '../anchorProvider'
 
 const xor = require('buffer-xor')
