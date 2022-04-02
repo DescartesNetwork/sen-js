@@ -263,33 +263,6 @@ describe('Swap library', function () {
       }
     })
 
-    it('Should be failed routing because of amount input is zero', async function () {
-      const swap = new Swap()
-      const payerAddress = await wallet.getAddress()
-      const srcAddresses = await Promise.all(
-        mints.map(({ address: mintAddress }) =>
-          account.deriveAssociatedAddress(payerAddress, mintAddress),
-        ),
-      )
-
-      try {
-        const result = await swap.route(
-          0n,
-          20000000000n,
-          [
-            {
-              srcAddress: srcAddresses[0],
-              dstAddress: srcAddresses[2],
-              poolAddress: POOL_ADDRESS_1,
-            },
-          ],
-          wallet,
-        )
-      } catch (er) {
-        assert.deepStrictEqual(er.message, 'Cannot input a zero amount')
-      }
-    })
-
     it('Should be failed routing because of exceed limit', async function () {
       const swap = new Swap()
       const payerAddress = await wallet.getAddress()

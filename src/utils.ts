@@ -6,6 +6,7 @@ import {
   Commitment,
   Connection,
   LAMPORTS_PER_SOL,
+  ParsedAccountData,
   PublicKey,
 } from '@solana/web3.js'
 import * as emoji from './assets/emoji.json'
@@ -13,7 +14,7 @@ import * as emoji from './assets/emoji.json'
 const PRECISION = new BN('1000000000')
 
 const util = {
-  /**˝
+  /**
    * Basic transaction fee
    */
   BASIC_TX_FEE: 0.000005,
@@ -160,7 +161,7 @@ const util = {
     const limit = 99
     const length = publicKeys.length
     const counter = Math.floor(length / limit) + 1
-    let data: (AccountInfo<Buffer> | null)[] = []
+    let data: (AccountInfo<Buffer | ParsedAccountData> | null)[] = []
     for (let i = 0; i < counter; i++) {
       const subPublicKeys = publicKeys.slice(limit * i, limit * (i + 1))
       const re = await connection.getMultipleAccountsInfo(
