@@ -9,7 +9,7 @@ import * as nacl from 'tweetnacl'
 
 import account from '../account'
 import { DEFAULT_NODEURL } from '../default'
-import { Signature, WalletInterface } from '../rawWallet'
+import { WalletInterface } from '../rawWallet'
 
 export class TxError extends Error {
   info: { txId: string }
@@ -85,21 +85,6 @@ class Tx {
   }
 
   /**
-   * Add transaction signature
-   * @param transaction
-   * @param { publicKey, signature } signature
-   * @returns transaction with added signature
-   */
-  protected addSignature = (
-    transaction: Transaction,
-    { publicKey, signature }: Signature,
-  ): Transaction => {
-    if (!transaction.feePayer) transaction.feePayer = publicKey
-    transaction.addSignature(publicKey, signature)
-    return transaction
-  }
-
-  /**
    * Sign a transaction by a keypair
    * @param transaction
    * @param account
@@ -108,7 +93,7 @@ class Tx {
   protected selfSign = (
     transaction: Transaction,
     account: Keypair,
-  ): Signature => {
+  ): Transaction => {
     if (!transaction || !transaction.feePayer)
       throw new Error('Empty transaction')
     if (!transaction.feePayer) throw new Error('Empty transaction payer')
@@ -116,8 +101,8 @@ class Tx {
     const publicKey = account.publicKey
     const signData = transaction.serializeMessage()
     const sig = nacl.sign.detached(signData, account.secretKey)
-    const signature = Buffer.from(sig)
-    return { publicKey, signature }
+    transaction.addSignature(publicKey, Buffer.from(sig))
+    return transaction
   }
 
   /**
@@ -180,10 +165,8 @@ class Tx {
     transaction.add(instruction)
     transaction.feePayer = fromPubkey
     // Sign tx
-    const payerSig = await wallet.rawSignTransaction(transaction)
-    this.addSignature(transaction, payerSig)
-    const accSig = this.selfSign(transaction, newAccount)
-    this.addSignature(transaction, accSig)
+    transaction = await wallet.signTransaction(transaction)
+    transaction = this.selfSign(transaction, newAccount)
     // Send tx
     const txId = this.sendTransaction(transaction)
     return txId

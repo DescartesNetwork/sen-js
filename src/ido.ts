@@ -315,10 +315,8 @@ class IDO extends Tx {
     transaction.add(instruction)
     transaction.feePayer = payerPublicKey
     // Sign tx
-    const payerSig = await wallet.rawSignTransaction(transaction)
-    this.addSignature(transaction, payerSig)
-    const idoSig = await this.selfSign(transaction, ido)
-    this.addSignature(transaction, idoSig)
+    transaction = await wallet.signTransaction(transaction)
+    transaction = await this.selfSign(transaction, ido)
     // Send tx
     const txId = await this.sendTransaction(transaction)
     return { txId, idoAddress }
@@ -370,8 +368,7 @@ class IDO extends Tx {
     transaction.add(instruction)
     transaction.feePayer = payerPublicKey
     // Sign tx
-    const payerSig = await wallet.rawSignTransaction(transaction)
-    this.addSignature(transaction, payerSig)
+    transaction = await wallet.signTransaction(transaction)
     // Send tx
     const txId = await this.sendTransaction(transaction)
     return { txId, ticketAddress }
@@ -463,8 +460,7 @@ class IDO extends Tx {
     transaction.add(instruction)
     transaction.feePayer = payerPublicKey
     // Sign tx
-    const payerSig = await wallet.rawSignTransaction(transaction)
-    this.addSignature(transaction, payerSig)
+    transaction = await wallet.signTransaction(transaction)
     // Send tx
     const txId = await this.sendTransaction(transaction)
     return { txId, ticketAddress }
@@ -556,8 +552,7 @@ class IDO extends Tx {
     transaction.add(instruction)
     transaction.feePayer = payerPublicKey
     // Sign tx
-    const payerSig = await wallet.rawSignTransaction(transaction)
-    this.addSignature(transaction, payerSig)
+    transaction = await wallet.signTransaction(transaction)
     // Send tx
     const txId = await this.sendTransaction(transaction)
     return { txId, ticketAddress }
@@ -650,8 +645,7 @@ class IDO extends Tx {
     transaction.add(instruction)
     transaction.feePayer = payerPublicKey
     // Sign tx
-    const payerSig = await wallet.rawSignTransaction(transaction)
-    this.addSignature(transaction, payerSig)
+    transaction = await wallet.signTransaction(transaction)
     // Send tx
     const txId = await this.sendTransaction(transaction)
     return { txId, dstAddress }
@@ -725,8 +719,7 @@ class IDO extends Tx {
     transaction.add(instruction)
     transaction.feePayer = payerPublicKey
     // Sign tx
-    const payerSig = await wallet.rawSignTransaction(transaction)
-    this.addSignature(transaction, payerSig)
+    transaction = await wallet.signTransaction(transaction)
     // Send tx
     const txId = await this.sendTransaction(transaction)
     return { txId }
@@ -807,8 +800,7 @@ class IDO extends Tx {
     transaction.add(instruction)
     transaction.feePayer = payerPublicKey
     // Sign tx
-    const payerSig = await wallet.rawSignTransaction(transaction)
-    this.addSignature(transaction, payerSig)
+    transaction = await wallet.signTransaction(transaction)
     // Send tx
     const txId = await this.sendTransaction(transaction)
     return { txId }
@@ -895,8 +887,7 @@ class IDO extends Tx {
     transaction.add(instruction)
     transaction.feePayer = payerPublicKey
     // Sign tx
-    const payerSig = await wallet.rawSignTransaction(transaction)
-    this.addSignature(transaction, payerSig)
+    transaction = await wallet.signTransaction(transaction)
     // Send tx
     const txId = await this.sendTransaction(transaction)
     return { txId, dstAddress }
@@ -941,8 +932,7 @@ class IDO extends Tx {
     transaction.add(instruction)
     transaction.feePayer = payerPublicKey
     // Sign tx
-    const payerSig = await wallet.rawSignTransaction(transaction)
-    this.addSignature(transaction, payerSig)
+    transaction = await wallet.signTransaction(transaction)
     // Send tx
     const txId = await this.sendTransaction(transaction)
     return { txId }

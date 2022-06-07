@@ -299,10 +299,8 @@ class Purchasing extends Tx {
     transaction.add(instruction)
     transaction.feePayer = payerPublicKey
     // Sign tx
-    const payerSig = await wallet.rawSignTransaction(transaction)
-    this.addSignature(transaction, payerSig)
-    const retailerSig = await this.selfSign(transaction, retailer)
-    this.addSignature(transaction, retailerSig)
+    transaction = await wallet.signTransaction(transaction)
+    transaction = await this.selfSign(transaction, retailer)
     // Send tx
     const txId = await this.sendTransaction(transaction)
     return { txId, retailerAddress }
@@ -389,8 +387,7 @@ class Purchasing extends Tx {
     transaction.add(instruction)
     transaction.feePayer = ownerPublicKey
     // Sign tx
-    const payerSig = await wallet.rawSignTransaction(transaction)
-    this.addSignature(transaction, payerSig)
+    transaction = await wallet.signTransaction(transaction)
     // Send tx
     const txId = await this.sendTransaction(transaction)
     return { txId, orderAddress: orderAddress }
@@ -456,8 +453,7 @@ class Purchasing extends Tx {
     transaction.add(instruction)
     transaction.feePayer = ownerPublicKey
     // Sign tx
-    const payerSig = await wallet.rawSignTransaction(transaction)
-    this.addSignature(transaction, payerSig)
+    transaction = await wallet.signTransaction(transaction)
     // Send tx
     const txId = await this.sendTransaction(transaction)
     return { txId }
@@ -523,8 +519,7 @@ class Purchasing extends Tx {
     transaction.add(instruction)
     transaction.feePayer = ownerPublicKey
     // Sign tx
-    const payerSig = await wallet.rawSignTransaction(transaction)
-    this.addSignature(transaction, payerSig)
+    transaction = await wallet.signTransaction(transaction)
     // Send tx
     const txId = await this.sendTransaction(transaction)
     return { txId }
@@ -593,8 +588,7 @@ class Purchasing extends Tx {
     transaction.add(instruction)
     transaction.feePayer = verifierPublicKey
     // Sign tx
-    const payerSig = await wallet.rawSignTransaction(transaction)
-    this.addSignature(transaction, payerSig)
+    transaction = await wallet.signTransaction(transaction)
     // Send tx
     const txId = await this.sendTransaction(transaction)
     return { txId }
@@ -674,8 +668,7 @@ class Purchasing extends Tx {
     transaction.add(instruction)
     transaction.feePayer = verifierPublicKey
     // Sign tx
-    const payerSig = await wallet.rawSignTransaction(transaction)
-    this.addSignature(transaction, payerSig)
+    transaction = await wallet.signTransaction(transaction)
     // Send tx
     const txId = await this.sendTransaction(transaction)
     return { txId }
@@ -713,8 +706,7 @@ class Purchasing extends Tx {
     transaction.add(instruction)
     transaction.feePayer = payerPublicKey
     // Sign tx
-    const payerSig = await wallet.rawSignTransaction(transaction)
-    this.addSignature(transaction, payerSig)
+    transaction = await wallet.signTransaction(transaction)
     // Send tx
     const txId = await this.sendTransaction(transaction)
     return { txId }
@@ -752,8 +744,7 @@ class Purchasing extends Tx {
     transaction.add(instruction)
     transaction.feePayer = payerPublicKey
     // Sign tx
-    const payerSig = await wallet.rawSignTransaction(transaction)
-    this.addSignature(transaction, payerSig)
+    transaction = await wallet.signTransaction(transaction)
     // Send tx
     const txId = await this.sendTransaction(transaction)
     return { txId }
@@ -799,8 +790,7 @@ class Purchasing extends Tx {
     transaction.add(instruction)
     transaction.feePayer = payerPublicKey
     // Sign tx
-    const payerSig = await wallet.rawSignTransaction(transaction)
-    this.addSignature(transaction, payerSig)
+    transaction = await wallet.signTransaction(transaction)
     // Send tx
     const txId = await this.sendTransaction(transaction)
     return { txId }

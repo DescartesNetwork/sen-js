@@ -9,11 +9,6 @@ export interface Provider {
   disconnect: () => void
 }
 
-export type Signature = {
-  publicKey: PublicKey
-  signature: Buffer
-}
-
 export type SignedMessage = {
   address: string // Base58 string
   signature: string // Hex string
@@ -22,18 +17,18 @@ export type SignedMessage = {
 
 /**
  * All the library in sen-js have been leveraged by wallet instance for getting wallet address, signing transaction for example.\
- * 
+ *
  * @example
- * 
+ *
  * The last parameter in the following example is `wallet` that respects `WalletInstance`.
  * By the `wallet`, the `transfer` method can sign or read necessary wallet info for the transaction.
- * 
+ *
  * ```ts
  * splt.transfer(amount, srcAddress, dstAddress, wallet)
  * ```
- * 
+ *
  * Following the interface, you can create a wallet instance that work with the libraries seamlessly.
- * 
+ *
  * @remarks We have already written multiple wallet that you can refer as {@link https://github.com/DescartesNetwork/senhub/tree/master/src/os/view/header/wallet/lib | examples}
  */
 export interface WalletInterface {
@@ -56,18 +51,18 @@ export interface WalletInterface {
   getAddress(): Promise<string>
 
   /**
-   * Call `rawSignTransaction` for signature and add to the input transaction
+   * Sign the input transaction and return signed transaction
    * @param transaction - The transaction that needs to be signed
    * @returns The signed transaction
    */
   signTransaction(transaction: Transaction): Promise<Transaction>
 
   /**
-   * Sign the input transaction and return signature
+   * Sign the input transactions and return signed transactions
    * @param transaction - The transaction that needs to be signed
-   * @returns {@link https://descartesnetwork.github.io/sen-js/modules.html#Signature | Signature}
+   * @returns The signed transactions
    */
-  rawSignTransaction(transaction: Transaction): Promise<Signature>
+  signAllTransactions(transactions: Transaction[]): Promise<Transaction[]>
 
   /**
    * Sign a message and return a signed messaged
@@ -124,17 +119,18 @@ class RawWallet implements WalletInterface {
   }
 
   signTransaction = async (transaction: Transaction): Promise<Transaction> => {
-    const { signature, publicKey } = await this.rawSignTransaction(transaction)
-    transaction.addSignature(publicKey, signature)
-    return transaction
-  }
-
-  rawSignTransaction = async (transaction: Transaction) => {
     const { keypair } = await this.getProvider()
     const signData = transaction.serializeMessage()
     const publicKey = keypair.publicKey
     const signature = nacl.sign.detached(signData, keypair.secretKey)
-    return { publicKey, signature } as Signature
+    transaction.addSignature(publicKey, Buffer.from(signature))
+    return transaction
+  }
+
+  signAllTransactions(transactions: Transaction[]): Promise<Transaction[]> {
+    return Promise.all(
+      transactions.map((transaction) => this.signTransaction(transaction)),
+    )
   }
 
   signMessage = async (message: string) => {

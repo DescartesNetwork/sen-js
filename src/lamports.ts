@@ -92,8 +92,7 @@ class Lamports extends Tx {
     transaction.add(instruction)
     transaction.feePayer = payerPublicKey
     // Sign tx
-    const payerSig = await wallet.rawSignTransaction(transaction)
-    this.addSignature(transaction, payerSig)
+    transaction = await wallet.signTransaction(transaction)
     // Send tx
     const txId = await this.sendTransaction(transaction)
     return txId

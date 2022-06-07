@@ -1,6 +1,5 @@
 import axios from 'axios'
 import * as BN from 'bn.js'
-import * as nacl from 'tweetnacl'
 import {
   AccountInfo,
   Commitment,
@@ -9,7 +8,6 @@ import {
   ParsedAccountData,
   PublicKey,
 } from '@solana/web3.js'
-import * as emoji from './assets/emoji.json'
 
 const PRECISION = new BN('1000000000')
 
@@ -20,26 +18,9 @@ const util = {
   BASIC_TX_FEE: 0.000005,
 
   /**
-   * Total number of emoji for address mapping
-   */
-  TOTAL_EMOJI: emoji.length,
-
-  /**
    * Sol decimals
    */
   LAMPORTS_PER_SOL: LAMPORTS_PER_SOL,
-
-  /**
-   * Map an address to an emoji
-   * @param seed maybe your address
-   * @returns an emoji
-   */
-  randEmoji: (seed: string) => {
-    const hash = nacl.hash(Buffer.from(seed))
-    const shortenedHash = Buffer.from(hash.subarray(0, 4)).toString('hex')
-    const index = parseInt(shortenedHash, 16)
-    return emoji[index % util.TOTAL_EMOJI]
-  },
 
   /**
    * Parse Coingecko
