@@ -7,6 +7,9 @@ import {
   GetProgramAccountsFilter,
   KeyedAccountInfo,
 } from '@solana/web3.js'
+import { sha256 } from 'js-sha256'
+import camelcase from 'camelcase'
+import * as anchor from '@project-serum/anchor'
 
 import Tx from './core/tx'
 import SPLT from './splt'
@@ -41,6 +44,170 @@ const ErrorMapping = [
   'Must fully unstaked first',
   'Inconsistent treasury balance',
 ]
+
+const ACCOUNT_DISCRIMINATOR_SIZE = 8
+
+const accountDiscriminator = (name: string): Buffer => {
+  return Buffer.from(
+    sha256.digest(`account:${camelcase(name, { pascalCase: true })}`),
+  ).slice(0, ACCOUNT_DISCRIMINATOR_SIZE)
+}
+
+type IDL = {
+  version: '0.1.0'
+  name: 'sen_utility'
+  instructions: []
+  accounts: [
+    {
+      name: 'farm'
+      type: {
+        kind: 'struct'
+        fields: [
+          {
+            name: 'owner'
+            type: 'publicKey'
+          },
+          {
+            name: 'state'
+            type: 'u8'
+          },
+          {
+            name: 'mintStake'
+            type: 'publicKey'
+          },
+          {
+            name: 'treasuryStake'
+            type: 'publicKey'
+          },
+          {
+            name: 'mintReward'
+            type: 'publicKey'
+          },
+          {
+            name: 'treasuryReward'
+            type: 'publicKey'
+          },
+          {
+            name: 'genesisTimestamp'
+            type: 'i64'
+          },
+          {
+            name: 'totalShares'
+            type: 'u64'
+          },
+          {
+            name: 'reward'
+            type: 'u64'
+          },
+          {
+            name: 'period'
+            type: 'u64'
+          },
+          {
+            name: 'compensation'
+            type: 'i128'
+          },
+        ]
+      }
+    },
+    {
+      name: 'debt'
+      type: {
+        kind: 'struct'
+        fields: [
+          {
+            name: 'farm'
+            type: 'publicKey'
+          },
+          { name: 'owner'; type: 'publicKey' },
+          { name: 'shares'; type: 'u64' },
+          { name: 'debt'; type: 'u128' },
+          { name: 'isInitialized'; type: 'bool' },
+        ]
+      }
+    },
+  ]
+  events: []
+  errors: []
+}
+
+const farmingIdl: IDL = {
+  version: '0.1.0',
+  name: 'sen_utility',
+  instructions: [],
+  accounts: [
+    {
+      name: 'farm',
+      type: {
+        kind: 'struct',
+        fields: [
+          {
+            name: 'owner',
+            type: 'publicKey',
+          },
+          {
+            name: 'state',
+            type: 'u8',
+          },
+          {
+            name: 'mintStake',
+            type: 'publicKey',
+          },
+          {
+            name: 'treasuryStake',
+            type: 'publicKey',
+          },
+          {
+            name: 'mintReward',
+            type: 'publicKey',
+          },
+          {
+            name: 'treasuryReward',
+            type: 'publicKey',
+          },
+          {
+            name: 'genesisTimestamp',
+            type: 'i64',
+          },
+          {
+            name: 'totalShares',
+            type: 'u64',
+          },
+          {
+            name: 'reward',
+            type: 'u64',
+          },
+          {
+            name: 'period',
+            type: 'u64',
+          },
+          {
+            name: 'compensation',
+            type: 'i128',
+          },
+        ],
+      },
+    },
+    {
+      name: 'debt',
+      type: {
+        kind: 'struct',
+        fields: [
+          {
+            name: 'farm',
+            type: 'publicKey',
+          },
+          { name: 'owner', type: 'publicKey' },
+          { name: 'shares', type: 'u64' },
+          { name: 'debt', type: 'u128' },
+          { name: 'isInitialized', type: 'bool' },
+        ],
+      },
+    },
+  ],
+  events: [],
+  errors: [],
+}
 
 class Farming extends Tx {
   farmingProgramId: PublicKey
@@ -160,11 +327,40 @@ class Farming extends Tx {
    * @param data - Buffer data (raw data) that you get by {@link https://solana-labs.github.io/solana-web3.js/classes/Connection.html#getAccountInfo | connection.getAccountInfo}
    * @returns Readable json data respect to {@link https://descartesnetwork.github.io/sen-js/modules.html#schema | FARM_SCHEMA}
    */
-  parseFarmData = (data: Buffer): FarmData => {
-    const layout = new soproxABI.struct(schema.FARM_SCHEMA)
-    if (data.length !== layout.space) throw new Error('Unmatched buffer length')
-    layout.fromBuffer(data)
-    return layout.value
+  // parseFarmData = (data: Buffer): FarmData => {
+  //   const layout = new soproxABI.struct(schema.FARM_SCHEMA)
+  //   if (data.length !== layout.space) throw new Error('Unmatched buffer length')
+  //   layout.fromBuffer(data)
+  //   return layout.value
+  // }
+
+  parseFarmData = (buf: Buffer): FarmData => {
+    let discriminator = accountDiscriminator('farm')
+    const program = /*#__PURE__*/ new anchor.Program(
+      farmingIdl,
+      this.farmingProgramId,
+      //@ts-ignore
+      new anchor.AnchorProvider(null, null, {
+        skipPreflight: false,
+      }),
+    )
+    const farmData = program.coder.accounts.decode(
+      'farm',
+      Buffer.concat([discriminator, buf]),
+    )
+    return {
+      compensation: BigInt(farmData.compensation.toString()),
+      genesis_timestamp: BigInt(farmData.genesisTimestamp.toString()),
+      mint_reward: farmData.mintReward.toString(),
+      mint_stake: farmData.mintStake.toString(),
+      owner: farmData.owner.toString(),
+      period: BigInt(farmData.period.toString()),
+      reward: BigInt(farmData.reward.toString()),
+      state: farmData.state,
+      total_shares: BigInt(farmData.totalShares.toString()),
+      treasury_reward: farmData.treasuryReward.toString(),
+      treasury_stake: farmData.treasuryStake.toString(),
+    }
   }
 
   /**
@@ -185,11 +381,34 @@ class Farming extends Tx {
    * @param data - Buffer data (raw data) that you get by {@link https://solana-labs.github.io/solana-web3.js/classes/Connection.html#getAccountInfo | connection.getAccountInfo}
    * @returns Readable json data respect to {@link https://descartesnetwork.github.io/sen-js/modules.html#schema | DEBT_SCHEMA}
    */
-  parseDebtData = (data: Buffer): DebtData => {
-    const layout = new soproxABI.struct(schema.DEBT_SCHEMA)
-    if (data.length !== layout.space) throw new Error('Unmatched buffer length')
-    layout.fromBuffer(data)
-    return layout.value
+  // parseDebtData = (data: Buffer): DebtData => {
+  //   const layout = new soproxABI.struct(schema.DEBT_SCHEMA)
+  //   if (data.length !== layout.space) throw new Error('Unmatched buffer length')
+  //   layout.fromBuffer(data)
+  //   return layout.value
+  // }
+
+  parseDebtData = (buf: Buffer): DebtData => {
+    let discriminator = accountDiscriminator('debt')
+    const program = /*#__PURE__*/ new anchor.Program(
+      farmingIdl,
+      this.farmingProgramId,
+      //@ts-ignore
+      new anchor.AnchorProvider(null, null, {
+        skipPreflight: false,
+      }),
+    )
+    const debtData = program.coder.accounts.decode(
+      'debt',
+      Buffer.concat([discriminator, buf]),
+    )
+    return {
+      farm: debtData.farm.toString(),
+      owner: debtData.owner.toString(),
+      shares: BigInt(debtData.shares.toString()),
+      debt: BigInt(debtData.debt.toString()),
+      is_initialized: debtData.isInitialized,
+    }
   }
 
   /**
