@@ -328,7 +328,12 @@ class SPLT extends Tx {
     mintAddress: string,
     ownerAddress: string,
     wallet: WalletInterface,
-  ): Promise<{ accountAddress: string; txId: string }> => {
+    sendAndConfirm: boolean = true,
+  ): Promise<{
+    accountAddress: string
+    txId: string
+    instruction: TransactionInstruction
+  }> => {
     if (!account.isAddress(mintAddress)) throw new Error('Invalid mint address')
     if (!account.isAddress(ownerAddress))
       throw new Error('Invalid owner address')
@@ -359,13 +364,17 @@ class SPLT extends Tx {
       programId: this.splataProgramId,
       data: Buffer.from([]),
     })
-    transaction.add(instruction)
-    transaction.feePayer = payerPublicKey
-    // Sign tx
-    transaction = await wallet.signTransaction(transaction)
-    // Send tx
-    const txId = await this.sendTransaction(transaction)
-    return { accountAddress, txId }
+
+    let txId = ''
+    if (sendAndConfirm) {
+      transaction.add(instruction)
+      transaction.feePayer = payerPublicKey
+      // Sign tx
+      transaction = await wallet.signTransaction(transaction)
+      // Send tx
+      txId = await this.sendTransaction(transaction)
+    }
+    return { accountAddress, txId, instruction }
   }
 
   /**
@@ -877,13 +886,34 @@ class SPLT extends Tx {
       await this.connection.getMinimumBalanceForRentExemption(accountSpace)
     if (requiredLamports > Number(lamports))
       throw new Error(`At least ${requiredLamports} is required`)
-    // Call wrap
-    await this._lamports.transfer(lamports, accountAddress, wallet)
-    const { txId } = await this.initializeAccount(
+
+    let transaction = new Transaction()
+    transaction = await this.addRecentCommitment(transaction)
+    // Create transfer instruction
+    const { instruction: transferInstruction } = await this._lamports.transfer(
+      lamports,
+      accountAddress,
+      wallet,
+      false,
+    )
+    transaction.add(transferInstruction)
+    //Create initialize instruction
+    const { instruction: initializeInstruction } = await this.initializeAccount(
       DEFAULT_WSOL,
       ownerAddress,
       wallet,
+      false,
     )
+    transaction.add(initializeInstruction)
+    // Get payer
+    const payerAddress = await wallet.getAddress()
+    const payerPublicKey = account.fromAddress(payerAddress)
+
+    transaction.feePayer = payerPublicKey
+    // Sign tx
+    transaction = await wallet.signTransaction(transaction)
+    // Send tx
+    const txId = await this.sendTransaction(transaction)
     return { accountAddress, txId }
   }
 
