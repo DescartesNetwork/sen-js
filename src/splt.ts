@@ -328,7 +328,12 @@ class SPLT extends Tx {
     mintAddress: string,
     ownerAddress: string,
     wallet: WalletInterface,
-  ): Promise<{ accountAddress: string; txId: string }> => {
+    onlyInstruction: boolean = false,
+  ): Promise<{
+    accountAddress: string
+    txId: string
+    instruction: TransactionInstruction
+  }> => {
     if (!account.isAddress(mintAddress)) throw new Error('Invalid mint address')
     if (!account.isAddress(ownerAddress))
       throw new Error('Invalid owner address')
@@ -359,13 +364,15 @@ class SPLT extends Tx {
       programId: this.splataProgramId,
       data: Buffer.from([]),
     })
+
+    if (onlyInstruction) return { accountAddress, txId: '', instruction }
     transaction.add(instruction)
     transaction.feePayer = payerPublicKey
     // Sign tx
     transaction = await wallet.signTransaction(transaction)
     // Send tx
     const txId = await this.sendTransaction(transaction)
-    return { accountAddress, txId }
+    return { accountAddress, txId, instruction }
   }
 
   /**
@@ -877,39 +884,29 @@ class SPLT extends Tx {
       await this.connection.getMinimumBalanceForRentExemption(accountSpace)
     if (requiredLamports > Number(lamports))
       throw new Error(`At least ${requiredLamports} is required`)
-    //Transfer lamport
-    const dstPublicKey = account.fromAddress(accountAddress)
+
+    let transaction = new Transaction()
+    transaction = await this.addRecentCommitment(transaction)
+    // Create transfer instruction
+    const { instruction: transferInstruction } = await this._lamports.transfer(
+      lamports,
+      accountAddress,
+      wallet,
+      true,
+    )
+    transaction.add(transferInstruction)
+    //Create initialize instruction
+    const { instruction: initializeInstruction } = await this.initializeAccount(
+      DEFAULT_WSOL,
+      ownerAddress,
+      wallet,
+      true,
+    )
+    transaction.add(initializeInstruction)
     // Get payer
     const payerAddress = await wallet.getAddress()
     const payerPublicKey = account.fromAddress(payerAddress)
-    if (!payerPublicKey) throw new Error('Cannot get the payer address')
-    // Build tx
-    let transaction = new Transaction()
-    transaction = await this.addRecentCommitment(transaction)
-    const instruction = SystemProgram.transfer({
-      fromPubkey: payerPublicKey,
-      toPubkey: dstPublicKey,
-      lamports: Number(lamports),
-    })
-    transaction.add(instruction)
-    // Initialize Account
-    const mintPublicKey = account.fromAddress(DEFAULT_WSOL)
-    const ownerPublicKey = account.fromAddress(ownerAddress)
-    // Build tx
-    const initializeInstruction = new TransactionInstruction({
-      keys: [
-        { pubkey: payerPublicKey, isSigner: true, isWritable: true },
-        { pubkey: dstPublicKey, isSigner: false, isWritable: true },
-        { pubkey: ownerPublicKey, isSigner: false, isWritable: false },
-        { pubkey: mintPublicKey, isSigner: false, isWritable: false },
-        { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
-        { pubkey: this.spltProgramId, isSigner: false, isWritable: false },
-        { pubkey: SYSVAR_RENT_PUBKEY, isSigner: false, isWritable: false },
-      ],
-      programId: this.splataProgramId,
-      data: Buffer.from([]),
-    })
-    transaction.add(initializeInstruction)
+
     transaction.feePayer = payerPublicKey
     // Sign tx
     transaction = await wallet.signTransaction(transaction)

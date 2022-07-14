@@ -1,4 +1,9 @@
-import { Transaction, SystemProgram, PublicKey } from '@solana/web3.js'
+import {
+  Transaction,
+  SystemProgram,
+  PublicKey,
+  TransactionInstruction,
+} from '@solana/web3.js'
 
 import Tx from './core/tx'
 import account from './account'
@@ -73,7 +78,8 @@ class Lamports extends Tx {
     lamports: number | bigint,
     dstAddress: string,
     wallet: WalletInterface,
-  ): Promise<string> => {
+    onlyInstruction: boolean = false,
+  ): Promise<{ txId: string; instruction: TransactionInstruction }> => {
     if (!account.isAddress(dstAddress))
       throw new Error('Invalid destination address')
     const dstPublicKey = account.fromAddress(dstAddress)
@@ -89,13 +95,14 @@ class Lamports extends Tx {
       toPubkey: dstPublicKey,
       lamports: Number(lamports),
     })
+    if (onlyInstruction) return { txId: '', instruction }
     transaction.add(instruction)
     transaction.feePayer = payerPublicKey
     // Sign tx
     transaction = await wallet.signTransaction(transaction)
     // Send tx
     const txId = await this.sendTransaction(transaction)
-    return txId
+    return { txId, instruction }
   }
 
   /**
