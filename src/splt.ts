@@ -877,24 +877,47 @@ class SPLT extends Tx {
       await this.connection.getMinimumBalanceForRentExemption(accountSpace)
     if (requiredLamports > Number(lamports))
       throw new Error(`At least ${requiredLamports} is required`)
-    // Call wrap
 
+    const balance = await this.connection.getBalance(
+      new PublicKey(accountAddress),
+    )
     const dstPublicKey = account.fromAddress(accountAddress)
     // Get payer
     const payerAddress = await wallet.getAddress()
     const payerPublicKey = account.fromAddress(payerAddress)
     if (!payerPublicKey) throw new Error('Cannot get the payer address')
     // Build tx
+    console.log('lamports before: ', lamports, accountAddress)
+    let unwrapTransaction
+    if (balance !== 0) {
+      unwrapTransaction = new Transaction()
+      unwrapTransaction = await this.addRecentCommitment(unwrapTransaction)
+      const layout = new soproxABI.struct([{ key: 'code', type: 'u8' }], {
+        code: 9,
+      })
+      const instruction = new TransactionInstruction({
+        keys: [
+          { pubkey: dstPublicKey, isSigner: false, isWritable: true },
+          { pubkey: payerPublicKey, isSigner: false, isWritable: true },
+          { pubkey: payerPublicKey, isSigner: true, isWritable: false },
+        ],
+        programId: this.spltProgramId,
+        data: layout.toBuffer(),
+      })
+      unwrapTransaction.add(instruction)
+      unwrapTransaction.feePayer = payerPublicKey
+      lamports = Number(lamports) + balance
+    }
+    // initialize
     let transaction = new Transaction()
     transaction = await this.addRecentCommitment(transaction)
+    //transfer
     const instruction = SystemProgram.transfer({
       fromPubkey: payerPublicKey,
       toPubkey: dstPublicKey,
       lamports: Number(lamports),
     })
     transaction.add(instruction)
-
-    // initialize
     const mintPublicKey = account.fromAddress(DEFAULT_WSOL)
     const ownerPublicKey = account.fromAddress(ownerAddress)
     // Generate the associated account address
@@ -915,11 +938,22 @@ class SPLT extends Tx {
     })
     transaction.add(initializeInstruction)
     transaction.feePayer = payerPublicKey
+    if (!unwrapTransaction) {
+      transaction = await wallet.signTransaction(transaction)
+      const txId = await this.sendTransaction(transaction)
+      return { accountAddress, txId }
+    }
     // Sign tx
-    transaction = await wallet.signTransaction(transaction)
+    let allTransaction = [unwrapTransaction, transaction]
+    allTransaction = await wallet.signAllTransactions(allTransaction)
     // Send tx
-    const txId = await this.sendTransaction(transaction)
-    return { accountAddress, txId }
+    const [txUnwrap, txWrap] = await Promise.all(
+      allTransaction.map(async (tx) => {
+        const txId = await this.sendTransaction(tx)
+        return txId
+      }),
+    )
+    return { accountAddress, txId: txWrap }
   }
 
   /**
@@ -934,6 +968,7 @@ class SPLT extends Tx {
       ownerAddress,
       DEFAULT_WSOL,
     )
+    console.log('updddd: ', accountAddress)
     return await this.closeAccount(accountAddress, wallet)
   }
 }
