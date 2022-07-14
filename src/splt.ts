@@ -328,7 +328,7 @@ class SPLT extends Tx {
     mintAddress: string,
     ownerAddress: string,
     wallet: WalletInterface,
-    onlyInstruction: boolean = false,
+    sendAndConfirm: boolean = true,
   ): Promise<{
     accountAddress: string
     txId: string
@@ -365,13 +365,15 @@ class SPLT extends Tx {
       data: Buffer.from([]),
     })
 
-    if (onlyInstruction) return { accountAddress, txId: '', instruction }
-    transaction.add(instruction)
-    transaction.feePayer = payerPublicKey
-    // Sign tx
-    transaction = await wallet.signTransaction(transaction)
-    // Send tx
-    const txId = await this.sendTransaction(transaction)
+    let txId = ''
+    if (sendAndConfirm) {
+      transaction.add(instruction)
+      transaction.feePayer = payerPublicKey
+      // Sign tx
+      transaction = await wallet.signTransaction(transaction)
+      // Send tx
+      txId = await this.sendTransaction(transaction)
+    }
     return { accountAddress, txId, instruction }
   }
 
@@ -892,7 +894,7 @@ class SPLT extends Tx {
       lamports,
       accountAddress,
       wallet,
-      true,
+      false,
     )
     transaction.add(transferInstruction)
     //Create initialize instruction
@@ -900,7 +902,7 @@ class SPLT extends Tx {
       DEFAULT_WSOL,
       ownerAddress,
       wallet,
-      true,
+      false,
     )
     transaction.add(initializeInstruction)
     // Get payer
